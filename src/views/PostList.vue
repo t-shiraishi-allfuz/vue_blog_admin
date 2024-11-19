@@ -1,7 +1,7 @@
 <template>
 	<v-container v-if="currentPage === 'list'">
-		<v-card class="post-list">
-			<v-data-table class="post-list" :headers="headers" :items="filteredPosts" :items-per-page="30" no-data-text="記事がありません">
+		<v-card class="blog-list">
+			<v-data-table class="blog-list" :headers="headers" :items="filteredBlogList" :items-per-page="30" no-data-text="記事がありません">
 				<template v-slot:top>
 					<v-toolbar flat>
 						<v-toolbar-title>記事一覧</v-toolbar-title>
@@ -11,7 +11,7 @@
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.title`]="{ item }">
-					<a @click.prevent="goToDetail(item)" class="post-title" href="#">
+					<a @click.prevent="goToDetail(item)" class="blog-title" href="#">
 						{{ item.title }}
 					</a>
 				</template>
@@ -22,13 +22,24 @@
 					{{ item.isPublished ? '公開' : '下書き' }}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="confirmDelete(item)" />
+					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
 				</template>
 			</v-data-table>
 		</v-card>
+		<v-dialog v-model="deleteDialog" max-width="400px">
+			<v-card>
+				<v-card-title>削除確認</v-card-title>
+				<v-card-text>この記事を本当に削除しますか？</v-card-text>
+				<v-card-actions>
+					<v-spacer></v-spacer>
+					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
+					<v-btn color="primary" variant="flat" @click="confirmDelete">削除</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 	</v-container>
 	<v-container v-if="currentPage === 'detail'">
-		<PostDetail :blog="selectedPost" />
+		<PostDetail :blog="selectedBlog" />
 		<v-card-actions>
 			<v-btn @click="goToList">一覧に戻る</v-btn>
 		</v-card-actions>
@@ -37,16 +48,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { db } from '@/setting/firebase';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { useBlogStore } from '@/stores/blogStore';
 import { format } from 'date-fns';
 import { mdiMagnify, mdiDelete } from '@mdi/js';
 import PostDetail from '@/views/PostDetail.vue';
 
-const posts = ref([]);
+const blogStore = useBlogStore();
+const blogList = ref([]);
 const currentPage = ref('list'); // 現在のページ ('list' または 'detail')
-const selectedPost = ref(null);  // 選択された記事
+const selectedBlog = ref(null);  // 選択された記事
 const search = ref('');
+const deleteDialog = ref(false);
+const blogToDelete = ref(null);
 
 const headers = [
 	{title: "記事タイトル", value: "title" },
@@ -55,44 +68,38 @@ const headers = [
 	{title: "削除", value: "actions", sortable: false },
 ];
 
+// 一覧取得
 const fetchBlogList = async () => {
-	posts.value = [];
-	const blogCollectionRef = collection(db, "blog");
-	const snapshot = await getDocs(blogCollectionRef);
-
-	if (!snapshot.empty) {
-		snapshot.forEach(doc => {
-			const data = { id: doc.id, ...doc.data() };
-			if (data.createdAt && data.createdAt.toDate) {
-				data.createdAt = data.createdAt.toDate();
-			}
-			posts.value.push(data);
-		});
-	}
-}
-
-const confirmDelete = async (blog) => {
-	if (confirm("本当にこの記事を削除しますか？")) {
-		await deleteItem(blog);
-	}
-}
-
-const deleteItem = async (blog) => {
 	try {
-		const docRef = doc(db, "blog", blog.id);
-		await deleteDoc(docRef);
-		alert('記事が削除されました');
-		posts.value = posts.value.filter(post => post.id !== blog.id);
+		blogList.value = await blogStore.getList();
 	} catch (error) {
-		alert('記事の削除に失敗しました');
+		alert(error);
 	}
 }
+
+// 個別削除確認ダイアログを開く
+const openDeleteDialog = (blog) => {
+	blogToDelete.value = blog;
+	deleteDialog.value = true;
+};
+
+// 個別削除を確定する
+const confirmDelete = async () => {
+	deleteDialog.value = false;
+
+	try {
+		await blogStore.delete(blogToDelete.value.id);
+		blogList.value = blogList.value.filter(blog => blog.id !== blogToDelete.value.id);
+	} catch (error) {
+		alert(error);
+	}
+};
 
 // 検索条件に基づく投稿フィルタリング
-const filteredPosts = computed(() => {
-	if (!search.value) return posts.value;
-	return posts.value.filter(post =>
-		post.title.toLowerCase().includes(search.value.toLowerCase())
+const filteredBlogList = computed(() => {
+	if (!search.value) return blogList.value;
+	return blogList.value.filter(blog =>
+		blog.title.toLowerCase().includes(search.value.toLowerCase())
 	);
 });
 
@@ -103,13 +110,13 @@ const formatDate = (date) => {
 
 // 詳細ページに移動
 const goToDetail = (post) => {
-	selectedPost.value = post;
+	selectedBlog.value = post;
 	currentPage.value = 'detail';
 };
 
 // 一覧ページに戻る
 const goToList = () => {
-	selectedPost.value = null;
+	selectedBlog.value = null;
 	currentPage.value = 'list';
 };
 

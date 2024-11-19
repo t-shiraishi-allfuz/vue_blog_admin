@@ -1,32 +1,30 @@
 <template>
-	<v-container>
-		<v-form ref="blogForm" @submit.prevent="updatePost">
-			<v-card class="post-create">
-				<v-card-text>
-					<v-text-field
-						type="text"
-						label="タイトルを入力して下さい"
-						v-model="blog.title" />
-					<quill-editor
-						class="custom-quill-editor"
-						v-model:value="blog.content"
-						:options="editorOptions"
-						ref="quillEditor" />
-					<v-text-field
-						type="text"
-						label="記事の概要を入力して下さい"
-						v-model="blog.summary" />
-					<v-switch
-						label="公開設定"
-						v-model="blog.isPublished"
-						hide-details />
-				</v-card-text>
-				<v-card-actions>
-					<v-btn color="primary" variant="flat" type="submit">更新する</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-form>
-	</v-container>
+	<v-form ref="blogForm" @submit.prevent="updatePost">
+		<v-card class="post-create">
+			<v-card-text>
+				<v-text-field
+					type="text"
+					label="タイトルを入力して下さい"
+					v-model="blog.title" />
+				<quill-editor
+					class="custom-quill-editor"
+					v-model:value="blog.content"
+					:options="editorOptions"
+					ref="quillEditor" />
+				<v-text-field
+					type="text"
+					label="記事の概要を入力して下さい"
+					v-model="blog.summary" />
+				<v-switch
+					label="公開設定"
+					v-model="blog.isPublished"
+					hide-details />
+			</v-card-text>
+			<v-card-actions>
+				<v-btn color="primary" variant="flat" type="submit">更新する</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-form>
 </template>
 
 <script setup>

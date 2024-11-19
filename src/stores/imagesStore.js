@@ -40,11 +40,8 @@ export const useImagesStore = defineStore('images', {
 				const imagesDocRef = collection(db, "images");
 				const querySnapshot = await getDocs(query(imagesDocRef, where("uid", "==", user.uid)));
 				querySnapshot.forEach(doc => {
-					result.push({
-						id: doc.id,
-						name: doc.data().name,
-						url: doc.data().url
-					});
+					const data = { id: doc.id, ...doc.data() };
+					result.push(data);
 				})
 				return result;
 			} catch (error) {
