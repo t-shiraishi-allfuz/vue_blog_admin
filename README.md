@@ -1,5 +1,4 @@
 # vue_blog_admin
-<<<<<<< HEAD
 
 ## Project setup
 ```
@@ -23,6 +22,4 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
-=======
 vueで作るブログサイト管理画面
->>>>>>> origin/main
