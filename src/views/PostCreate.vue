@@ -27,6 +27,21 @@
 			</v-card>
 		</v-form>
 	</v-container>
+	<v-dialog v-model="imageSelectDialog" max-width="600px">
+		<v-card>
+			<v-card-title>アップロード済みの画像を選択</v-card-title>
+			<v-card-text>
+				<div class="image-gallery">
+					<div v-for="image in imageList" :key="image.id" class="image-item">
+						<img :src="image.url" @click="selectImage(image.url)" alt="Image" />
+					</div>
+				</div>
+			</v-card-text>
+			<v-card-actions>
+				<v-btn text @click="imageSelectDialog = false">閉じる</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>
 
 <script setup>
@@ -34,8 +49,12 @@ import { ref } from 'vue';
 import { useBlogStore } from '@/stores/blogStore';
 import { useImagesStore } from '@/stores/imagesStore';
 
-const imagesStore = useImagesStore();
 const blogStore = useBlogStore();
+const imagesStore = useImagesStore();
+
+const imageList = ref([]);
+const imageSelectDialog = ref(false);
+const quill = ref(null);
 
 const blog = ref({
 	uid: null,
@@ -60,37 +79,31 @@ const editorOptions = ref({
 			],
 			handlers: {
 				image: async function () {
-					const fileInput = document.createElement('input');
-					fileInput.setAttribute('type', 'file');
-					fileInput.setAttribute('accept', 'image/*');
-					fileInput.click();
-
-					fileInput.onchange = async () => {
-						const file = fileInput.files[0];
-						if (file) {
-							const url = await submitImage(file);
-							if (url) {
-								const range = this.quill.getSelection();
-								this.quill.insertEmbed(range.index, 'image', url);
-								this.quill.setSelection(range.index + 1);
-							}
-						}
-					}
+					quill.value = this.quill;
+					await fetchImageList();
 				}
 			}
 		},
 	}
 });
 
-// 画像をサーバーにアップロードする処理
-const submitImage = async (file) => {
+// 画像一覧取得
+const fetchImageList = async () => {
 	try {
-		const url = await imagesStore.create(file);
-		return url;
+		imageList.value = await imagesStore.getList(null);
+		imageSelectDialog.value = true;
 	} catch (error) {
 		alert(error);
 	}
-};
+}
+
+// 画像を選択
+const selectImage = (imageUrl) => {
+	const range = quill.value.getSelection();
+	quill.value.insertEmbed(range.index, 'image', imageUrl);
+	quill.value.setSelection(range.index + 1);
+	imageSelectDialog.value = false;
+}
 
 const submitPost = async () => {
 	if (!blog.value.title || !blog.value.content) {
@@ -115,5 +128,22 @@ const submitPost = async () => {
 <style scoped lang="scss">
 	.custom-quill-editor {
 		margin: 10px 0;
+	}
+	.image-gallery {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.image-item img {
+		width: 100px;
+		height: 100px;
+		object-fit: cover;
+		cursor: pointer;
+		border: 2px solid #ccc;
+		border-radius: 8px;
+		transition: transform 0.3s ease;
+	}
+	.image-item img:hover {
+		transform: scale(1.1);
 	}
 </style>

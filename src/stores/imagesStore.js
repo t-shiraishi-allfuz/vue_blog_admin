@@ -2,12 +2,24 @@
 import { defineStore } from 'pinia';
 import { storage, db } from '@/setting/firebase';
 import { getDownloadURL, ref as storageRef, uploadBytes, deleteObject } from 'firebase/storage';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import {
+	collection,
+	query,
+	where,
+	getDocs,
+	setDoc,
+	addDoc,
+	deleteDoc,
+	doc
+} from 'firebase/firestore';
 import { useAuthStore } from '@/stores/authStore';
 
 export const useImagesStore = defineStore('images', {
+	state: () => ({
+		imageList: [],
+	}),
 	actions: {
-		async create(file) {
+		async create(file, folder_id) {
 			const authStore = useAuthStore();
 			const user = authStore.user;
 
@@ -24,26 +36,69 @@ export const useImagesStore = defineStore('images', {
 					uid: user.uid,
 					name: file.name,
 					url: url,
+					folder_id: folder_id != null ? folder_id : null,
 					uploadedAt: new Date()
 				});
-				return url;
 			} catch (error) {
 				throw new Error('画像のアップロードに失敗しました');
 			}
 		},
-		async getList() {
+		async update(file, folder_id) {
+			try {
+				// 取得したURLをstoreに保存
+				const imageDocRef = doc(db, "images", file.id);
+				await setDoc(imageDocRef, {
+					folder_id: folder_id != null ? folder_id : null,
+					uploadedAt: new Date()
+				}, { merge: true });
+			} catch (error) {
+				throw new Error('画像データの更新に失敗しました');
+			}
+		},
+		async getList(folder_id) {
 			const authStore = useAuthStore();
 			const user = authStore.user;
-			const result = [];
+			const list = [];
+
+			let querySnapshot;
 
 			try {
 				const imagesDocRef = collection(db, "images");
-				const querySnapshot = await getDocs(query(imagesDocRef, where("uid", "==", user.uid)));
+				if (folder_id != null) {
+					querySnapshot = await getDocs(query(
+						imagesDocRef,
+						where("uid", "==", user.uid),
+						where("folder_id", "==", folder_id)
+					));
+				} else {
+					querySnapshot = await getDocs(query(
+						imagesDocRef,
+						where("uid", "==", user.uid)
+					));
+				}
 				querySnapshot.forEach(doc => {
 					const data = { id: doc.id, ...doc.data() };
-					result.push(data);
-				})
-				return result;
+					list.push(data);
+				});
+				return this.imageList = list;
+			} catch (error) {
+				console.log(error.message);
+				throw new Error('データの取得に失敗しました');
+			}
+		},
+		// フォルダに格納されている画像数取得
+		async getImageCount(folder_id) {
+			const authStore = useAuthStore();
+			const user = authStore.user;
+
+			try {
+				const imagesDocRef = collection(db, "images");
+				const querySnapshot = await getDocs(query(
+					imagesDocRef,
+					where("uid", "==", user.uid),
+					where("folder_id", "==", folder_id)
+				));
+				return querySnapshot.size;
 			} catch (error) {
 				throw new Error('データの取得に失敗しました');
 			}
