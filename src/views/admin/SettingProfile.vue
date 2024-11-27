@@ -9,11 +9,12 @@
 						type="file"
 						accept="image/png, image/jpg, image/jpeg"
 						@change="handleFileUpload" />
-					<v-img
+					<v-avatar
 						v-if="blogSettingStore.tempSetting.profileUrl"
-						:src="blogSettingStore.tempSetting.profileUrl"
+						:image="blogSettingStore.tempSetting.profileUrl"
 						alt="Profile Preview"
-						class="profile-preview" cover />
+						class="profile-image"
+						size="64" />
 					<v-text-field
 						type="text"
 						label="ブログのタイトルを入力して下さい"
@@ -74,10 +75,7 @@ const updateSetting = async () => {
 </script>
 
 <style scoped>
-	.profile-preview {
-		width: 80px;
-		height: 80px;
-		border-radius: 50%;
+	.profile-image {
 		margin-bottom: 10px;
 	}
 </style>

@@ -9,6 +9,9 @@
 	html {
 		height: 100%;
 	}
+	header {
+		padding: 0 16px;
+	}
 	body {
 		position: relative;
 		height: auto!important;

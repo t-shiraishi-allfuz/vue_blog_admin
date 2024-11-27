@@ -15,7 +15,7 @@
 					<template v-slot:activator="{ props }">
 						<v-avatar v-bind="props" :image="blogSettingStore.blogSetting.profileUrl" size="48" end />
 					</template>
-					<CommonSidemenu />
+					<CommonUsermenu />
 				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
@@ -33,7 +33,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
 import { mdiMagnify } from '@mdi/js';
-import CommonSidemenu from '@/components/CommonSidemenu';
+import CommonUsermenu from '@/components/CommonUsermenu';
 
 const router = useRouter();
 const authStore = useAuthStore();
