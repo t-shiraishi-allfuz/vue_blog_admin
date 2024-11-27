@@ -13,7 +13,7 @@
 					<v-divider class="mx-4" inset vertical />
 					<v-spacer></v-spacer>
 					<v-select
-						v-if="folderList.length > 0"
+						v-if="extendedFolderList.length > 0"
 						label="画像フォルダ選択"
 						:items="folderList"
 						item-title="name"
@@ -24,12 +24,12 @@
 				<div class="fileBox">
 					<ul class="image-list" v-if="imageList.length > 0">
 						<li class="thumbnail" v-for="(image, index) in imageList" :key="index">
-							<div class="image-box">
+							<div class="image-gallery">
 								<div class="image-top">
 									<input type="checkbox" v-model="selectedForDelete" :value="image" />
 									<label class="file-name">{{ image.name }}</label>
 								</div>
-								<span>
+								<span class="image-item">
 									<img :src="image.url" :alt="'Image ' + (index + 1)" @click="openImageViewer(image.url)" />
 								</span>
 								<div class="delete-image">
@@ -69,7 +69,7 @@
 				<v-card-title>移動確認</v-card-title>
 				<v-card-text>
 					<v-select
-						v-if="folderList.length > 0"
+						v-if="extendedFolderList.length > 0"
 						label="移動する画像フォルダ選択を選択して下さい"
 						:items="folderList"
 						item-title="name"
@@ -131,10 +131,13 @@ const imagesStore = useImagesStore();
 const imageList = computed(() => imagesStore.imageList || []);
 
 const imagesFolderStore = useImagesFolderStore();
-const folderList = computed(() => [
-	{ id: null, name: '指定なし' },
-	...imagesFolderStore.folderList
-]);
+const folderList = computed(() => imagesFolderStore.folderList);
+
+// フォルダリストにデフォルト値を追加
+const defaultSelect = ref({id: null, name: '指定なし'});
+const extendedFolderList = computed(() => {
+	return [defaultSelect.value, ...folderList.value];
+});
 
 // モーダル用データ
 const imageViewerDialog = ref(false);
@@ -169,6 +172,8 @@ const openMoveDialog = (image) => {
 
 // 画像移動
 const moveImage = async () => {
+	moveDialog.value = false;
+
 	try {
 		await imagesStore.update(imageToMove.value, selectedMoveFolder.value.id);
 		emit('changeFolderList', selectedFolder.value);
@@ -176,7 +181,6 @@ const moveImage = async () => {
 	} catch (error) {
 		alert(error);
 	}
-	moveDialog.value = false;
 };
 
 // 個別削除確認ダイアログを開く
@@ -193,27 +197,32 @@ const openBatchDeleteDialog = () => {
 
 // 画像削除
 const deleteImage = async () => {
+	deleteDialog.value = false;
+
 	try {
 		await imagesStore.delete(imageToDelete.value);
+		imageToDelete.value = null;
+		emit('changeFolderList', selectedFolder.value);
 		alert('画像が削除されました');
 	} catch (error) {
 		alert(error);
 	}
-	deleteDialog.value = false;
 };
 
 // 一括削除
 const deleteSelectedImages = async () => {
+	batchDeleteDialog.value = false;
+
 	if (selectedForDelete.value.length === 0) return;
 
 	try {
 		await Promise.all(selectedForDelete.value.map((image) => imagesStore.delete(image)));
-		alert('選択した画像が削除されました');
 		selectedForDelete.value = [];
+		emit('changeFolderList', selectedFolder.value);
+		alert('選択した画像が削除されました');
 	} catch (error) {
 		alert(error);
 	}
-	batchDeleteDialog.value = false;
 };
 
 watch(selectedFolder, (newValue) => {
@@ -257,14 +266,6 @@ watch(() => props.selectedFolder, (newValue) => {
 				text-align: center;
 				width: 155px;
 
-				img{
-					width: auto;
-					height: auto;
-					max-width: 145px;
-					height: 100px;
-					border: 1px solid #0270cc;
-					object-fit: cover;
-				}
 				.image-top {
 					position: relative;
 					margin: 5px 0;
@@ -297,5 +298,17 @@ watch(() => props.selectedFolder, (newValue) => {
 				}
 			}
 		}
+	}
+	.image-item img {
+		width: 100px;
+		height: 100px;
+		object-fit: cover;
+		cursor: pointer;
+		border: 2px solid #ccc;
+		border-radius: 8px;
+		transition: transform 0.3s ease;
+	}
+	.image-item img:hover {
+		transform: scale(1.1);
 	}
 </style>

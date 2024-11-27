@@ -11,6 +11,7 @@ const blog = ref({
 	title: "",
 	summary: "",
 	content: "",
+	category_id: null,
 	isPublished: false,
 	createdAt: null,
 	updatedAt: null

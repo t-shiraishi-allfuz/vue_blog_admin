@@ -64,13 +64,32 @@ export const useImagesFolderStore = defineStore('images_folder', {
 					}
 					list.push(data);
 				}
+				// createdAt の昇順でソート
+				list.sort((a, b) => a.createdAt - b.createdAt);
+
 				return this.folderList = list;
 			} catch (error) {
 				throw new Error('データの取得に失敗しました');
 			}
 		},
 		async delete(id) {
+			const authStore = useAuthStore();
+			const user = authStore.user;
+
 			try {
+				// フォルダに紐づく画像のデータを更新
+				const imagesDocRef = collection(db, "images");
+				const querySnapshot = await getDocs(query(
+					imagesDocRef,
+					where("uid", "==", user.uid),
+					where("folder_id", "==", id)
+				));
+				const updatePromises = querySnapshot.docs.map(async (doc) => {
+					const imageDocRef = doc.ref;
+					await setDoc(imageDocRef, { folder_id: null }, { merge: true });
+				});
+				await Promise.all(updatePromises);
+
 				// storeからも削除
 				const docRef = doc(db, "images_folder", id);
 				await deleteDoc(docRef);

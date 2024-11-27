@@ -46,11 +46,6 @@
 	.form-group {
 		margin-bottom: 16px;
 	}
-    .custom-quill-editor {
-        border: 1px solid #ccc;
-        padding: 10px;
-    }               
-
     .ql-toolbar {
         border: 1px solid #ccc;
         border-bottom: none;

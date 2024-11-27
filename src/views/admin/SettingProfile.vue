@@ -33,11 +33,13 @@
 			</v-card>
 		</v-form>
 	</v-container>
+	<BlogCategoryList />
 </template>
 
 <script setup>
+import { ref, defineAsyncComponent } from 'vue';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
-import { ref } from 'vue';
+const BlogCategoryList = defineAsyncComponent(() => import('@/views/admin/BlogCategoryList.vue'));
 
 // ブログ設定
 const blogSettingStore = useBlogSettingStore();
@@ -59,8 +61,15 @@ const handleFileUpload = (event) => {
 };
 
 // ブログ設定更新
-const updateSetting = () => {
-	blogSettingStore.updateSettingFromFirestore(profileImage);
+const updateSetting = async () => {
+	try {
+		await blogSettingStore.updateSettingFromFirestore(profileImage);
+		alert('プロフィールを更新しました');
+
+		profileImage.value = null;
+	} catch (error) {
+		alert(error);
+	}
 };
 </script>
 

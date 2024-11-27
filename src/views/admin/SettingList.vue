@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-	import SettingProfile from '@/views/SettingProfile.vue';
+	import SettingProfile from '@/views/admin/SettingProfile.vue';
 </script>
 
 <style scoped>

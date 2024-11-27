@@ -1,7 +1,7 @@
 <template>
 	<v-container>
 		<v-card class="folder-list">
-			<v-data-table class="folder-list" :headers="headers" :items="folderList" :items-per-page="30" v-if="folderList.length > 0">
+			<v-data-table class="folder-list" :headers="headers" :items="folderList" :items-per-page="30" no-data-text="画像フォルダがありません">
 				<template v-slot:top>
 					<v-toolbar flat>
 						<v-toolbar-title>画像フォルダ一覧</v-toolbar-title>
@@ -22,7 +22,6 @@
 					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
 				</template>
 			</v-data-table>
-			<p v-else>画像フォルダはありません。</p>
 		</v-card>
 		<v-dialog v-model="createDialog" max-width="400px">
 			<v-card>
@@ -36,7 +35,7 @@
 				<v-card-actions>
 					<v-spacer></v-spacer>
 					<v-btn color="grey-lighten-2" variant="flat" @click="createDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="confirmCreate">作成</v-btn>
+					<v-btn color="primary" variant="flat" @click="createFolder">作成</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -52,7 +51,7 @@
 				<v-card-actions>
 					<v-spacer></v-spacer>
 					<v-btn color="grey-lighten-2" variant="flat" @click="updateDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="confirmUpdate">更新</v-btn>
+					<v-btn color="primary" variant="flat" @click="updateFolder">更新</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -63,7 +62,7 @@
 				<v-card-actions>
 					<v-spacer></v-spacer>
 					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="confirmDelete">削除</v-btn>
+					<v-btn color="primary" variant="flat" @click="deleteFolder">削除</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -71,13 +70,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, defineEmits } from 'vue';
 import { useImagesFolderStore } from '@/stores/imagesFolderStore';
 import { format } from 'date-fns';
 import { mdiDelete } from '@mdi/js';
 
 const imagesFolderStore = useImagesFolderStore();
 const folderList = computed(() => imagesFolderStore.folderList);
+
+const emit = defineEmits(["reFetchFolderList"]);
 
 const createDialog = ref(false);
 const folder = ref({
@@ -106,22 +107,10 @@ const openCreateDialog = () => {
 	createDialog.value = true;
 };
 
-// フォルダ作成を確定する
-const confirmCreate = async () => {
-	createDialog.value = false;
-	await createFolder();
-};
-
 // フォルダ更新確認ダイアログを開く
 const openUpdateDialog = (folder) => {
 	folderToUpdate.value = folder;
 	updateDialog.value = true;
-};
-
-// フォルダ更新を確定する
-const confirmUpdate = async () => {
-	updateDialog.value = false;
-	await updateFolder();
 };
 
 // フォルダ削除確認ダイアログを開く
@@ -130,16 +119,13 @@ const openDeleteDialog = (image) => {
 	deleteDialog.value = true;
 };
 
-// フォルダ削除を確定する
-const confirmDelete = async () => {
-	deleteDialog.value = false;
-	await deleteFolder(folderToDelete.value);
-};
-
 // 新規フォルダ作成
 const createFolder = async () => {
+	createDialog.value = false;
+
 	try {
 		await imagesFolderStore.create(folder.value);
+		emit("reFetchFolderList");
 		alert('画像フォルダが作成されました');
 	} catch (error) {
 		alert(error);
@@ -147,8 +133,12 @@ const createFolder = async () => {
 }
 
 const updateFolder = async () => {
+	updateDialog.value = false;
+
 	try {
 		await imagesFolderStore.update(folderToUpdate.value);
+		folderToUpdate.value = null;
+		emit("reFetchFolderList");
 		alert('画像フォルダを更新しました');
 	} catch (error) {
 		alert(error);
@@ -156,10 +146,13 @@ const updateFolder = async () => {
 }
 
 // フォルダ削除
-const deleteFolder = async (folder) => {
-	try {
-		await imagesFolderStore.delete(folder.id);
+const deleteFolder = async () => {
+	deleteDialog.value = false;
 
+	try {
+		await imagesFolderStore.delete(folderToDelete.value.id);
+		folderToDelete.value = null;
+		emit("reFetchFolderList");
 		alert('画像フォルダが削除されました');
 	} catch (error) {
 		alert(error);

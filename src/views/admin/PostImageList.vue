@@ -24,6 +24,13 @@
 						return-object
 						hide-details />
 				</v-card-text>
+				<v-card-text v-if="previewFiles.length > 0">
+					<div class="image-gallery">
+						<div v-for="(file, index) in previewFiles" :key="index" class="image-item">
+							<img :src="file.url" @click="openImageViewer(file.url)" alt="Image" />
+						</div>
+					</div>
+				</v-card-text>
 				<v-card-actions>
 					<v-btn color="primary" variant="flat" type="submit">画像をアップロード</v-btn>
 				</v-card-actions>
@@ -37,22 +44,35 @@
 		</v-tabs>
 		<v-window v-model="activeTab">
 			<v-window-item v-for="(component, index) in tabComponents" :key="index" transition="none" reverse-transition="none">
-				<component :is="component" :selectedFolder="selectedFolder" @changeFolderList="changeFolderList" />
+				<component :is="component" :selectedFolder="selectedFolder" @changeFolderList="changeFolderList" @reFetchFolderList="reFetchFolderList" />
 			</v-window-item>
 		</v-window>
 	</div>
+
+	<v-dialog
+		class="openImageViewer"
+		v-model="imageViewerDialog"
+		max-width="800px"
+		overlay-color="rgba(0, 0, 0, 0.5)"
+		scrollable
+	>
+		<v-card>
+			<v-card-text>
+				<img :src="currentImage" alt="Preview" style="width:100%; height:auto;" @click="imageViewerDialog = false" />
+			</v-card-text>
+		</v-card>
+	</v-dialog>
 </template>
 
 <script setup>
 import { ref, defineAsyncComponent, computed, onMounted, watch } from 'vue';
 import { useImagesStore } from '@/stores/imagesStore';
 import { useImagesFolderStore } from '@/stores/imagesFolderStore';
-const PostImage = defineAsyncComponent(() => import('@/views/PostImage.vue'));
-const ImageFolderList = defineAsyncComponent(() => import('@/views/ImageFolderList.vue'));
+const PostImage = defineAsyncComponent(() => import('@/views/admin/PostImage.vue'));
+const ImageFolderList = defineAsyncComponent(() => import('@/views/admin/ImageFolderList.vue'));
 
 // 画像リスト取得
 const imagesStore = useImagesStore();
-const imageList = ref([]);
 
 // 画像フォルダ取得
 const imagesFolderStore = useImagesFolderStore();
@@ -67,15 +87,19 @@ const tabComponents = [
 const activeTab = ref(0);
 const fileInputValue = ref(null);
 const selectedFiles = ref([]); // 選択した画像ファイル
+const previewFiles = ref([]);
 const defaultSelect = ref({id: null, name: '指定なし'});
 const selectedFolder = ref(defaultSelect.value);
 const isDataLoaded = ref(false);
 
+// モーダル用データ
+const imageViewerDialog = ref(false);
+const currentImage = ref(null);
+
 // フォルダリストにデフォルト値を追加
-const extendedFolderList = computed(() => [
-	defaultSelect.value,
-	...folderList.value
-]);
+const extendedFolderList = computed(() => {
+	return [defaultSelect.value, ...folderList.value];
+});
 
 // ファイル選択時の処理
 const handleFileUpload = (event) => {
@@ -94,7 +118,7 @@ const handleFileUpload = (event) => {
 	});
 
 	Promise.all(promises).then(results => {
-		imageList.value.push(...results);
+		previewFiles.value = results;
 	});
 };
 
@@ -107,16 +131,22 @@ const submitImages = async () => {
 
 	try {
 		await Promise.all(selectedFiles.value.map((file) => imagesStore.create(file, selectedFolder.value.id)));
-		// 再取得
-		imageList.value = await reFetchImageList();
+		await reFetchImageList();
 		// アップロード完了後、選択ファイルをリセット
 		selectedFiles.value = [];
+		previewFiles.value = [];
 		fileInputValue.value = null;
 		alert("画像がアップロードされました");
 	} catch (error) {
 		alert(error);
 	}
 };
+
+// プレビュー表示
+const openImageViewer = (imageUrl) => {
+	currentImage.value = imageUrl;
+	imageViewerDialog.value = true;
+}
 
 // フォルダ切り替え
 const changeFolderList = async (newValue) => {
@@ -127,7 +157,16 @@ const changeFolderList = async (newValue) => {
 // データ再取得
 const reFetchImageList = async () => {
 	try {
-		imageList.value = await imagesStore.getList(selectedFolder.value.id);
+		await imagesStore.getList(selectedFolder.value.id);
+	} catch (error) {
+		alert(error);
+	}
+}
+
+// データ再取得
+const reFetchFolderList = async () => {
+	try {
+		await imagesFolderStore.getList();
 	} catch (error) {
 		alert(error);
 	}
@@ -140,7 +179,7 @@ watch(selectedFolder, async (newValue) => {
 
 onMounted(async() => {
 	try {
-		imageList.value = await imagesStore.getList(null);
+		await imagesStore.getList(null);
 		folderList.value = await imagesFolderStore.getList();
 		isDataLoaded.value = true;
 	} catch (error) {
@@ -152,5 +191,22 @@ onMounted(async() => {
 <style scoped lang="scss">
 	.form-group {
 		margin-bottom: 16px;
+	}
+	.image-gallery {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.image-item img {
+		width: 100px;
+		height: 100px;
+		object-fit: cover;
+		cursor: pointer;
+		border: 2px solid #ccc;
+		border-radius: 8px;
+		transition: transform 0.3s ease;
+	}
+	.image-item img:hover {
+		transform: scale(1.1);
 	}
 </style>

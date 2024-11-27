@@ -1,11 +1,22 @@
 <template>
 	<v-app-bar color="primary" light>
-		<v-app-bar-title>{{ blogSettingStore.blogSetting.title }}</v-app-bar-title>
-		<template v-slot:prepend>
-			<v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-		</template>
+		<v-app-bar-title>
+			<v-text-field
+				:loading="loading"
+				label="キーワードやクリエイターで検索"
+				v-model="search"
+				:append-inner-icon="mdiMagnify"
+				single-line
+				hide-details />
+		</v-app-bar-title>
 		<template v-slot:append>
 			<div v-if="authStore.user">
+				<v-menu>
+					<template v-slot:activator="{ props }">
+						<v-avatar v-bind="props" :image="blogSettingStore.blogSetting.profileUrl" size="48" end />
+					</template>
+					<CommonSidemenu />
+				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
 			<div v-else>
@@ -14,7 +25,6 @@
 			</div>
 		</template>
 	</v-app-bar>
-	<CommonSidemenu :drawer="drawer" @update:drawer="drawer = $event" />
 </template>
 
 <script setup>
@@ -22,19 +32,23 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
+import { mdiMagnify } from '@mdi/js';
 import CommonSidemenu from '@/components/CommonSidemenu';
 
-const drawer = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
 const blogSettingStore = useBlogSettingStore();
+const search = ref('');
 
 const logout = async () => {
 	try {
 		await authStore.logout();
-		router.push('/user_login');
+		router.push('/');
 	} catch (error) {
 		alert(error);
 	}
 }
 </script>
+
+<style scoped>
+</style>

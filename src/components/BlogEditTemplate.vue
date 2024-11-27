@@ -16,6 +16,14 @@
 						type="text"
 						label="記事の概要を入力して下さい"
 						v-model="blog.summary" />
+					<v-select
+						v-if="categoryList.length > 0"
+						label="カテゴリーを設定する場合は選択して下さい"
+						:items="categoryList"
+						item-title="name"
+						item-value="id"
+						v-model="blog.category_id"
+						hide-details />
 					<v-switch
 						label="公開設定"
 						v-model="blog.isPublished"
@@ -47,11 +55,16 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue';
+import { ref, defineProps, computed, watch, onMounted } from 'vue';
 import { useBlogStore } from '@/stores/blogStore';
 import { useImagesStore } from '@/stores/imagesStore';
+import { useBlogCategoryStore } from '@/stores/blogCategoryStore';
 
 const props = defineProps({
+	id: {
+		type: String,
+		required: true,
+	},
 	blog: {
 		type: Object,
 		required: true,
@@ -61,11 +74,15 @@ const props = defineProps({
 		required: true,
 	},
 });
+const blog_id = ref(props.id);
 const blog = ref(props.blog);
 const isUpdate = ref(props.isUpdate);
+console.log(blog.value);
 
 const blogStore = useBlogStore();
 const imagesStore = useImagesStore();
+const blogCategoryStore = useBlogCategoryStore();
+const categoryList = computed(() => blogCategoryStore.categoryList);
 
 const imageList = ref([]);
 const imageSelectDialog = ref(false);
@@ -79,7 +96,7 @@ const editorOptions = ref({
 				[{ 'header': [1, 2, 3, false] }],
 				[{ 'font': [] }, {'size': ['small', false, 'large', 'huge'] }],
 				['bold', 'italic', 'underline'],
-				['link', 'image', 'video'],
+				['image'],
 				[{ 'color': [] }, { 'background': [] }],
 			],
 			handlers: {
@@ -118,7 +135,7 @@ const submitPost = async () => {
 
 	try {
 		if (isUpdate.value) {
-			await blogStore.update(blog.value);
+			await blogStore.update(blog.value, blog_id.value);
 		} else {
 			await blogStore.create(blog.value);
 		}
@@ -136,11 +153,23 @@ const submitPost = async () => {
 		alert(error);
 	}
 };
+
+watch(blog.value.category_id, (newValue) => {
+	blog.value.category_id = newValue;
+});
+
+onMounted(async() => {
+	try {
+		categoryList.value = await blogCategoryStore.getList();
+	} catch (error) {
+		alert(error);
+	}
+})
 </script>
 
 <style scoped lang="scss">
 	.custom-quill-editor {
-		margin: 10px 0;
+		margin-bottom: 10px;
 	}
 	.image-gallery {
 		display: flex;
