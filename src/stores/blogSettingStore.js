@@ -65,7 +65,7 @@ export const useBlogSettingStore = defineStore('blogSetting', {
 				throw error.message;
 			}
 		},
-		async updateSettingFromFirestore(image) {
+		async update(image) {
 			this.setBlogSetting(this.tempSetting);
 			this.blogSetting.updatedAt = new Date();
 
@@ -87,7 +87,7 @@ export const useBlogSettingStore = defineStore('blogSetting', {
 				throw error.message;
 			}
 		},
-		async fetchSettingFromFirestore() {
+		async get() {
 			const authStore = useAuthStore();
 			const user = authStore.user;
 

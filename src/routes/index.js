@@ -1,13 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import CommonLoginTemplate from '@/components/CommonLoginTemplate.vue';
 import CommonTemplate from '@/components/CommonTemplate.vue';
+import CommonAdminTemplate from '@/components/CommonAdminTemplate.vue';
 import UserCreate from '@/views/admin/UserCreate.vue'; // ユーザー登録
 import UserLogin from '@/views/admin/UserLogin.vue'; // ユーザーログイン
 import ResetPassword from '@/views/admin/ResetPassword.vue'; // パスワードリセット
 import ResetPasswordConfirm from '@/views/admin/ResetPasswordConfirm.vue'; // パスワードリセット
 import HomePage from '@/views/HomePage.vue'; // ホームページ
+import BlogDetail from '@/views/BlogDetail.vue'; // ブログ詳細
 import AdminHomePage from '@/views/admin/HomePage.vue'; // ホームページ
-import BlogDetail from '@/views/admin/BlogDetail.vue'; // ブログ詳細
+import AdminBlogDetail from '@/views/admin/BlogDetail.vue'; // ブログ詳細
 import CommentList from '@/views/admin/CommentList.vue'; // コメント一覧
 import LikeList from '@/views/admin/LikeList.vue'; // いいね一覧
 import BlogCategoryList from '@/views/admin/BlogCategoryList.vue'; // いいね一覧
@@ -52,12 +54,22 @@ const routes = [
 	{
 		path: '/', // ホームページへのルート
 		name: 'Home',
-		component: HomePage,
+		component: CommonTemplate,
+		children: [
+			{
+				path: '',
+				component: HomePage,
+			},
+			{
+				path: '/blog_detail/:blog_id',
+				component: BlogDetail,
+			},
+		]
 	},
 	{
 		path: '/admin', // 管理画面へのルート
 		name: 'AdminHome',
-		component: CommonTemplate,
+		component: CommonAdminTemplate,
 		meta: { requiresAuth: true },
 		children: [
 			{
@@ -70,7 +82,7 @@ const routes = [
 			},
 			{
 				path: '/admin/blog_detail/:blog_id',
-				component: BlogDetail,
+				component: AdminBlogDetail,
 			},
 			{
 				path: '/admin/comment_list/:blog_id',

@@ -64,7 +64,7 @@ const handleFileUpload = (event) => {
 // ブログ設定更新
 const updateSetting = async () => {
 	try {
-		await blogSettingStore.updateSettingFromFirestore(profileImage);
+		await blogSettingStore.update(profileImage);
 		alert('プロフィールを更新しました');
 
 		profileImage.value = null;

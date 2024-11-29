@@ -13,6 +13,7 @@ const blog = ref({
 	content: "",
 	category_id: null,
 	isPublished: false,
+	thumbUrl: null,
 	createdAt: null,
 	updatedAt: null
 });

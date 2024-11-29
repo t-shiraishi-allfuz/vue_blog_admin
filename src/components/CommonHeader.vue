@@ -1,5 +1,10 @@
 <template>
 	<v-app-bar color="primary" light>
+		<template v-slot:prepend>
+			<v-app-bar-nav-icon>
+				<v-icon :icon="mdiHomeCircle" @click="goToHome" />
+			</v-app-bar-nav-icon>
+		</template>
 		<v-app-bar-title>
 			<v-text-field
 				:loading="loading"
@@ -32,7 +37,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
-import { mdiMagnify } from '@mdi/js';
+import { mdiMagnify, mdiHomeCircle } from '@mdi/js';
 import CommonUsermenu from '@/components/CommonUsermenu';
 
 const router = useRouter();
@@ -47,6 +52,10 @@ const logout = async () => {
 	} catch (error) {
 		alert(error);
 	}
+}
+
+const goToHome = () => {
+	router.push('/');
 }
 </script>
 

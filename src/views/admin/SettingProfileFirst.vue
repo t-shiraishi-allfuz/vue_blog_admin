@@ -34,7 +34,7 @@ const blogSettingStore = useBlogSettingStore();
 // ブログ設定更新
 const updateSetting = async () => {
 	try {
-		await blogSettingStore.updateSettingFromFirestore(ref(null));
+		await blogSettingStore.update(ref(null));
 		router.push('/setting_profile_icon');
 	} catch(error) {
 		console.log(error);

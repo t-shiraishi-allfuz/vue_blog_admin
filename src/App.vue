@@ -65,4 +65,10 @@
 	.v-label {
 		margin-bottom: 0;
 	}
+	.blog-detail .v-card-title {
+		font-size: 1.5rem;
+	}
+	.blog-detail img {
+		max-width: 50% !important;
+	}
 </style>

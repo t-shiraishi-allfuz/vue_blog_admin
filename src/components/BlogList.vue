@@ -9,26 +9,50 @@
 				<v-container class="pa-2" fluid>
 					<v-row dense>
 						<v-col v-for="item in items" :key="item.title" cols="auto" md="4">
-							<v-card class="pb-3" border flat @click="goToDetail(item)">
-								<v-list-item :subtitle="item.raw.summary" class="mb-2">
-									<template v-slot:title>
-										<strong class="text-h6 mb-2">{{ item.raw.title }}</strong>
-									</template>
-								</v-list-item>
-								<div class="d-flex justify-space-between px-4">
-									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-										<v-icon :icon="mdiClock" start />
-										<div class="text-truncate">{{ formatDate(item.raw.createdAt) }}</div>
+							<v-card class="blog-card" outlined @click="goToDetail(item.raw)">
+								<v-img :src="item.raw.thumbUrl" cover class="blog-image"></v-img>
+								<v-card-text>
+									<strong class="text-h6">{{ item.raw.title }}</strong>
+									<p class="text-caption text-truncate">{{ item.raw.summary }}</p>
+								</v-card-text>
+								<v-card-actions>
+									<div class="d-flex justify-space-between w-100">
+										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+											<v-icon :icon="mdiClock" start />
+											<div class="text-truncate">{{ formatDate(item.raw.createdAt) }}</div>
+										</div>
+										<v-tooltip top>
+											<template v-slot:activator="{ props }">
+												<v-icon
+													:icon="formatReply(item.raw.reply_count)"
+													v-bind="props"
+													color="grey"
+												/>
+											</template>
+											<span>{{ item.raw.reply_count }}</span>
+										</v-tooltip>
+										<v-tooltip top>
+											<template v-slot:activator="{ props }">
+												<v-icon
+													:icon="formatComment(item.raw.comment_count)"
+													v-bind="props"
+													color="grey"
+												/>
+											</template>
+											<span>{{ item.raw.comment_count }}</span>
+										</v-tooltip>
+										<v-tooltip top>
+											<template v-slot:activator="{ props }">
+												<v-icon
+													:icon="formatLike(item.raw.like_count)"
+													v-bind="props"
+													color="grey"
+												/>
+											</template>
+											<span>{{ item.raw.like_count }}</span>
+										</v-tooltip>
 									</div>
-									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-										<v-icon :icon="mdiMessageReply" start />
-										<div class="text-truncate">{{ item.raw.comment_count }}</div>
-									</div>
-									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-										<v-icon :icon="mdiHeart" start />
-										<div class="text-truncate">{{ item.raw.like_count }}</div>
-									</div>
-								</div>
+								</v-card-actions>
 							</v-card>
 						</v-col>
 					</v-row>
@@ -71,10 +95,15 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blogStore';
 import { format } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import {
 	mdiClock,
-	mdiMessageReply,
+	mdiReply,
+	mdiReplyOutline,
+	mdiComment,
+	mdiCommentOutline,
 	mdiHeart,
+	mdiHeartOutline,
 	mdiArrowLeft,
 	mdiArrowRight
 } from '@mdi/js';
@@ -94,13 +123,24 @@ const fetchBlogList = async () => {
 
 // 日時フォーマット関数
 const formatDate = (date) => {
-	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
-};
+	return format(new Date(date), 'yyyy年MM月dd日 HH:mm:ss', { locale: ja });
+}
+
+// アイコン設定
+const formatReply = (count) => {
+	return count > 0 ? mdiReply : mdiReplyOutline;
+}
+const formatComment = (count) => {
+	return count > 0 ? mdiComment : mdiCommentOutline;
+}
+const formatLike = (count) => {
+	return count > 0 ? mdiHeart : mdiHeartOutline;
+}
 
 // 詳細ページに移動
 const goToDetail = (blog) => {
 	router.push(`/blog_detail/${blog.id}`);
-};
+}
 
 onMounted(async () => {
 	await fetchBlogList();
@@ -108,4 +148,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+	.blog-card {
+		.v-responsive {
+			min-width: 100px;
+			min-height: 200px;
+			max-height: 200px;
+		}
+	}
 </style>

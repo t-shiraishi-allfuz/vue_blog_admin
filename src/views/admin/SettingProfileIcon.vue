@@ -52,7 +52,7 @@ const handleFileUpload = (event) => {
 const updateSetting = async () => {
 	if (profileImage.value) {
 		try {
-			await blogSettingStore.updateSettingFromFirestore(profileImage);
+			await blogSettingStore.update(profileImage);
 			router.push('/');
 		} catch (error) {
 			alert(error);
@@ -63,7 +63,7 @@ const updateSetting = async () => {
 };
 
 onMounted(() => {
-	blogSettingStore.fetchSettingFromFirestore();
+	blogSettingStore.get();
 });
 </script>
 

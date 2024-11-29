@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { db } from '@/setting/firebase';
 import {
@@ -33,15 +32,22 @@ export const useBlogStore = defineStore('blog', {
 			}
 		},
 		async update(blog, blog_id) {
-			blog.updatedAt = new Date();
-
 			try {
 				const blogDocRef = doc(db, "blog", blog_id);
-				await setDoc(blogDocRef, blog, { merge: true });
+				await setDoc(blogDocRef, {
+					title: blog.title,
+					content: blog.content,
+					summary: blog.summary,
+					thumbUrl: blog.thumbUrl,
+					category_id: blog.category_id,
+					isPublished: blog.isPublished,
+					updatedAt: new Date(),
+				}, { merge: true });
 			} catch (error) {
 				throw new Error('ブログの更新に失敗しました');
 			}
 		},
+		// 自分のブログ一覧取得
 		async getList() {
 			const authStore = useAuthStore();
 			const commentStore = useCommentStore();
@@ -57,6 +63,7 @@ export const useBlogStore = defineStore('blog', {
 					const likeCount = await likeStore.getLikeCount(doc.id);
 					const data = {
 						id: doc.id,
+						reply_count: 0,
 						comment_count: commentCount,
 						like_count: likeCount,
 						...doc.data()
@@ -71,7 +78,7 @@ export const useBlogStore = defineStore('blog', {
 				throw new Error('データの取得に失敗しました');
 			}
 		},
-		// 全ブログデータ取得
+		// 全ユーザーのブログデータ取得
 		async getListForAll() {
 			const commentStore = useCommentStore();
 			const likeStore = useLikeStore();
@@ -88,6 +95,39 @@ export const useBlogStore = defineStore('blog', {
 					const likeCount = await likeStore.getLikeCount(doc.id);
 					const data = {
 						id: doc.id,
+						reply_count: 0,
+						comment_count: commentCount,
+						like_count: likeCount,
+						...doc.data()
+					};
+					if (data.createdAt && data.createdAt.toDate) {
+						data.createdAt = data.createdAt.toDate();
+					}
+					result.push(data);
+				}
+				return result;
+			} catch (error) {
+				throw new Error('データの取得に失敗しました');
+			}
+		},
+		// フォロー中ユーザーのブログデータ取得
+		async getListForFollow() {
+			const commentStore = useCommentStore();
+			const likeStore = useLikeStore();
+			const result = [];
+
+			try {
+				const blogDocRefs = collection(db, "blog");
+				const querySnapshot = await getDocs(query(
+					blogDocRefs,
+					where("isPublished", "==", true)
+				));
+				for (const doc of querySnapshot.docs) {
+					const commentCount = await commentStore.getCommentCount(doc.id);
+					const likeCount = await likeStore.getLikeCount(doc.id);
+					const data = {
+						id: doc.id,
+						reply_count: 0,
 						comment_count: commentCount,
 						like_count: likeCount,
 						...doc.data()
@@ -103,15 +143,30 @@ export const useBlogStore = defineStore('blog', {
 			}
 		},
 		async get(blog_id) {
-			const result = ref(null);
+			const commentStore = useCommentStore();
+			const likeStore = useLikeStore();
 
 			try {
 				const blogDocRef = doc(db, "blog", blog_id);
 				const snapshot = await getDoc(blogDocRef);
 				if (snapshot.exists()) {
-					result.value = snapshot.data();
+					const doc = snapshot;
+					const commentCount = await commentStore.getCommentCount(doc.id);
+					const likeCount = await likeStore.getLikeCount(doc.id);
+					const data = {
+						id: doc.id,
+						reply_count: 0,
+						comment_count: commentCount,
+						like_count: likeCount,
+						...doc.data()
+					};	
+
+					if (data.createdAt && data.createdAt.toDate) {
+						data.createdAt = data.createdAt.toDate();
+					}
+					return data;
 				}
-				return result;
+				return null;
 			} catch (error) {
 				throw new Error('データの取得に失敗しました');
 			}
