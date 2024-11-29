@@ -76,6 +76,13 @@ export const useLikeStore = defineStore('like', {
 				throw new Error('データの取得に失敗しました');
 			}
 		},
+		async getLikeCounts(blogIds) {
+			const counts = {};
+			for (const id of blogIds) {
+				counts[id] = await this.getLikeCount(id);
+			}
+			return counts;
+		},
 		// 指定のブログにいいねした数
 		async getLikeCount(blog_id) {
 			const result = ref(null);

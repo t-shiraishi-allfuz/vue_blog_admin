@@ -62,6 +62,13 @@ export const useCommentStore = defineStore('comment', {
 				throw new Error('データの取得に失敗しました');
 			}
 		},
+		async getCommentCounts(blogIds) {
+			const counts = {};
+			for (const id of blogIds) {
+				counts[id] = await this.getCommentCount(id);
+			}
+			return counts;
+		},
 		async getCommentCount(blog_id) {
 			const result = ref(null);
 

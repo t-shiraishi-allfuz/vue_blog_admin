@@ -4,6 +4,9 @@ import {
 	collection,
 	query,
 	where,
+	orderBy,
+	limit,
+	startAfter,
 	getDoc,
 	getDocs,
 	addDoc,
@@ -79,34 +82,61 @@ export const useBlogStore = defineStore('blog', {
 			}
 		},
 		// 全ユーザーのブログデータ取得
-		async getListForAll() {
+		async getListForAll({page = 1, pageSize = 5}) {
 			const commentStore = useCommentStore();
 			const likeStore = useLikeStore();
 			const result = [];
 
 			try {
 				const blogDocRefs = collection(db, "blog");
-				const querySnapshot = await getDocs(query(
+				let blogQuery = query(
 					blogDocRefs,
-					where("isPublished", "==", true)
-				));
-				for (const doc of querySnapshot.docs) {
-					const commentCount = await commentStore.getCommentCount(doc.id);
-					const likeCount = await likeStore.getLikeCount(doc.id);
-					const data = {
-						id: doc.id,
-						reply_count: 0,
-						comment_count: commentCount,
-						like_count: likeCount,
-						...doc.data()
-					};
-					if (data.createdAt && data.createdAt.toDate) {
+					where("isPublished", "==", true),
+					orderBy("createdAt", "desc"),
+					limit(pageSize)
+				);
+				if (page > 1) {
+					const skipQuery = query(
+						blogDocRefs,
+						where("isPublished", "==", true),
+						orderBy("createdAt", "desc"),
+						limit((page - 1) * pageSize)
+					);
+					const skipSnapshot = await getDocs(skipQuery);
+					// 最後のドキュメントを使用
+					const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
+					if (lastVisible) {
+						blogQuery = query(blogQuery, startAfter(lastVisible));
+					}
+				}
+				const querySnapshot = await getDocs(blogQuery);
+				const blogList = querySnapshot.docs.map((doc) => {
+					const data = { id: doc.id, ...doc.data() };
+					if (data.createdAt?.toDate) {
 						data.createdAt = data.createdAt.toDate();
 					}
-					result.push(data);
+					return { ...data, rawDoc: doc };
+				});
+				
+				const commentCounts = await commentStore.getCommentCounts(
+					blogList.map((blog) => blog.id)
+				);
+				const likeCounts = await likeStore.getLikeCounts(
+					blogList.map((blog) => blog.id)
+				);
+
+				// 結果を組み立てる
+				for (const blog of blogList) {
+					result.push({
+						...blog,
+						reply_count: 0, // 必要なら更新
+						comment_count: commentCounts[blog.id] || 0,
+						like_count: likeCounts[blog.id] || 0,
+					});
 				}
 				return result;
 			} catch (error) {
+				console.log(error.message);
 				throw new Error('データの取得に失敗しました');
 			}
 		},
