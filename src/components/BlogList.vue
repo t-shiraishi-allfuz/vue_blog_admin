@@ -1,14 +1,11 @@
 <template>
 	<v-container fluid>
 		<v-row class="horizontal-scroll" no-gutters>
-			<v-infinite-scroll
-				width="1000"
-				mode="manual"
-				side="end"
-				direction="horizontal"
-				@load="fetchBlogList"
-			>
-				<template v-for="(item, index) in blogList" :key="index">
+			<v-slide-group show-arrows>
+				<v-slide-group-item
+					v-for="(item, index) in blogList"
+					:key="index"
+				>
 					<v-card
 						class="blog-card d-inline-block"
 						@click="goToDetail(item)"
@@ -27,28 +24,17 @@
 							</div>
 						</v-card-actions>
 					</v-card>
-				</template>
-				<template v-slot:load-more="{ props }">
-					<v-btn
-						:icon="mdiArrowRight"
-						v-bind="props"
-						variant="text"
-					/>
-				</template>
-				<template v-slot:empty>
-					<v-alert type="warning">ブログがありません</v-alert>
-				</template>
-			</v-infinite-scroll>
+				</v-slide-group-item>
+			</v-slide-group>
 		</v-row>
 	</v-container>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blogStore';
 import {
-	mdiArrowRight,
 	mdiHeart,
 	mdiHeartOutline
 } from '@mdi/js';
@@ -57,32 +43,12 @@ const router = useRouter();
 const blogStore = useBlogStore();
 const blogList = ref([]);
 
-// 無限スクロールの管理
-const page = ref(1);
-const isEnd = ref(false);
-
 // 一覧取得
-const fetchBlogList = async ({ done } = {}) => {
-	if (isEnd.value) {
-		done?.();
-		return;
-	}
-
+const fetchBlogList = async () => {
 	try {
-		const newBlogList = await blogStore.getListForAll({
-			page: page.value,
-			pageSize: 5,
-		});
-		if (newBlogList.length > 0) {
-			blogList.value.push(...newBlogList);
-			page.value++;
-		} else {
-			isEnd.value = true;
-		}
+		blogList.value = await blogStore.getListForAll();
 	} catch (error) {
 		alert(error);
-	} finally {
-		done?.();
 	}
 }
 
@@ -97,11 +63,14 @@ const goToDetail = (blog) => {
 }
 
 // 初回ロード
-await fetchBlogList();
+onMounted(async () => {
+	await fetchBlogList();
+})
 </script>
 
 <style scoped>
 .horizontal-scroll {
+	max-width: 1100px;
 	overflow-x: auto;
 	white-space: nowrap;
 }
