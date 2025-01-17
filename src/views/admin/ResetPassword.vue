@@ -25,8 +25,9 @@ import { ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { mdiEmailOutline } from '@mdi/js';
 
-const email = ref('');
 const authStore = useAuthStore();
+
+const email = ref('');
 
 // パスワードリセット
 const resetPassword = async () => {

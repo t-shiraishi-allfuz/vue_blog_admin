@@ -41,12 +41,18 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
-import { mdiEyeOff, mdiEye, mdiEmailOutline, mdiLockOutline } from '@mdi/js';
+import {
+	mdiEyeOff,
+	mdiEye,
+	mdiEmailOutline,
+	mdiLockOutline
+} from '@mdi/js';
+
+const router = useRouter();
+const authStore = useAuthStore();
 
 const email = ref('');
 const password = ref('');
-const authStore = useAuthStore();
-const router = useRouter();
 const visibleIcon = ref(mdiEyeOff);
 const visibleType = ref('password');
 

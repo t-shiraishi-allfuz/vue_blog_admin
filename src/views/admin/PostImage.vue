@@ -128,7 +128,7 @@ const emit = defineEmits(["changeFolderList"]);
 
 // 画像取得
 const imagesStore = useImagesStore();
-const imageList = computed(() => imagesStore.imageList || []);
+const imageList = computed(() => imagesStore.imageList);
 
 const imagesFolderStore = useImagesFolderStore();
 const folderList = computed(() => imagesFolderStore.folderList);

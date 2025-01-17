@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { storage, db } from '@/setting/firebase';
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
@@ -12,107 +13,138 @@ import {
 } from 'firebase/firestore';
 import { useAuthStore } from '@/stores/authStore';
 
-export const useBlogSettingStore = defineStore('blogSetting', {
-	state: () => ({
-		blogSetting: {
-			title: "仮タイトル",
-			description: "仮説明",
-			category: "一般",
-			profileUrl: null,
-			updatedAt: null,
-		},
-		tempSetting: {
-			title: "",
-			description: "",
-			category: "一般",
-			profileUrl: null,
-		},
-	}),
-	actions: {
-		setBlogSetting(setting) {
-			this.blogSetting = { ...setting };
-		},
-		setTempSetting(setting) {
-			this.tempSetting = { ...setting };
-		},
-		async create() {
-			this.setBlogSetting(this.blogSetting);
-			this.blogSetting.createdAt = new Date();
-			this.blogSetting.updatedAt = new Date();
+export const useBlogSettingStore = defineStore('blogSetting', () => {
+	const tempSetting = ref({
+		title: "仮タイトル",
+		description: "仮説明",
+		name: "名無しさん",
+		profileUrl: null,
+		createdAt: null,
+		updatedAt: null,
+	})
 
-			try {
-				const authStore = useAuthStore();
-				const user = authStore.user;
-				const settingDocRef = doc(db, "blog_setting", user.uid);
-				await setDoc(settingDocRef, this.blogSetting);
-			} catch (error) {
-				throw error.message;
-			}
-		},
-		async uploadProfileImage(image) {
-			if (!image.value) return null;
+	const blogSetting = ref(null);
 
-			try {
-				const authStore = useAuthStore();
-				const user = authStore.user;
-				const storagePath = `profile_images/${user.uid}/${image.value.name}`;
-				const fileRef = storageRef(storage, storagePath);
+	const authStore = useAuthStore()
 
-				// Firebase Storageに画像をアップロード
-				await uploadBytes(fileRef, image.value);
-				return await getDownloadURL(fileRef);
-			} catch (error) {
-				throw error.message;
-			}
-		},
-		async update(image) {
-			this.setBlogSetting(this.tempSetting);
-			this.blogSetting.updatedAt = new Date();
+	const setBlogSetting = (setting) => {
+		return tempSetting.value = { ...setting };
+	}
 
-			const imageUrl = await this.uploadProfileImage(image);
-			if (imageUrl) this.blogSetting.profileUrl = imageUrl;
+	const getBlogSetting = () => {
+		return blogSetting.value;
+	}
 
-			try {
-				const authStore = useAuthStore();
-				const user = authStore.user;
+	const create = async () => {
+		const userInfo = authStore.getUserInfo();
 
-				// タイトル重複チェック
-				const isUnique = await this.isTitleUnique(user, this.tempSetting.title);
-				if (!isUnique) {
-					throw new Error("このブログタイトルは既に使用されています");
-				}
-				const settingDocRef = doc(db, "blog_setting", user.uid);
-				await setDoc(settingDocRef, this.blogSetting, { merge: true });
-			} catch (error) {
-				throw error.message;
-			}
-		},
-		async get() {
-			const authStore = useAuthStore();
-			const user = authStore.user;
+		blogSetting.value = tempSetting.value;
+		blogSetting.value.createdAt = new Date();
+		blogSetting.value.updatedAt = new Date();
 
-			if (user) {
-				const settingDocRef = doc(db, "blog_setting", user.uid);
-				const snapshot = await getDoc(settingDocRef);
-
-				if (snapshot.exists()) {
-					const data = snapshot.data();
-					this.setBlogSetting(data);
-					this.setTempSetting(data);
-				}
-			}
-		},
-		// タイトルの重複チェック
-		async isTitleUnique(user, title) {
-			const blogSettingRef = collection(db, "blog_setting");
-			const q = query(
-				blogSettingRef,
-				where("title", "==", title),
-			);
-			const snapshot = await getDocs(q);
-			const result = snapshot.docs.filter(doc => doc.id !== user.uid);
-		
-			return result.length > 0 ? false : true;
+		try {
+			const settingDocRef = doc(db, "blog_setting", userInfo.uid);
+			await setDoc(settingDocRef, blogSetting.value);
+		} catch (error) {
+			throw error.message;
 		}
 	}
-});
+
+	// プロフィール画像アップロード
+	const uploadProfileImage = async (image) => {
+		if (!image.value) return null;
+
+		const userInfo = authStore.getUserInfo();
+
+		try {
+			const storagePath = `profile_images/${userInfo.uid}/${image.value.name}`;
+			const fileRef = storageRef(storage, storagePath);
+
+			// Firebase Storageに画像をアップロード
+			await uploadBytes(fileRef, image.value);
+			return await getDownloadURL(fileRef);
+		} catch (error) {
+			throw error.message;
+		}
+	}
+
+	const update = async (image, data) => {
+		const userInfo = authStore.getUserInfo();
+
+		data.updatedAt = new Date();
+
+		const imageUrl = await uploadProfileImage(image);
+		if (imageUrl) data.profileUrl = imageUrl;
+
+		try {
+			// タイトル重複チェック
+			const isUnique = await isTitleUnique(userInfo.uid, data.title);
+			if (!isUnique) {
+				throw new Error("このブログタイトルは既に使用されています");
+			}
+			const settingDocRef = doc(db, "blog_setting", userInfo.uid);
+			await setDoc(settingDocRef, data, { merge: true });
+			blogSetting.value = data;
+		} catch (error) {
+			console.log(error);
+			throw error.message;
+		}
+	}
+
+	const get = async () => {
+		const userInfo = authStore.getUserInfo();
+
+		if (userInfo) {
+			const settingDocRef = doc(db, "blog_setting", userInfo.uid);
+			const snapshot = await getDoc(settingDocRef);
+
+			if (snapshot.exists()) {
+				blogSetting.value = snapshot.data();
+			}
+		}
+	}
+
+	const getForUids = async (uids) => {
+		const results = {};
+		for (const uid of uids) {
+			results[uid] = await getForUid(uid);
+		}
+		return results;
+	}
+
+	const getForUid = async (uid) => {
+		const settingDocRef = doc(db, "blog_setting", uid);
+		const snapshot = await getDoc(settingDocRef);
+
+		if (snapshot.exists()) {
+			return snapshot.data();
+		}
+	}
+
+	// タイトルの重複チェック
+	const isTitleUnique = async (uid, title) => {
+		const blogSettingRef = collection(db, "blog_setting");
+		const q = query(
+			blogSettingRef,
+			where("title", "==", title),
+		);
+		const snapshot = await getDocs(q);
+		const result = snapshot.docs.filter(doc => doc.id !== uid);
+	
+		return result.length > 0 ? false : true;
+	}
+
+	return {
+		tempSetting,
+		blogSetting,
+		setBlogSetting,
+		getBlogSetting,
+		create,
+		uploadProfileImage,
+		update,
+		get,
+		getForUids,
+		getForUid,
+		isTitleUnique
+	}
+})

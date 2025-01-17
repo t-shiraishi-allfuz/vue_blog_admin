@@ -1,9 +1,10 @@
 <template>
 	<v-list>
 		<v-list-item
-			:prepend-avatar="blogSettingStore.blogSetting.profileUrl"
-			:title="blogSettingStore.blogSetting.title"
-			:subtitle="blogSettingStore.blogSetting.description" />
+			v-if="setting"
+			:prepend-avatar="setting.profileUrl"
+			:title="setting.title"
+			:subtitle="setting.description" />
 		<v-divider></v-divider>
 		<v-list-item :prepend-icon="mdiInformationOutline" title="お知らせ" value="news" />
 		<v-list-item :prepend-icon="mdiCog" title="設定" value="setting" @click="goToProfile" />
@@ -11,15 +12,22 @@
 </template>
 
 <script setup>
+import { ref, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
-import { useBlogSettingStore } from '@/stores/blogSettingStore';
 import {
 	mdiInformationOutline,
 	mdiCog
 } from '@mdi/js';
 
 const router = useRouter();
-const blogSettingStore = useBlogSettingStore();
+
+const props = defineProps({
+	setting: {
+		type: Object,
+		required: true,
+	}
+})
+const setting = ref(props.setting); 
 
 // ブログ設定へ
 const goToProfile = () => {

@@ -69,6 +69,7 @@ import { mdiMagnify, mdiDelete } from '@mdi/js';
 
 const router = useRouter();
 const blogStore = useBlogStore();
+
 const blogList = ref([]);
 const search = ref('');
 const deleteDialog = ref(false);
@@ -85,11 +86,7 @@ const headers = [
 
 // 一覧取得
 const fetchBlogList = async () => {
-	try {
-		blogList.value = await blogStore.getList();
-	} catch (error) {
-		alert(error);
-	}
+	blogList.value = await blogStore.getList();
 }
 
 // 個別削除確認ダイアログを開く
@@ -100,13 +97,9 @@ const openDeleteDialog = (blog) => {
 
 // 個別削除を確定する
 const deleteBlog = async () => {
-	try {
-		await blogStore.delete(blogToDelete.value.id);
-		blogList.value = blogList.value.filter(blog => blog.id !== blogToDelete.value.id);
-	} catch (error) {
-		alert(error);
-	}
 	deleteDialog.value = false;
+	await blogStore.deleteBlog(blogToDelete.value.id);
+	blogList.value = blogList.value.filter(blog => blog.id !== blogToDelete.value.id);
 };
 
 // 検索条件に基づく投稿フィルタリング

@@ -1,5 +1,5 @@
 <template>
-	<v-app>
+	<v-app v-if="isLoading">
 		<CommonHeader />
 		<v-main>
 			<v-container>
@@ -10,13 +10,16 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import CommonHeader from '@/components/CommonHeader.vue';
+import { ref, onMounted } from 'vue';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
+import CommonHeader from '@/components/CommonHeader.vue';
 
 const blogSettingStore = useBlogSettingStore();
 
-onMounted(() => {
-	blogSettingStore.get();
-});
+const isLoading = ref(false);
+
+onMounted(async () => {
+	await blogSettingStore.get();
+	isLoading.value = true;
+})
 </script>

@@ -1,6 +1,6 @@
 <template>
 	<v-container class="image-upload">
-		<v-form @submit.prevent="submitImages">
+		<v-form v-if="isLoading" @submit.prevent="submitImages">
 			<v-card class="post-image-list">
 				<v-card-title>画像アップロード</v-card-title>
 				<v-card-text>
@@ -38,7 +38,7 @@
 		</v-form>
 	</v-container>
 
-	<div v-if="isDataLoaded">
+	<div v-if="isLoading">
 		<v-tabs v-model="activeTab">
 			<v-tab v-for="(tab, index) in tabs" :key="index">{{ tab }}</v-tab>
 		</v-tabs>
@@ -76,7 +76,7 @@ const imagesStore = useImagesStore();
 
 // 画像フォルダ取得
 const imagesFolderStore = useImagesFolderStore();
-const folderList = ref([]);
+const folderList = computed(() => imagesFolderStore.folderList);
 
 const tabs = ['画像管理', '画像フォルダ管理'];
 const tabComponents = [
@@ -90,7 +90,7 @@ const selectedFiles = ref([]); // 選択した画像ファイル
 const previewFiles = ref([]);
 const defaultSelect = ref({id: null, name: '指定なし'});
 const selectedFolder = ref(defaultSelect.value);
-const isDataLoaded = ref(false);
+const isLoading = ref(false);
 
 // モーダル用データ
 const imageViewerDialog = ref(false);
@@ -156,20 +156,12 @@ const changeFolderList = async (newValue) => {
 
 // データ再取得
 const reFetchImageList = async () => {
-	try {
-		await imagesStore.getList(selectedFolder.value.id);
-	} catch (error) {
-		alert(error);
-	}
+	await imagesStore.getList(selectedFolder.value.id);
 }
 
 // データ再取得
 const reFetchFolderList = async () => {
-	try {
-		await imagesFolderStore.getList();
-	} catch (error) {
-		alert(error);
-	}
+	await imagesFolderStore.getList();
 }
 
 watch(selectedFolder, async (newValue) => {
@@ -178,13 +170,9 @@ watch(selectedFolder, async (newValue) => {
 })
 
 onMounted(async() => {
-	try {
-		await imagesStore.getList(null);
-		folderList.value = await imagesFolderStore.getList();
-		isDataLoaded.value = true;
-	} catch (error) {
-		alert(error);
-	}
+	await imagesStore.getList(null);
+	await imagesFolderStore.getList();
+	isLoading.value = true;
 })
 </script>
 

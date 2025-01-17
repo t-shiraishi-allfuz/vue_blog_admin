@@ -61,6 +61,10 @@ const routes = [
 				component: HomePage,
 			},
 			{
+				path: '/blog_list/:type',
+				component: HomePage,
+			},
+			{
 				path: '/blog_detail/:blog_id',
 				component: BlogDetail,
 			},
@@ -116,16 +120,16 @@ router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
 	// 初期化待ち
-	if (authStore.loading) {
+	if (authStore.isLogin) {
 		await authStore.initializeAuth();
 	}
 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 	const isAuthPage = ['UserLogin', 'UserCreate'].includes(to.name);
 
-    if (requiresAuth && !authStore.user) {
+    if (requiresAuth && !authStore.userInfo) {
         next('/user_login');
-	} else if (isAuthPage && authStore.user) {
+	} else if (isAuthPage && authStore.userInfo) {
         next('/');
     } else {
         next();

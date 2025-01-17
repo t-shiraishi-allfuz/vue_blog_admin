@@ -9,32 +9,37 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 
 // フォロー管理
-export const useFollowUsersStore = defineStore('follow_users', {
-	actions: {
-		async create(follow_uid) {
-			const authStore = useAuthStore();
-			const user = authStore.user;
+export const useFollowUsersStore = defineStore('follow_users', () => {
+	const authStore = useAuthStore()
 
-			try {
-				const docsRef = collection(db, "follow_users");
+	const create = async (follow_uid) => {
+		const userInfo = authStore.userInfo;
 
-				await addDoc(docsRef, {
-					uid: user.uid,
-					follow_uid: follow_uid,
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
-			} catch (error) {
-				throw new Error('フォローユーザーの登録に失敗しました');
-			}
-		},
-		async delete(doc_id) {
-			try {
-				const docRef = doc(db, "follow_users", doc_id);
-				await deleteDoc(docRef);
-			} catch (error) {
-				throw new Error('フォローユーザーの削除に失敗しました');
-			}
-		},
+		try {
+			const docsRef = collection(db, "follow_users");
+
+			await addDoc(docsRef, {
+				uid: userInfo.uid,
+				follow_uid: follow_uid,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+		} catch (error) {
+			throw new Error('フォローユーザーの登録に失敗しました');
+		}
 	}
-});
+
+	const deleteFollow = async (doc_id) => {
+		try {
+			const docRef = doc(db, "follow_users", doc_id);
+			await deleteDoc(docRef);
+		} catch (error) {
+			throw new Error('フォローユーザーの削除に失敗しました');
+		}
+	}
+
+	return {
+		create,
+		deleteFollow
+	}
+})

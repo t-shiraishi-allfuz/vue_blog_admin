@@ -7,6 +7,12 @@
 						type="text"
 						label="タイトルを入力して下さい"
 						v-model="blog.title" />
+					<BlogCard
+						v-if="shareBlog"
+						class="mb-5"
+						:blog="shareBlog"
+						:setting="shareSetting"
+					/>
 					<quill-editor
 						class="custom-quill-editor"
 						v-model:value="blog.content"
@@ -36,9 +42,17 @@
 						<v-img :src="blog.thumbUrl" />
 					</div>
 					<v-switch
+						label="閲覧制限の設定"
+						v-model="blog.isAdult"
+						hint="ブログに18歳未満の閲覧制限を付ける場合は設定して下さい"
+						persistent-hint
+					/>
+					<v-switch
 						label="公開設定"
 						v-model="blog.isPublished"
-						hide-details />
+						hint="オフにすると下書き保存されます"
+						persistent-hint
+					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-btn color="primary" variant="flat" type="submit">
@@ -66,18 +80,29 @@
 </template>
 
 <script setup>
-import { ref, defineProps, computed, watch, onMounted } from 'vue';
+import {
+	ref,
+	defineProps,
+	computed,
+	watch,
+	onMounted
+} from 'vue';
 import { useBlogStore } from '@/stores/blogStore';
 import { useImagesStore } from '@/stores/imagesStore';
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore';
 import { mdiImage } from '@mdi/js';
+import BlogCard from '@/components/BlogCard';
 
 const props = defineProps({
-	id: {
-		type: String,
+	blog: {
+		type: Object,
 		required: true,
 	},
-	blog: {
+	shareBlog: {
+		type: Object,
+		required: true,
+	},
+	shareSetting: {
 		type: Object,
 		required: true,
 	},
@@ -86,8 +111,9 @@ const props = defineProps({
 		required: true,
 	},
 });
-const blog_id = ref(props.id);
 const blog = ref(props.blog);
+const shareBlog = ref(props.shareBlog);
+const shareSetting = ref(props.shareSetting);
 const isUpdate = ref(props.isUpdate);
 
 const blogStore = useBlogStore();
@@ -150,8 +176,10 @@ const submitPost = async () => {
 
 	try {
 		if (isUpdate.value) {
-			await blogStore.update(blog.value, blog_id.value);
+			await blogStore.update(blog.value);
 		} else {
+			blog.value.share_blog_id = shareBlog.value ? shareBlog.value.id : null;
+			console.log(blog.value);
 			await blogStore.create(blog.value);
 		}
 
@@ -174,12 +202,8 @@ watch(blog.value.category_id, (newValue) => {
 });
 
 onMounted(async() => {
-	try {
-		categoryList.value = await blogCategoryStore.getList();
-		imageList.value = await imagesStore.getList(null);
-	} catch (error) {
-		alert(error);
-	}
+	categoryList.value = await blogCategoryStore.getList();
+	imageList.value = await imagesStore.getList(null);
 })
 </script>
 

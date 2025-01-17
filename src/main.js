@@ -3,7 +3,7 @@ import App from './App.vue';
 import router from './routes';
 import { createPinia } from 'pinia'; // Pinia
 import { quillEditor } from 'vue3-quill'
-import 'quill/dist/quill.snow.css'; // Quill用のスタイル
+import 'quill/dist/quill.snow.css';
 
 // Vuetify用のインポート（Vuetifyを使用する場合）
 import '@mdi/font/css/materialdesignicons.css'
@@ -34,7 +34,7 @@ const app = createApp(App);
 // プラグインをアプリに登録
 app.use(pinia);
 app.use(vuetify);
-app.use(quillEditor);
+app.component('quillEditor', quillEditor);
 
 const authStore = useAuthStore();
 authStore.initializeAuth().then(() => {

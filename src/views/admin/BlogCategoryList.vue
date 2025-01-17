@@ -1,7 +1,14 @@
 <template>
 	<v-container>
 		<v-card class="category-list">
-			<v-data-table class="category-list" :headers="headers" :items="categoryList" :items-per-page="30" no-data-text="カテゴリーがありません" v-if="isDataLoaded">
+			<v-data-table
+				v-if="isLoading"
+				class="category-list"
+				:headers="headers"
+				:items="categoryList"
+				:items-per-page="30"
+				no-data-text="カテゴリーがありません"
+			>
 				<template v-slot:top>
 					<v-toolbar flat>
 						<v-toolbar-title>カテゴリー一覧</v-toolbar-title>
@@ -11,7 +18,11 @@
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.name`]="{ item }">
-					<v-icon v-if="item.pre_category_id" :icon="mdiSubdirectoryArrowRight" :style="{ marginLeft: '20px' }" />
+					<v-icon
+						v-if="item.pre_category_id"
+						:icon="mdiSubdirectoryArrowRight"
+						:style="{ marginLeft: '20px' }"
+					/>
 					<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
 						{{ item.name }}（{{ item.blog_count }}）
 					</a>
@@ -20,7 +31,13 @@
 					{{ formatDate(item.createdAt) }}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
+					<v-icon
+						class="delete-icon"
+						:icon="mdiDelete"
+						aria-label="削除"
+						role="button"
+						@click="openDeleteDialog(item)"
+					/>
 				</template>
 			</v-data-table>
 		</v-card>
@@ -97,7 +114,7 @@ import { mdiDelete, mdiSubdirectoryArrowRight } from '@mdi/js';
 const blogCategoryStore = useBlogCategoryStore();
 const categoryList = computed(() => blogCategoryStore.categoryList);
 
-const isDataLoaded = ref(false);
+const isLoading = ref(false);
 
 const createDialog = ref(false);
 const category = ref({
@@ -145,14 +162,11 @@ const createCategory = async () => {
 	createDialog.value = false;
 	category.value.pre_category_id = selectedPreCategoryID.value;
 
-	try {
-		await blogCategoryStore.create(category.value);
-		alert('カテゴリーが作成されました');
-	} catch (error) {
-		alert(error);
-	}
+	await blogCategoryStore.create(category.value);
+	await reFetch();
 	selectedPreCategoryID.value = null;
 	category.value = { pre_category_id: null, name: "" };
+	alert('カテゴリーが作成されました');
 }
 
 // カテゴリー更新
@@ -165,35 +179,30 @@ const updateCategory = async () => {
 		return;
 	}
 
-	try {
-		await blogCategoryStore.update(categoryToUpdate.value);
-		alert('カテゴリーを更新しました');
-	} catch (error) {
-		alert(error);
-	}
+	await blogCategoryStore.update(categoryToUpdate.value);
+	await reFetch();
 	categoryToUpdate.value = null;
+	alert('カテゴリーを更新しました');
 }
 
 // カテゴリー削除
 const deleteCategory = async () => {
 	deleteDialog.value = false;
 
-	try {
-		await blogCategoryStore.delete(categoryToDelete.value);
-		alert('カテゴリーが削除されました');
-	} catch (error) {
-		alert(error);
-	}
+	await blogCategoryStore.delete(categoryToDelete.value);
+	await reFetch();
 	categoryToDelete.value = null;
+	alert('カテゴリーが削除されました');
 };
 
+// 再取得
+const reFetch = async () => {
+	await blogCategoryStore.getList();
+}
+
 onMounted(async() => {
-	try {
-		await blogCategoryStore.getList();
-		isDataLoaded.value = true;
-	} catch (error) {
-		alert(error);
-	}
+	await blogCategoryStore.getList();
+	isLoading.value = true;
 })
 </script>
 

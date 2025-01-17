@@ -15,12 +15,12 @@
 				hide-details />
 		</v-app-bar-title>
 		<template v-slot:append>
-			<div v-if="authStore.user">
+			<div v-if="setting">
 				<v-menu>
 					<template v-slot:activator="{ props }">
-						<v-avatar v-bind="props" :image="blogSettingStore.blogSetting.profileUrl" size="48" end />
+						<v-avatar v-bind="props" :image="setting.profileUrl" size="48" end />
 					</template>
-					<CommonUsermenu />
+					<CommonUsermenu :setting="setting" />
 				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
@@ -33,17 +33,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
+import { useBlogStore } from '@/stores/blogStore';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
 import { mdiMagnify, mdiHomeCircle } from '@mdi/js';
 import CommonUsermenu from '@/components/CommonUsermenu';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const blogStore = useBlogStore();
 const blogSettingStore = useBlogSettingStore();
+
 const search = ref('');
+const setting = computed(() => blogSettingStore.blogSetting); 
 
 const logout = async () => {
 	try {
@@ -55,6 +59,7 @@ const logout = async () => {
 }
 
 const goToHome = () => {
+	blogStore.setSelectType(0);
 	router.push('/');
 }
 </script>

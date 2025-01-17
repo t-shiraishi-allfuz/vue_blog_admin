@@ -1,18 +1,29 @@
 <template>
 	<CommonLoginTemplate>
-		<v-form ref="settingForm" @submit.prevent="updateSetting">
+		<v-form v-if="setting" ref="settingForm" @submit.prevent="updateSetting">
 			<v-card class="user-login">
 				<v-card-title class="cardHeader textCenter" color="info">
 					<h4 class="cardTitle">プロフィール設定 2/2</h4>
 				</v-card-title>
 				<v-card-text>
+					<v-text-field
+						label="ニックネームを入力して下さい"
+						v-model="setting.name"
+					/>
 					<v-file-input
 						label="ブログアイコン"
 						id="profileImage"
 						type="file"
+						accept="image/png,image/jpg,image/jpeg"
 						@change="handleFileUpload"
-						accept="image/png,image/jpg,image/jpeg" />
-					<v-img v-if="blogSettingStore.tempSetting.profileUrl" :src="blogSettingStore.tempSetting.profileUrl" alt="Profile Preview" class="profile-preview" cover />
+					/>
+					<v-img
+						v-if="setting.profileUrl"
+						class="profile-preview"
+						alt="Profile Preview"
+						:src="setting.profileUrl"
+						cover
+					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-btn color="grey-lighten-2" variant="flat" type="submit">あとで</v-btn>
@@ -24,13 +35,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogSettingStore } from '@/stores/blogSettingStore';
 
 // ブログ設定
 const router = useRouter();
 const blogSettingStore = useBlogSettingStore();
+
+const setting = ref(blogSettingStore.blogSetting);
 const profileImage = ref(null);
 
 // ファイルアップロードの処理
@@ -42,7 +55,7 @@ const handleFileUpload = (event) => {
 		// 画像のプレビュー
 		const reader = new FileReader();
 		reader.onload = (e) => {
-			blogSettingStore.tempSetting.profileUrl = e.target.result;
+			setting.value.profileUrl = e.target.result;
 		};
 		reader.readAsDataURL(file);
 	}
@@ -52,7 +65,7 @@ const handleFileUpload = (event) => {
 const updateSetting = async () => {
 	if (profileImage.value) {
 		try {
-			await blogSettingStore.update(profileImage);
+			await blogSettingStore.update(profileImage, setting.value);
 			router.push('/');
 		} catch (error) {
 			alert(error);
@@ -61,10 +74,6 @@ const updateSetting = async () => {
 		router.push('/');
 	}
 };
-
-onMounted(() => {
-	blogSettingStore.get();
-});
 </script>
 
 <style scoped>

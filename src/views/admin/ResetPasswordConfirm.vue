@@ -33,14 +33,20 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
-import { mdiEyeOff, mdiEye, mdiLockOutline } from '@mdi/js';
+import {
+	mdiEyeOff,
+	mdiEye,
+	mdiLockOutline
+} from '@mdi/js';
+
+const route = useRoute();
+const oobCode = route.query.oobCode;
+
+const router = useRouter();
+const authStore = useAuthStore();
 
 const password = ref('');
 const confirmPassword = ref('');
-const authStore = useAuthStore();
-const route = useRoute();
-const router = useRouter();
-const oobCode = route.query.oobCode;
 const visibleIcon = ref(mdiEyeOff);
 const visibleType = ref('password');
 
