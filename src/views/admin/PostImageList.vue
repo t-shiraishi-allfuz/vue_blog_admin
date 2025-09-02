@@ -66,6 +66,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { storeToRefs } from "pinia"
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 const PostImage = defineAsyncComponent(() => import('@/views/admin/PostImage.vue'))
@@ -73,6 +74,9 @@ const ImageFolderList = defineAsyncComponent(() => import('@/views/admin/ImageFo
 
 // 画像リスト取得
 const imagesStore = useImagesStore()
+const {
+	imageList
+} = storeToRefs(imagesStore)
 
 // 画像フォルダ取得
 const imagesFolderStore = useImagesFolderStore()

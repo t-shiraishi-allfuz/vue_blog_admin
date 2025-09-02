@@ -50,7 +50,7 @@ export const useImagesStore = defineStore('images', () => {
 		const filters = [
 			["uid", "==", userInfo.uid],
 		]
-		if (!folder_id != null) {
+		if (folder_id != null) {
 			filters.push(["folder_id", "==", folder_id])
 		}
 
@@ -63,15 +63,12 @@ export const useImagesStore = defineStore('images', () => {
 			}
 		)
 
-		const result = []
-		if (querySnapshot) {
-			querySnapshot.forEach(doc => {
-				const data = { id: doc.id, ...doc.data() }
-				result.push(data)
-			})
-			return imageList.value = result
-		}
-		return result
+		if (!querySnapshot) return []
+
+		imageList.value = querySnapshot.docs.map((doc) => {
+			const data = { id: doc.id, ...doc.data() }
+			return data
+		})
 	}
 
 	// フォルダに格納されている画像数取得
@@ -89,12 +86,7 @@ export const useImagesStore = defineStore('images', () => {
 				}
 			}
 		)
-
-		if (querySnapshot) {
-			return querySnapshot.size
-		} else {
-			return 0
-		}
+		return querySnapshot ? querySnapshot.size : 0
 	}
 
 	const deleteItem = async (file) => {
@@ -102,11 +94,11 @@ export const useImagesStore = defineStore('images', () => {
 
 		try {
 			// 画像をstorageから削除
-			const storagePath = `images/${userInfo.uid}/${file.name}`;
-			const fileRef = storageRef(storage, storagePath);
-			await deleteObject(fileRef);
+			const storagePath = `images/${userInfo.uid}/${file.name}`
+			const fileRef = storageRef(storage, storagePath)
+			await deleteObject(fileRef)
 		} catch (error) {
-			throw new Error('画像の削除に失敗しました');
+			throw new Error('画像の削除に失敗しました')
 		}
 
 		await BaseAPI.deleteData(

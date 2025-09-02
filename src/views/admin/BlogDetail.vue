@@ -1,7 +1,7 @@
 <template>
 	<div v-if="isLoading">
 		<BlogEditTemplate
-			:blog="blog"
+			:blog="blogDetail"
 			:isUpdate="true"
 		/>
 	</div>
@@ -12,6 +12,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useRoute, useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
@@ -19,22 +20,26 @@ import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 const route = useRoute()
 const router = useRouter()
 const blogStore = useBlogStore()
-const blog_id = route.params.blog_id
-const blog = ref(null)
+const {
+	blogDetail
+} = storeToRefs(blogStore)
+
+const blog_id = route.query.blog_id
 const isLoading = ref(false)
 
 // ブログデータ取得
 const getBlog = async () => {
-	blog.value = await blogStore.get(blog_id)
+	await blogStore.getDetail(blog_id)
 	isLoading.value = true
 }
 
 // 一覧ページに戻る
 const goToList = () => {
-	router.push('/admin/1')
+	router.push({path: "/admin"})
 }
 
 onMounted(async () => {
 	await getBlog()
+	console.log(blogDetail.value)
 })
 </script>

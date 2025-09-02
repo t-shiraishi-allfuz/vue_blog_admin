@@ -12,7 +12,9 @@ export const useBlogStore = defineStore('blog', () => {
 	const likeStore = useLikeStore()
 	const bookmarkStore = useBookmarkStore()
 
-	const selectType = ref(0);
+	const blogList = ref([])
+	const blogDetail = ref(null)
+	const selectType = ref(0)
 
 	const tempBlog = ref({
 		uid: null,
@@ -82,9 +84,7 @@ export const useBlogStore = defineStore('blog', () => {
 			if (data.createdAt?.toDate) {
 				data.createdAt = data.createdAt.toDate();
 			}
-			return data
-		} else {
-			return null
+			blogDetail.value = data
 		}
 	}
 
@@ -98,8 +98,7 @@ export const useBlogStore = defineStore('blog', () => {
 	const getList = async () => {
 		const userInfo = authStore.userInfo
 		const filters = [
-			["uid", "==", userInfo.uid],
-			["isPublished", "==", true]
+			["uid", "==", userInfo.uid]
 		]
 		const sorters = [
 			["createdAt", "desc"]
@@ -111,14 +110,13 @@ export const useBlogStore = defineStore('blog', () => {
 				searchConditions: {
 					filters: filters,
 					sorters: sorters,
-					limit: 10
 				}
 			}
 		)
 
 		const result = []
 		if (querySnapshot) {
-			const blogList = querySnapshot.docs.map((doc) => {
+			const results = querySnapshot.docs.map((doc) => {
 				const data = { id: doc.id, ...doc.data() }
 				if (data.createdAt?.toDate) {
 					data.createdAt = data.createdAt.toDate()
@@ -127,23 +125,23 @@ export const useBlogStore = defineStore('blog', () => {
 			})
 			
 			const commentCounts = await commentStore.getCommentCounts(
-				blogList.map((blog) => blog.id)
+				results.map((blog) => blog.id)
 			)
 
 			const likeCounts = await likeStore.getLikeCounts(
-				blogList.map((blog) => blog.id)
+				results.map((blog) => blog.id)
 			)
 
 			const isLikes = await likeStore.isLikes(
-				blogList.map((blog) => blog.id)
+				results.map((blog) => blog.id)
 			)
 
 			const isBookmarks = await bookmarkStore.isBookmarks(
-				blogList.map((blog) => blog.id)
+				results.map((blog) => blog.id)
 			)
 
 			// 結果を組み立てる
-			for (const blog of blogList) {
+			for (const blog of results) {
 				result.push({
 					...blog,
 					comment_count: commentCounts[blog.id] || 0,
@@ -152,8 +150,8 @@ export const useBlogStore = defineStore('blog', () => {
 					is_bookmark: isBookmarks[blog.id] || false
 				})
 			}
+			blogList.value = result
 		}
-		return result
 	}
 
 	// 全ユーザーのブログデータ取得
@@ -301,6 +299,8 @@ export const useBlogStore = defineStore('blog', () => {
 
 	return {
 		selectType,
+		blogList,
+		blogDetail,
 		tempBlog,
 		setSelectType,
 		create,

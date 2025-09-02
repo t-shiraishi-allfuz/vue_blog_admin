@@ -1,7 +1,7 @@
 <template>
 	<BlogEditTemplate
 		v-if="isLoading"
-		:blog="blog"
+		:blog="tempBlog"
 		:shareBlog="shareBlog"
 		:shareSetting="shareSetting"
 		:isUpdate="false"
@@ -10,11 +10,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useBlogStore } from '@/stores/blogStore'
 import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 
 const blogStore = useBlogStore()
-const blog = blogStore.tempBlog
+const {
+	tempBlog
+} = storeToRefs(blogStore)
 
 const shareBlog = ref(null)
 const shareSetting = ref(null)

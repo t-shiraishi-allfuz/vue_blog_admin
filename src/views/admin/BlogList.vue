@@ -62,14 +62,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
 
 const router = useRouter()
 const blogStore = useBlogStore()
+const {
+	blogList
+} = storeToRefs(blogStore)
 
-const blogList = ref([])
 const search = ref('')
 const deleteDialog = ref(false)
 const blogToDelete = ref(null)
@@ -85,7 +88,7 @@ const headers = [
 
 // 一覧取得
 const fetchBlogList = async () => {
-	blogList.value = await blogStore.getList()
+	await blogStore.getList()
 }
 
 // 個別削除確認ダイアログを開く

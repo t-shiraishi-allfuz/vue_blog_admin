@@ -113,6 +113,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { storeToRefs } from "pinia"
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 
@@ -127,10 +128,13 @@ const emit = defineEmits(["changeFolderList"])
 
 // 画像取得
 const imagesStore = useImagesStore()
-const imageList = computed(() => imagesStore.imageList)
-
 const imagesFolderStore = useImagesFolderStore()
-const folderList = computed(() => imagesFolderStore.folderList)
+const {
+	imageList,
+} = storeToRefs(imagesStore)
+const {
+	folderList
+} = storeToRefs(imagesFolderStore)
 
 // フォルダリストにデフォルト値を追加
 const defaultSelect = ref({id: null, name: '指定なし'})

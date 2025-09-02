@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-	"serve": "vite --host --mode localhost",
-	"build": "vue-tsc --noEmit && vite build --mode"
+    "serve": "vite --host --mode localhost",
+    "build": "vue-tsc --noEmit && vite build --mode"
   },
   "dependencies": {
     "@mdi/font": "7.0.96",
@@ -35,16 +35,17 @@
     "serve": "^14.2.1",
     "stream-browserify": "^3.0.0",
     "vee-validate": "^4.14.4",
-	"vite": "^5.2.0",
+    "vite": "^5.2.0",
     "vite-plugin-vuetify": "^2.0.3",
     "vm-browserify": "^1.1.2",
     "vue": "^3.4.21",
-	"vue-ctk-date-time-picker": "^3.0.0-alpha.0",
+    "vue-ctk-date-time-picker": "^3.0.0-alpha.0",
     "vue-material-design-icons": "^5.2.0",
     "vue-meta": "^2.4.0",
     "vue-multiselect": "^2.1.8",
     "vue-router": "^4.1.6",
     "vue-sweetalert2": "^5.0.5",
+    "vue3-editor": "^0.1.1",
     "vue3-quill": "^0.3.1",
     "vuetify": "^3.9.5"
   },

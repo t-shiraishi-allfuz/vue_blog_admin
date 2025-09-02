@@ -13,11 +13,9 @@
 						:blog="shareBlog"
 						:setting="shareSetting"
 					/>
-					<quill-editor
-						class="custom-quill-editor"
-						v-model:value="blog.content"
-						:options="editorOptions"
-						ref="quillEditor" />
+					<VueEditor
+						v-model="blog.content"
+					/>
 					<v-text-field
 						type="text"
 						label="記事の概要を入力して下さい"
@@ -80,15 +78,12 @@
 </template>
 
 <script setup>
-import {
-	ref,
-	computed,
-	watch,
-	onMounted
-} from 'vue'
+import { ref, computed, watch, onMounted} from 'vue'
+import { storeToRefs } from "pinia"
 import { useBlogStore } from '@/stores/blogStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
+import { VueEditor } from "vue3-editor"
 import BlogCard from '@/components/BlogCard.vue'
 
 const props = defineProps({
@@ -117,34 +112,18 @@ const isUpdate = ref(props.isUpdate)
 const blogStore = useBlogStore()
 const imagesStore = useImagesStore()
 const blogCategoryStore = useBlogCategoryStore()
-const categoryList = computed(() => blogCategoryStore.categoryList)
 
-const imageList = ref([])
+const {
+	imageList
+} = storeToRefs(imagesStore)
+
+const {
+	categoryList
+} = storeToRefs(blogCategoryStore)
+
 const imageSelectDialog = ref(false)
-const quill = ref(null)
 const selectThumb = ref(null)
 const selectType = ref('content')
-
-const editorOptions = ref({
-	theme: 'snow',
-	modules: {
-		toolbar: {
-			container: [
-				[{ 'header': [1, 2, 3, false] }],
-				[{ 'font': [] }, {'size': ['small', false, 'large', 'huge'] }],
-				['bold', 'italic', 'underline'],
-				['image'],
-				[{ 'color': [] }, { 'background': [] }],
-			],
-			handlers: {
-				image: function () {
-					quill.value = this.quill
-					openImageDialog('content')
-				}
-			}
-		},
-	}
-})
 
 // 画像選択ダイアログ表示
 const openImageDialog = (type) => {
@@ -157,9 +136,6 @@ const selectImage = (imageUrl) => {
 	imageSelectDialog.value = false
 
 	if (selectType.value == 'content') {
-		const range = quill.value.getSelection()
-		quill.value.insertEmbed(range.index, 'image', imageUrl)
-		quill.value.setSelection(range.index + 1)
 	} else {
 		selectThumb.value = imageUrl
 		blog.value.thumbUrl = imageUrl
@@ -167,6 +143,7 @@ const selectImage = (imageUrl) => {
 }
 
 const submitPost = async () => {
+	console.log(blog.value)
 	if (!blog.value.title || !blog.value.content) {
 		alert("タイトルまたは本文が入力されていません");
 		return;
@@ -199,15 +176,12 @@ watch(blog.value.category_id, (newValue) => {
 })
 
 onMounted(async() => {
-	categoryList.value = await blogCategoryStore.getList()
-	imageList.value = await imagesStore.getList(null)
+	await blogCategoryStore.getList()
+	await imagesStore.getList(null)
 })
 </script>
 
 <style scoped lang="scss">
-	.custom-quill-editor {
-		margin-bottom: 10px;
-	}
 	.image-gallery {
 		display: flex;
 		flex-wrap: wrap;
