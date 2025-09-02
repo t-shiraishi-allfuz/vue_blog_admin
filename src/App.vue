@@ -2,10 +2,10 @@
 	<router-view />
 </template>
 
-<script setup>
-</script>
+<script setup></script>
 
-<style>
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style lang="scss">
 	html {
 		height: 100%;
 	}

@@ -1,0 +1,47 @@
+{
+	"extends": "@vue/tsconfig/tsconfig.json",
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"strict": true,
+		"jsx": "preserve",
+		"moduleResolution": "node",
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"useDefineForClassFields": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"allowJs": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"baseUrl": ".",
+		"types": [
+			"node",
+			"vue"
+		],
+		"paths": {
+			"@/*": [
+				"src/*"
+			  ]
+		},
+		"lib": [
+		  "esnext",
+		  "dom",
+		  "dom.iterable",
+		  "scripthost"
+		]
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.d.ts",
+		"src/**/*.vue",
+		"vite.config.ts",
+	],
+	"exclude": ["node_modules", "dist"]
+}

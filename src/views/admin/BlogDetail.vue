@@ -11,30 +11,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useBlogStore } from '@/stores/blogStore';
-import BlogEditTemplate from '@/components/BlogEditTemplate';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useBlogStore } from '@/stores/blogStore'
+import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 
-const route = useRoute();
-const router = useRouter();
-const blogStore = useBlogStore();
-const blog_id = route.params.blog_id;
-const blog = ref(null);
-const isLoading = ref(false);
+const route = useRoute()
+const router = useRouter()
+const blogStore = useBlogStore()
+const blog_id = route.params.blog_id
+const blog = ref(null)
+const isLoading = ref(false)
 
 // ブログデータ取得
 const getBlog = async () => {
-	blog.value = await blogStore.get(blog_id);
-	isLoading.value = true;
+	blog.value = await blogStore.get(blog_id)
+	isLoading.value = true
 }
 
 // 一覧ページに戻る
 const goToList = () => {
-	router.push('/admin/1');
-};
+	router.push('/admin/1')
+}
 
 onMounted(async () => {
-	await getBlog();
+	await getBlog()
 })
 </script>

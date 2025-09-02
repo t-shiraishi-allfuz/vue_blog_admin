@@ -39,66 +39,64 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useCommentStore } from '@/stores/commentStore';
-import { format } from 'date-fns';
-import { mdiDelete } from '@mdi/js';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useCommentStore } from '@/stores/commentStore'
+import { format } from 'date-fns'
 
-const route = useRoute();
-const router = useRouter();
-const commentStore = useCommentStore();
-const commentList = ref([]);
+const route = useRoute()
+const router = useRouter()
+const commentStore = useCommentStore()
+const commentList = ref([])
 
-const deleteDialog = ref(false);
-const commentToDelete = ref(null);
+const deleteDialog = ref(false)
+const commentToDelete = ref(null)
 
 const headers = [
 	{title: "コメント", value: "comment" },
 	{title: "投稿日時", value: "createdAt" },
 	{title: "返信数", value: "reply_count" },
 	{title: "削除", value: "actions", sortable: false },
-];
+]
 
 // 一覧取得
 const fetchCommentList = async () => {
 	try {
-		commentList.value = await commentStore.getList(route.params.blog_id);
-		console.log(commentList.value);
+		commentList.value = await commentStore.getList(route.params.blog_id)
 	} catch (error) {
-		alert(error);
+		alert(error)
 	}
 }
 
 // 個別削除確認ダイアログを開く
 const openDeleteDialog = (blog) => {
-	commentToDelete.value = blog;
-	deleteDialog.value = true;
-};
+	commentToDelete.value = blog
+	deleteDialog.value = true
+}
 
 // 個別削除を確定する
 const deleteComment = async () => {
 	try {
-		await commentStore.delete(commentToDelete.value.id);
-		commentList.value = commentList.value.filter(comment => comment.id !== commentToDelete.value.id);
+		await commentStore.deleteItem(commentToDelete.value.id)
+		commentList.value = commentList.value.filter(comment => comment.id !== commentToDelete.value.id)
 	} catch (error) {
-		alert(error);
+		alert(error)
 	}
-	deleteDialog.value = false;
-};
+	deleteDialog.value = false
+}
 
 // 日時フォーマット関数
 const formatDate = (date) => {
-	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
-};
+	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
+}
 
 // ブログ一覧ページに移動
 const goToList = () => {
-	router.push('/admin/1');
-};
+	router.push({path: "/admin", query: {id: "3"}})
+}
 
 onMounted(async () => {
-	await fetchCommentList();
+	await fetchCommentList()
 })
 </script>
 

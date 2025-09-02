@@ -106,103 +106,102 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useBlogCategoryStore } from '@/stores/blogCategoryStore';
-import { format } from 'date-fns';
-import { mdiDelete, mdiSubdirectoryArrowRight } from '@mdi/js';
+import { ref, computed, onMounted } from 'vue'
+import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
+import { format } from 'date-fns'
 
-const blogCategoryStore = useBlogCategoryStore();
-const categoryList = computed(() => blogCategoryStore.categoryList);
+const blogCategoryStore = useBlogCategoryStore()
+const categoryList = computed(() => blogCategoryStore.categoryList)
 
-const isLoading = ref(false);
+const isLoading = ref(false)
 
-const createDialog = ref(false);
+const createDialog = ref(false)
 const category = ref({
 	pre_category_id: null,
 	name: ""
-});
-const selectedPreCategoryID = ref(null);
+})
+const selectedPreCategoryID = ref(null)
 
-const updateDialog = ref(false);
-const categoryToUpdate = ref(null);
+const updateDialog = ref(false)
+const categoryToUpdate = ref(null)
 
-const deleteDialog = ref(false);
-const categoryToDelete = ref(null);
+const deleteDialog = ref(false)
+const categoryToDelete = ref(null)
 
 const headers = [
 	{title: "カテゴリー名", value: "name" },
 	{title: "作成日時", value: "createdAt" },
 	{title: "削除", value: "actions", sortable: false },
-];
+]
 
 // 日時フォーマット関数
 const formatDate = (date) => {
-	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
-};
+	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
+}
 
 // カテゴリー作成確認ダイアログを開く
 const openCreateDialog = () => {
-	createDialog.value = true;
-};
+	createDialog.value = true
+}
 
 // カテゴリー更新確認ダイアログを開く
 const openUpdateDialog = (category) => {
-	categoryToUpdate.value = category;
-	updateDialog.value = true;
-};
+	categoryToUpdate.value = category
+	updateDialog.value = true
+}
 
 // カテゴリー削除確認ダイアログを開く
 const openDeleteDialog = (category) => {
-	categoryToDelete.value = category;
-	deleteDialog.value = true;
-};
+	categoryToDelete.value = category
+	deleteDialog.value = true
+}
 
 // 新規カテゴリー作成
 const createCategory = async () => {
-	createDialog.value = false;
-	category.value.pre_category_id = selectedPreCategoryID.value;
+	createDialog.value = false
+	category.value.pre_category_id = selectedPreCategoryID.value
 
-	await blogCategoryStore.create(category.value);
-	await reFetch();
-	selectedPreCategoryID.value = null;
-	category.value = { pre_category_id: null, name: "" };
-	alert('カテゴリーが作成されました');
+	await blogCategoryStore.create(category.value)
+	await reFetch()
+	selectedPreCategoryID.value = null
+	category.value = { pre_category_id: null, name: "" }
+	alert('カテゴリーが作成されました')
 }
 
 // カテゴリー更新
 const updateCategory = async () => {
-	updateDialog.value = false;
+	updateDialog.value = false
 
 	// 親と同一IDはNG
 	if (categoryToUpdate.value.pre_category_id == categoryToUpdate.value.id) {
-		alert('同じカテゴリーは選択出来ません');
-		return;
+		alert('同じカテゴリーは選択出来ません')
+		return
 	}
 
-	await blogCategoryStore.update(categoryToUpdate.value);
-	await reFetch();
-	categoryToUpdate.value = null;
-	alert('カテゴリーを更新しました');
+	await blogCategoryStore.update(categoryToUpdate.value)
+	await reFetch()
+	categoryToUpdate.value = null
+	alert('カテゴリーを更新しました')
 }
 
 // カテゴリー削除
 const deleteCategory = async () => {
-	deleteDialog.value = false;
+	deleteDialog.value = false
 
-	await blogCategoryStore.delete(categoryToDelete.value);
-	await reFetch();
-	categoryToDelete.value = null;
-	alert('カテゴリーが削除されました');
+	await blogCategoryStore.deleteItem(categoryToDelete.value)
+	await reFetch()
+	categoryToDelete.value = null
+	alert('カテゴリーが削除されました')
 };
 
 // 再取得
 const reFetch = async () => {
-	await blogCategoryStore.getList();
+	await blogCategoryStore.getList()
 }
 
 onMounted(async() => {
-	await blogCategoryStore.getList();
-	isLoading.value = true;
+	await blogCategoryStore.getList()
+	isLoading.value = true
 })
 </script>
 

@@ -1,18 +1,8 @@
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-import { db } from '@/setting/firebase';
-import {
-	collection,
-	query,
-	where,
-	getDocs,
-	addDoc,
-	setDoc,
-	deleteDoc,
-	doc
-} from 'firebase/firestore';
-import { useAuthStore } from '@/stores/authStore';
-import { useImagesStore } from '@/stores/imagesStore';
+import BaseAPI from '@/api/base'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
+import { useImagesStore } from '@/stores/imagesStore'
 
 // 画像のフォルダ管理
 export const useImagesFolderStore = defineStore('images_folder', () => {
@@ -23,91 +13,96 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 
 	const create = async (folder) => {
 		const userInfo = authStore.userInfo
-
-		try {
-			// 取得したURLをstoreに保存
-			const imagesFolderDocRef = collection(db, "images_folder");
-			await addDoc(imagesFolderDocRef, {
+		await BaseAPI.addData(
+			{db_name: "images_folder"},
+			{
 				uid: userInfo.uid,
 				name: folder.name,
 				createdAt: new Date(),
 				updatedAt: new Date()
-			});
-		} catch (error) {
-			throw new Error('画像フォルダの作成に失敗しました');
-		}
+			}
+		)
 	}
 
 	const update = async (folder) => {
-		try {
-			// 取得したURLをstoreに保存
-			const docRef = doc(db, "images_folder", folder.id);
-			await setDoc(docRef, {
+		await BaseAPI.setData(
+			{db_name: "images_folder", item_id: folder.id},
+			{
 				name: folder.name,
 				updatedAt: new Date()
-			}, { merge: true });
-		} catch (error) {
-			throw new Error('画像フォルダの更新に失敗しました');
-		}
+			}
+		)
 	}
 
 	const getList = async () => {
 		const userInfo = authStore.userInfo
+		const filters = [
+			["uid", "==", userInfo.uid],
+		]
 
-		const list = [];
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "images_folder",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
 
-		try {
-			const imagesDocRef = collection(db, "images_folder");
-			const querySnapshot = await getDocs(query(
-				imagesDocRef,
-				where("uid", "==", userInfo.uid)
-			));
+		if (querySnapshot) {
+			const result = []
 			for (const doc of querySnapshot.docs) {
-				const imageCount = await imagesStore.getImageCount(doc.id);
+				const imageCount = await imagesStore.getImageCount(doc.id)
 
 				// 対象のフォルダに格納されている画像数を取得
 				const data = {
 					id: doc.id,
 					image_count: imageCount,
 					...doc.data()
-				};
-				if (data.createdAt && data.createdAt.toDate) {
-					data.createdAt = data.createdAt.toDate();
 				}
-				list.push(data);
+				if (data.createdAt && data.createdAt.toDate) {
+					data.createdAt = data.createdAt.toDate()
+				}
+				result.push(data)
 			}
 			// createdAt の昇順でソート
-			list.sort((a, b) => a.createdAt - b.createdAt);
+			result.sort((a, b) => a.createdAt - b.createdAt)
 
-			folderList.value = list;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
+			folderList.value = result
 		}
 	}
 
-	const deleteFolder = async (docId) => {
+	const deleteItem = async (docId) => {
 		const userInfo = authStore.userInfo
+		const filters = [
+			["uid", "==", userInfo.uid],
+			["folder_id", "==", docId]
+		]
 
-		try {
-			// フォルダに紐づく画像のデータを更新
-			const imagesDocRef = collection(db, "images");
-			const querySnapshot = await getDocs(query(
-				imagesDocRef,
-				where("uid", "==", userInfo.uid),
-				where("folder_id", "==", docId)
-			));
+		// フォルダに紐づく画像のデータを更新
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "images",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+
+		if (querySnapshot) {
 			const updatePromises = querySnapshot.docs.map(async (doc) => {
-				const imageDocRef = doc.ref;
-				await setDoc(imageDocRef, { folder_id: null }, { merge: true });
-			});
-			await Promise.all(updatePromises);
-
-			// storeからも削除
-			const docRef = doc(db, "images_folder", docId);
-			await deleteDoc(docRef);
-		} catch (error) {
-			throw new Error('画像フォルダの削除に失敗しました');
+				const imageDocRef = doc.ref
+				await BaseAPI.deleteData(
+					{db_name: "images", item_id: imageDocRef.id},
+					{ folder_id: null }
+				)
+			})
+			await Promise.all(updatePromises)
 		}
+
+		await BaseAPI.deleteData(
+			{db_name: "images_folder", item_id: docId},
+		)
 	}
 
 	return {
@@ -115,6 +110,6 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 		create,
 		update,
 		getList,
-		deleteFolder
+		deleteItem
 	}
 })

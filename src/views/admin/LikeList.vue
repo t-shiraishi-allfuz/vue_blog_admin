@@ -20,36 +20,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useLikeStore } from '@/stores/likeStore';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useLikeStore } from '@/stores/likeStore'
 
-const route = useRoute();
-const router = useRouter();
-const likeStore = useLikeStore();
-const likeList = ref([]);
+const route = useRoute()
+const router = useRouter()
+const likeStore = useLikeStore()
+const likeList = ref([])
 
 const headers = [
-	{title: "ユーザー名", value: "user" },
-];
+	{title: "ユーザー名", value: "user" }
+]
 
 // 一覧取得
 const fetchLikeList = async () => {
-	try {
-		likeList.value = await likeStore.getListForBlog(route.params.blog_id);
-		console.log(likeList.value);
-	} catch (error) {
-		alert(error);
-	}
+	likeList.value = await likeStore.getListForBlog(route.params.blog_id)
 }
 
 // ブログ一覧ページに移動
 const goToList = () => {
-	router.push('/admin//1');
-};
+	router.push({path: "/admin", query: {id: "1"}})
+}
 
 onMounted(async () => {
-	await fetchLikeList();
+	await fetchLikeList()
 })
 </script>
 

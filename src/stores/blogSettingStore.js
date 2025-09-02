@@ -1,17 +1,9 @@
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-import { storage, db } from '@/setting/firebase';
-import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
-import {
-	getDoc,
-	setDoc,
-	doc,
-	collection,
-	query,
-	where,
-	getDocs
-} from 'firebase/firestore';
-import { useAuthStore } from '@/stores/authStore';
+import BaseAPI from '@/api/base'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import { storage } from '@/setting/firebase'
+import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
+import { useAuthStore } from '@/stores/authStore'
 
 export const useBlogSettingStore = defineStore('blogSetting', () => {
 	const tempSetting = ref({
@@ -23,7 +15,7 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		updatedAt: null,
 	})
 
-	const blogSetting = ref(null);
+	const blogSetting = ref(null)
 
 	const authStore = useAuthStore()
 
@@ -36,102 +28,103 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 	}
 
 	const create = async () => {
-		const userInfo = authStore.getUserInfo();
+		const userInfo = authStore.getUserInfo()
 
-		blogSetting.value = tempSetting.value;
-		blogSetting.value.createdAt = new Date();
-		blogSetting.value.updatedAt = new Date();
+		blogSetting.value = tempSetting.value
+		blogSetting.value.createdAt = new Date()
+		blogSetting.value.updatedAt = new Date()
 
-		try {
-			const settingDocRef = doc(db, "blog_setting", userInfo.uid);
-			await setDoc(settingDocRef, blogSetting.value);
-		} catch (error) {
-			throw error.message;
-		}
+		await BaseAPI.setData(
+			{db_name: "blog_setting", item_id: userInfo.uid},
+			blogSetting
+		)
 	}
 
 	// プロフィール画像アップロード
 	const uploadProfileImage = async (image) => {
-		if (!image.value) return null;
+		if (!image.value) return null
 
-		const userInfo = authStore.getUserInfo();
+		const userInfo = authStore.getUserInfo()
 
 		try {
-			const storagePath = `profile_images/${userInfo.uid}/${image.value.name}`;
-			const fileRef = storageRef(storage, storagePath);
+			const storagePath = `profile_images/${userInfo.uid}/${image.value.name}`
+			const fileRef = storageRef(storage, storagePath)
 
 			// Firebase Storageに画像をアップロード
-			await uploadBytes(fileRef, image.value);
-			return await getDownloadURL(fileRef);
+			await uploadBytes(fileRef, image.value)
+			return await getDownloadURL(fileRef)
 		} catch (error) {
-			throw error.message;
+			throw error.message
 		}
 	}
 
 	const update = async (image, data) => {
-		const userInfo = authStore.getUserInfo();
+		const userInfo = authStore.getUserInfo()
+		data.updatedAt = new Date()
 
-		data.updatedAt = new Date();
+		const imageUrl = await uploadProfileImage(image)
+		if (imageUrl) data.profileUrl = imageUrl
 
-		const imageUrl = await uploadProfileImage(image);
-		if (imageUrl) data.profileUrl = imageUrl;
-
-		try {
-			// タイトル重複チェック
-			const isUnique = await isTitleUnique(userInfo.uid, data.title);
-			if (!isUnique) {
-				throw new Error("このブログタイトルは既に使用されています");
-			}
-			const settingDocRef = doc(db, "blog_setting", userInfo.uid);
-			await setDoc(settingDocRef, data, { merge: true });
-			blogSetting.value = data;
-		} catch (error) {
-			console.log(error);
-			throw error.message;
+		// タイトル重複チェック
+		const isUnique = await isTitleUnique(userInfo.uid, data.title)
+		if (!isUnique) {
+			throw new Error("このブログタイトルは既に使用されています")
 		}
+
+		await BaseAPI.setData(
+			{db_name: "blog_setting", item_id: userInfo.uid},
+			data
+		)
+		blogSetting.value = data
 	}
 
-	const get = async () => {
-		const userInfo = authStore.getUserInfo();
+	const getDetail = async () => {
+		const userInfo = authStore.getUserInfo()
 
-		if (userInfo) {
-			const settingDocRef = doc(db, "blog_setting", userInfo.uid);
-			const snapshot = await getDoc(settingDocRef);
-
-			if (snapshot.exists()) {
-				blogSetting.value = snapshot.data();
-			}
+		const doc = await BaseAPI.getData(
+			{
+				db_name: "blog_setting",
+				item_id: userInfo.uid
+			},
+		)
+		if (doc) {
+			blogSetting.value = doc.data()
 		}
 	}
 
 	const getForUids = async (uids) => {
-		const results = {};
-		for (const uid of uids) {
-			results[uid] = await getForUid(uid);
-		}
-		return results;
+		const promises = uids.map(id => getForUid(id))
+		const results = await Promise.all(promises)
+		const userIds = {}
+		uids.forEach((id, index) => {
+			userIds[id] = results[index]
+		})
+		return userIds
 	}
 
 	const getForUid = async (uid) => {
-		const settingDocRef = doc(db, "blog_setting", uid);
-		const snapshot = await getDoc(settingDocRef);
-
-		if (snapshot.exists()) {
-			return snapshot.data();
-		}
+		const doc = await BaseAPI.getData(
+			{db_name: "blog_setting", item_id: uid},
+		)
+		return doc ? doc.data() : null
 	}
 
 	// タイトルの重複チェック
 	const isTitleUnique = async (uid, title) => {
-		const blogSettingRef = collection(db, "blog_setting");
-		const q = query(
-			blogSettingRef,
-			where("title", "==", title),
-		);
-		const snapshot = await getDocs(q);
-		const result = snapshot.docs.filter(doc => doc.id !== uid);
-	
-		return result.length > 0 ? false : true;
+		const filters = [
+			["title", "==", title],
+		]
+
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog_setting",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+		const result = querySnapshot.docs.filter(doc => doc.id !== uid)
+		return result.length > 0 ? false : true
 	}
 
 	return {
@@ -142,7 +135,7 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		create,
 		uploadProfileImage,
 		update,
-		get,
+		getDetail,
 		getForUids,
 		getForUid,
 		isTitleUnique

@@ -6,20 +6,16 @@
 			:title="setting.title"
 			:subtitle="setting.description" />
 		<v-divider></v-divider>
-		<v-list-item :prepend-icon="mdiInformationOutline" title="お知らせ" value="news" />
-		<v-list-item :prepend-icon="mdiCog" title="設定" value="setting" @click="goToProfile" />
+		<v-list-item prepend-icon="mdi-information-outline" title="お知らせ" value="news" />
+		<v-list-item prepend-icon="mdi-cog" title="設定" value="setting" @click="goToProfile" />
 	</v-list>
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue';
-import { useRouter } from 'vue-router';
-import {
-	mdiInformationOutline,
-	mdiCog
-} from '@mdi/js';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
 const props = defineProps({
 	setting: {
@@ -27,10 +23,10 @@ const props = defineProps({
 		required: true,
 	}
 })
-const setting = ref(props.setting); 
+const setting = ref(props.setting)
 
 // ブログ設定へ
 const goToProfile = () => {
-	router.push('/admin/3');
+	router.push({path: '/admin'})
 }
 </script>

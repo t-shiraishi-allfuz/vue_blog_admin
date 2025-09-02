@@ -4,27 +4,26 @@
 		:key="item.value"
 		:title="item.title"
 		:class="{ 'selected-item': blogStore.selectType === item.value }"
-		:append-icon="mdiChevronRight"
+		append-icon="mdi-chevron-right"
 		@click="onSelectType(item.value)"
 	/>
 	<v-divider />
 </template>
 
 <script setup>
-import { useBlogStore } from '@/stores/blogStore';
-import { mdiChevronRight } from '@mdi/js';
+import { useBlogStore } from '@/stores/blogStore'
+
+const blogStore = useBlogStore()
 
 const menuItems = [
 	{ title: 'すべて', value: 0 },
 	{ title: 'フォロー中', value: 1 },
 	{ title: 'お気に入り', value: 2 },
 	{ title: 'おすすめ', value: 3 },
-];
+]
 
-const blogStore = useBlogStore();
-
-const onSelectType = async (type) => {
-	blogStore.setSelectType(type);
+const onSelectType = (type) => {
+	blogStore.setSelectType(type)
 }
 </script>
 

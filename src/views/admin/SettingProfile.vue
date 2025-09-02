@@ -40,41 +40,36 @@
 </template>
 
 <script setup>
-import { ref, defineAsyncComponent } from 'vue';
-import { useBlogSettingStore } from '@/stores/blogSettingStore';
-const BlogCategoryList = defineAsyncComponent(() => import('@/views/admin/BlogCategoryList.vue'));
+import { ref } from 'vue'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
+const BlogCategoryList = defineAsyncComponent(() => import('@/views/admin/BlogCategoryList.vue'))
 
 // ブログ設定
-const blogSettingStore = useBlogSettingStore();
+const blogSettingStore = useBlogSettingStore()
 
-const setting = ref(blogSettingStore.blogSetting);
-const profileImage = ref(null);
+const setting = ref(blogSettingStore.blogSetting)
+const profileImage = ref(null)
 
 // ファイルアップロードの処理
 const handleFileUpload = (event) => {
-	const file = event.target.files[0];
+	const file = event.target.files[0]
 	if (file) {
-		profileImage.value = file;
+		profileImage.value = file
     
 		// 画像のプレビュー
-		const reader = new FileReader();
+		const reader = new FileReader()
 		reader.onload = (e) => {
-			setting.value.profileUrl = e.target.result;
-		};
-		reader.readAsDataURL(file);
+			setting.value.profileUrl = e.target.result
+		}
+		reader.readAsDataURL(file)
 	}
 }
 
 // ブログ設定更新
 const updateSetting = async () => {
-	try {
-		await blogSettingStore.update(profileImage, setting.value);
-		alert('プロフィールを更新しました');
+	await blogSettingStore.update(profileImage, setting.value)
 
-		profileImage.value = null;
-	} catch (error) {
-		alert(error);
-	}
+	profileImage.value = null
 }
 </script>
 

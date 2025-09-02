@@ -2,15 +2,14 @@
 	<v-app-bar color="primary" light>
 		<template v-slot:prepend>
 			<v-app-bar-nav-icon>
-				<v-icon :icon="mdiHomeCircle" @click="goToHome" />
+				<v-icon icon="mdi-home-circle" @click="goToHome" />
 			</v-app-bar-nav-icon>
 		</template>
 		<v-app-bar-title>
 			<v-text-field
-				:loading="loading"
 				label="キーワードやクリエイターで検索"
 				v-model="search"
-				:append-inner-icon="mdiMagnify"
+				append-inner-icon="mdi-magnify"
 				single-line
 				hide-details />
 		</v-app-bar-title>
@@ -33,34 +32,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/authStore';
-import { useBlogStore } from '@/stores/blogStore';
-import { useBlogSettingStore } from '@/stores/blogSettingStore';
-import { mdiMagnify, mdiHomeCircle } from '@mdi/js';
-import CommonUsermenu from '@/components/CommonUsermenu';
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import { useBlogStore } from '@/stores/blogStore'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import CommonUsermenu from '@/components/CommonUsermenu.vue'
 
-const router = useRouter();
-const authStore = useAuthStore();
-const blogStore = useBlogStore();
-const blogSettingStore = useBlogSettingStore();
+const router = useRouter()
+const authStore = useAuthStore()
+const blogStore = useBlogStore()
+const blogSettingStore = useBlogSettingStore()
 
-const search = ref('');
-const setting = computed(() => blogSettingStore.blogSetting); 
+const search = ref('')
+const setting = computed(() => blogSettingStore.blogSetting)
 
 const logout = async () => {
 	try {
-		await authStore.logout();
-		router.push('/');
+		await authStore.logout()
+		router.push('/')
 	} catch (error) {
-		alert(error);
+		alert(error)
 	}
 }
 
 const goToHome = () => {
-	blogStore.setSelectType(0);
-	router.push('/');
+	blogStore.setSelectType(0)
+	router.push('/')
 }
 </script>
 

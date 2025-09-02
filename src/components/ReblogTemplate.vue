@@ -14,9 +14,9 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted } from 'vue';
-import { useBlogStore } from '@/stores/blogStore';
-import BlogEditTemplate from '@/components/BlogEditTemplate';
+import { ref, onMounted } from 'vue'
+import { useBlogStore } from '@/stores/blogStore'
+import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 
 const props = defineProps({
 	blog: {
@@ -27,17 +27,17 @@ const props = defineProps({
 		type: Object,
 		required: true,
 	}
-});
-const blog = ref(props.blog);
-const setting = ref(props.setting);
+})
+const blog = ref(props.blog)
+const setting = ref(props.setting)
 
-const blogStore = useBlogStore();
-const reblog = blogStore.tempBlog;
+const blogStore = useBlogStore()
+const reblog = blogStore.tempBlog
 
-const openDialog = ref(false);
+const openDialog = ref(false)
 
 onMounted(() => {
-	openDialog.value = true;
+	openDialog.value = true
 })
 </script>
 

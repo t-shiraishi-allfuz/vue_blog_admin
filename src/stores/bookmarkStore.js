@@ -1,100 +1,100 @@
-import { defineStore } from 'pinia';
-import { db } from '@/setting/firebase';
-import {
-	collection,
-	query,
-	where,
-	getDocs,
-	addDoc,
-	deleteDoc,
-	doc
-} from 'firebase/firestore';
-import { useAuthStore } from '@/stores/authStore';
+import BaseAPI from '@/api/base'
+import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
 
 export const useBookmarkStore = defineStore('bookmark', () => {
-	const authStore = useAuthStore();
+	const authStore = useAuthStore()
 
 	const create = async (blog_id) => {
-		const userInfo = authStore.userInfo;
-
-		try {
-			const likesDocRefs = collection(db, "bookmark");
-			await addDoc(likesDocRefs, {
+		const userInfo = authStore.userInfo
+		await BaseAPI.addData(
+			{db_name: "bookmark"},
+			{
 				uid: userInfo.uid,
 				blog_id: blog_id,
 				createdAt: new Date(),
 				updatedAt: new Date()
-			});
-		} catch (error) {
-			throw new Error('ブックマークに失敗しました');
-		}
+			}
+		)
 	}
 
 	// ブックマークしているブログIDのリスト取得
 	const getBlogIds = async () => {
-		const userInfo = authStore.getUserInfo();
-		const results = [];
-		
-		try {
-			const bookmarkDocRefs = collection(db, "bookmark");
-			const querySnapshot = await getDocs(query(
-				bookmarkDocRefs,
-				where("uid", "==", userInfo.uid)
-			));
-			for (const doc of querySnapshot.docs) {
-				const data = doc.data();
-				results.push(data.blog_id);
+		const userInfo = authStore.getUserInfo()
+		const filters = [
+			["uid", "==", userInfo.uid],
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "bookmark",
+				searchConditions: {
+					filters: filters,
+				}
 			}
-			return results;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
-		}
+		)
+
+		if (!querySnapshot) return []
+
+		return querySnapshot.docs.map((doc) => {
+			const data = doc.data()
+			data.push(doc.blog_id)
+			return data
+		})
 	}
 
 	// 指定のブログをブックマークしてるかどうか（一括）
 	const isBookmarks = async (blogIds) => {
-		const results = {};
-
-		for (const id of blogIds) {
-			results[id] = await isBookmark(id);
-		}
-		return results;
+		const promises = blogIds.map(id => isBookmark(id))
+		const results = await Promise.all(promises)
+		const bookmarks = {}
+		blogIds.forEach((id, index) => {
+			bookmarks[id] = results[index]
+		})
+		return bookmarks
 	}
 
 	// 指定のブログをブックマークしてるかどうか
 	const isBookmark = async (blog_id) => {
-		const userInfo = authStore.getUserInfo();
+		const userInfo = authStore.getUserInfo()
+		const filters = [
+			["blog_id", "==", blog_id],
+			["uid", "==", userInfo.uid]
+		]
 
-		try {
-			const bookmarkDocRefs = collection(db, "bookmark");
-			const querySnapshot = await getDocs(query(
-				bookmarkDocRefs,
-				where("blog_id", "==", blog_id),
-				where("uid", "==", userInfo.uid)
-			));
-			const result = querySnapshot.docs;
-			return result.length > 0 ? true : false;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
-		}
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "bookmark",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+		return querySnapshot ? querySnapshot.size : 0
 	}
 
-	const deleteBookmark = async (blog_id) => {
-		const userInfo = authStore.getUserInfo();
+	const deleteItem = async (blog_id) => {
+		const userInfo = authStore.getUserInfo()
+		const filters = [
+			["blog_id", "==", blog_id],
+			["uid", "==", userInfo.uid]
+		]
 
-		try {
-			const bookmarkDocRefs = collection(db, "bookmark");
-			const querySnapshot = await getDocs(query(
-				bookmarkDocRefs,
-				where("blog_id", "==", blog_id),
-				where("uid", "==", userInfo.uid)
-			));
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "bookmark",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+
+		if (querySnapshot) {
 			const deletePromises = querySnapshot.docs.map((docSnapshot) =>
-				deleteDoc(doc(bookmarkDocRefs, docSnapshot.id))
-			);
-			await Promise.all(deletePromises);
-		} catch (error) {
-			throw new Error('ブックマークの解除に失敗しました');
+				BaseAPI.deleteData(
+					{db_name: "bookmark", item_id: docSnapshot.id},
+				)
+			)
+			await Promise.all(deletePromises)
 		}
 	}
 
@@ -103,6 +103,6 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 		getBlogIds,
 		isBookmarks,
 		isBookmark,
-		deleteBookmark
+		deleteItem
 	}
 })

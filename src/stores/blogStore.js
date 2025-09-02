@@ -1,22 +1,10 @@
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-import { db } from '@/setting/firebase';
-import {
-	collection,
-	query,
-	where,
-	orderBy,
-	getDoc,
-	getDocs,
-	addDoc,
-	setDoc,
-	deleteDoc,
-	doc
-} from 'firebase/firestore';
-import { useAuthStore } from '@/stores/authStore';
-import { useCommentStore } from '@/stores/commentStore';
-import { useLikeStore } from '@/stores/likeStore';
-import { useBookmarkStore } from '@/stores/bookmarkStore';
+import BaseAPI from '@/api/base'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
+import { useCommentStore } from '@/stores/commentStore'
+import { useLikeStore } from '@/stores/likeStore'
+import { useBookmarkStore } from '@/stores/bookmarkStore'
 
 export const useBlogStore = defineStore('blog', () => {
 	const authStore = useAuthStore()
@@ -41,27 +29,25 @@ export const useBlogStore = defineStore('blog', () => {
 	})
 
 	const setSelectType = (type) => {
-		selectType.value = type;
+		selectType.value = type
 	}
 
 	const create = async(blog) => {
-		const userInfo = authStore.userInfo;
-		blog.uid = userInfo.uid;
-		blog.createdAt = new Date();
-		blog.updatedAt = new Date();
+		const userInfo = authStore.userInfo
+		blog.uid = userInfo.uid
+		blog.createdAt = new Date()
+		blog.updatedAt = new Date()
 
-		try {
-			const blogDocRefs = collection(db, "blog");
-			await addDoc(blogDocRefs, blog);
-		} catch (error) {
-			throw new Error('ブログの投稿に失敗しました');
-		}
+		await BaseAPI.addData(
+			{db_name: "blog"},
+			blog
+		)
 	}
 
 	const update = async (blog) => {
-		try {
-			const blogDocRef = doc(db, "blog", blog.id);
-			await setDoc(blogDocRef, {
+		await BaseAPI.setData(
+			{db_name: "blog", item_id: blog.id},
+			{
 				title: blog.title,
 				content: blog.content,
 				summary: blog.summary,
@@ -69,75 +55,76 @@ export const useBlogStore = defineStore('blog', () => {
 				category_id: blog.category_id,
 				isPublished: blog.isPublished,
 				updatedAt: new Date(),
-			}, { merge: true });
-		} catch (error) {
-			throw new Error('ブログの更新に失敗しました');
-		}
-	}
-
-	const get = async (blog_id) => {
-		try {
-			const blogDocRef = doc(db, "blog", blog_id);
-			const snapshot = await getDoc(blogDocRef);
-			if (snapshot.exists()) {
-				const doc = snapshot;
-				const commentCount = await commentStore.getCommentCount(doc.id);
-				const likeCount = await likeStore.getLikeCount(doc.id);
-				const isLike = await likeStore.isLike(doc.id);
-				const isBookmark = await bookmarkStore.isBookmark(doc.id);
-				const data = {
-					id: doc.id,
-					comment_count: commentCount,
-					like_count: likeCount,
-					is_like: isLike,
-					is_bookmark: isBookmark,
-					shareBlog: null,
-					...doc.data()
-				};	
-
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate();
-				}
-				return data;
 			}
-			return null;
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('データの取得に失敗しました');
+		)
+	}
+
+	const getDetail = async (blog_id) => {
+		const doc = await BaseAPI.getData(
+			{db_name: "blog", item_id: blog_id},
+		)
+
+		if (doc) {
+			const commentCount = await commentStore.getCommentCount(doc.id)
+			const likeCount = await likeStore.getLikeCount(doc.id)
+			const isLike = await likeStore.isLike(doc.id)
+			const isBookmark = await bookmarkStore.isBookmark(doc.id)
+			const data = {
+				id: doc.id,
+				comment_count: commentCount,
+				like_count: likeCount,
+				is_like: isLike,
+				is_bookmark: isBookmark,
+				shareBlog: null,
+				...doc.data()
+			}
+
+			if (data.createdAt?.toDate) {
+				data.createdAt = data.createdAt.toDate();
+			}
+			return data
+		} else {
+			return null
 		}
 	}
 
-	const deleteBlog = async (blog_id) => {
-		try {
-			const blogDocRef = doc(db, "blog", blog_id);
-			await deleteDoc(blogDocRef);
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('ブログの削除に失敗しました');
-		}
+	const deleteItem = async (blog_id) => {
+		await BaseAPI.deleteData(
+			{db_name: "blog", item_id: blog_id},
+		)
 	}
 
 	// 自分のブログ一覧取得
 	const getList = async () => {
-		const userInfo = authStore.userInfo;
-		const result = [];
+		const userInfo = authStore.userInfo
+		const filters = [
+			["uid", "==", userInfo.uid],
+			["isPublished", "==", true]
+		]
+		const sorters = [
+			["createdAt", "desc"]
+		]
 
-		try {
-			const blogDocRefs = collection(db, "blog");
-			const blogQuery = query(
-				blogDocRefs,
-				where("uid", "==", userInfo.uid),
-				where("isPublished", "==", true),
-				orderBy("createdAt", "desc"),
-			);
-			const querySnapshot = await getDocs(blogQuery);
-			const blogList = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() };
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate();
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+					sorters: sorters,
+					limit: 10
 				}
-				return { ...data, rawDoc: doc };
-			});
+			}
+		)
+
+		const result = []
+		if (querySnapshot) {
+			const blogList = querySnapshot.docs.map((doc) => {
+				const data = { id: doc.id, ...doc.data() }
+				if (data.createdAt?.toDate) {
+					data.createdAt = data.createdAt.toDate()
+				}
+				return { ...data, rawDoc: doc }
+			})
 			
 			const commentCounts = await commentStore.getCommentCounts(
 				blogList.map((blog) => blog.id)
@@ -163,39 +150,47 @@ export const useBlogStore = defineStore('blog', () => {
 					like_count: likeCounts[blog.id] || 0,
 					is_like: isLikes[blog.id] || false,
 					is_bookmark: isBookmarks[blog.id] || false
-				});
+				})
 			}
-			return result;
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('データの取得に失敗しました');
 		}
+		return result
 	}
+
 	// 全ユーザーのブログデータ取得
 	const getListForAll = async () => {
-		const result = [];
+		const filters = [
+			["isPublished", "==", true]
+		]
+		const sorters = [
+			["createdAt", "desc"]
+		]
 
-		try {
-			const blogDocRefs = collection(db, "blog");
-			const blogQuery = query(
-				blogDocRefs,
-				where("isPublished", "==", true),
-				orderBy("createdAt", "desc"),
-			);
-			const querySnapshot = await getDocs(blogQuery);
-			const blogList = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() };
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate();
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+					sorters: sorters,
+					limit: 10
 				}
-				return { ...data, rawDoc: doc };
-			});
+			}
+		)
+
+		const result = []
+		if (querySnapshot) {
+			const blogList = querySnapshot.docs.map((doc) => {
+				const data = { id: doc.id, ...doc.data() }
+				if (data.createdAt?.toDate) {
+					data.createdAt = data.createdAt.toDate()
+				}
+				return { ...data, rawDoc: doc }
+			})
 			const commentCounts = await commentStore.getCommentCounts(
 				blogList.map((blog) => blog.id)
-			);
+			)
 			const likeCounts = await likeStore.getLikeCounts(
 				blogList.map((blog) => blog.id)
-			);
+			)
 			const isLikes = await likeStore.isLikes(
 				blogList.map((blog) => blog.id)
 			)
@@ -210,41 +205,47 @@ export const useBlogStore = defineStore('blog', () => {
 					like_count: likeCounts[blog.id] || 0,
 					is_like: isLikes[blog.id] || false,
 					is_bookmark: isBookmarks[blog.id] || false
-				});
+				})
 			}
-			return result;
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('データの取得に失敗しました');
 		}
+		return result
 	}
+
 	// フォロー中ユーザーのブログデータ取得
 	const getListForFollow = async () => {
-		const result = [];
+		const filters = [
+			["isPublished", "==", true]
+		]
+		const sorters = [
+			["createdAt", "desc"]
+		]
 
-		try {
-			const blogDocRefs = collection(db, "blog");
-			const blogQuery = query(
-				blogDocRefs,
-				where("isPublished", "==", true),
-				orderBy("createdAt", "desc"),
-			);
-			const querySnapshot = await getDocs(blogQuery);
-			const blogList = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() };
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate();
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+					sorters: sorters,
+					limit: 10
 				}
-				return { ...data, rawDoc: doc };
-			});
-			
+			}
+		)
+
+		const result = []
+		if (querySnapshot) {
+			const blogList = querySnapshot.docs.map((doc) => {
+				const data = { id: doc.id, ...doc.data() }
+				if (data.createdAt?.toDate) {
+					data.createdAt = data.createdAt.toDate()
+				}
+				return { ...data, rawDoc: doc }
+			})
 			const commentCounts = await commentStore.getCommentCounts(
 				blogList.map((blog) => blog.id)
-			);
+			)
 			const likeCounts = await likeStore.getLikeCounts(
 				blogList.map((blog) => blog.id)
-			);
-
+			)
 			// 結果を組み立てる
 			for (const blog of blogList) {
 				result.push({
@@ -252,44 +253,49 @@ export const useBlogStore = defineStore('blog', () => {
 					reply_count: 0, // 必要なら更新
 					comment_count: commentCounts[blog.id] || 0,
 					like_count: likeCounts[blog.id] || 0,
-				});
+				})
 			}
-			return result;
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('データの取得に失敗しました');
 		}
+		return result
 	}
+
 	// お気に入りのブログデータ取得
 	const getListForBookmark = async () => {
-		const result = [];
+		const result = []
 
-		try {
-			const blogIds = await bookmarkStore.getBlogIds();
-			for (const blogId of blogIds) {
-				result.push(await get(blogId));
-			}
-			return result;
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('データの取得に失敗しました');
+		const blogIds = await bookmarkStore.getBlogIds()
+		for (const blogId of blogIds) {
+			result.push(await getDetail(blogId))
 		}
+		return result
 	}
+
 	// カテゴリーIDに一致するブログ数取得
 	const getListForCategoryCount = async (category_id) => {
-		const userInfo = authStore.userInfo;
+		const userInfo = authStore.userInfo
+		const filters = [
+			["uid", "==", userInfo.uid],
+			["isPublished", "==", true]
+		]
+		const sorters = [
+			["createdAt", "desc"]
+		]
 
-		try {
-			const blogDocRefs = collection(db, "blog");
-			const querySnapshot = await getDocs(query(
-				blogDocRefs,
-				where("uid", "==", userInfo.uid),
-				where("category_id", "==", category_id)
-			));
-			return querySnapshot.size;
-		} catch (error) {
-			console.log(error.message);
-			throw new Error('データの取得に失敗しました');
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+					sorters: sorters,
+					limit: 10
+				}
+			}
+		)
+
+		if (querySnapshot) {
+			return querySnapshot.size
+		} else {
+			return 0
 		}
 	}
 
@@ -299,8 +305,8 @@ export const useBlogStore = defineStore('blog', () => {
 		setSelectType,
 		create,
 		update,
-		get,
-		deleteBlog,
+		getDetail,
+		deleteItem,
 		getList,
 		getListForAll,
 		getListForFollow,

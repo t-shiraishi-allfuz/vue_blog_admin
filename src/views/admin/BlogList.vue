@@ -61,19 +61,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useBlogStore } from '@/stores/blogStore';
-import { format } from 'date-fns';
-import { mdiMagnify, mdiDelete } from '@mdi/js';
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useBlogStore } from '@/stores/blogStore'
+import { format } from 'date-fns'
 
-const router = useRouter();
-const blogStore = useBlogStore();
+const router = useRouter()
+const blogStore = useBlogStore()
 
-const blogList = ref([]);
-const search = ref('');
-const deleteDialog = ref(false);
-const blogToDelete = ref(null);
+const blogList = ref([])
+const search = ref('')
+const deleteDialog = ref(false)
+const blogToDelete = ref(null)
 
 const headers = [
 	{title: "記事タイトル", value: "title" },
@@ -82,56 +81,57 @@ const headers = [
 	{title: "コメント", value: "comment_count" },
 	{title: "いいね", value: "like_count" },
 	{title: "削除", value: "actions", sortable: false },
-];
+]
 
 // 一覧取得
 const fetchBlogList = async () => {
-	blogList.value = await blogStore.getList();
+	blogList.value = await blogStore.getList()
 }
 
 // 個別削除確認ダイアログを開く
 const openDeleteDialog = (blog) => {
-	blogToDelete.value = blog;
-	deleteDialog.value = true;
-};
+	blogToDelete.value = blog
+	deleteDialog.value = true
+}
 
 // 個別削除を確定する
 const deleteBlog = async () => {
-	deleteDialog.value = false;
-	await blogStore.deleteBlog(blogToDelete.value.id);
-	blogList.value = blogList.value.filter(blog => blog.id !== blogToDelete.value.id);
-};
+	deleteDialog.value = false
+
+	await blogStore.deleteItem(blogToDelete.value.id)
+	blogList.value = blogList.value.filter(blog => blog.id !== blogToDelete.value.id)
+}
 
 // 検索条件に基づく投稿フィルタリング
 const filteredBlogList = computed(() => {
-	if (!search.value) return blogList.value;
+	if (!search.value) return blogList.value
 	return blogList.value.filter(blog =>
 		blog.title.toLowerCase().includes(search.value.toLowerCase())
-	);
-});
+	)
+})
 
 // 日時フォーマット関数
 const formatDate = (date) => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
-};
+}
 
 // 詳細ページに移動
 const goToDetail = (blog) => {
-	router.push(`/admin/blog_detail/${blog.id}`);
-};
+	router.push({path: "/admin/blog_detail", query: {blog_id: blog.id}});
+}
 
 // コメント一覧に移動
 const goToCommentList = (blog) => {
-	router.push(`/admin/comment_list/${blog.id}`);
+	router.push({path: "/admin/comment_list", query: {blog_id: blog.id}});
 }
 
 // いいね一覧に移動
 const goToLikeList = (blog) => {
-	router.push(`/admin/like_list/${blog.id}`);
+	router.push({path: "/admin/like_list", query: {blog_id: blog.id}});
 }
 
 onMounted(async () => {
-	await fetchBlogList();
+	await fetchBlogList()
 })
 </script>
 

@@ -21,28 +21,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useAuthStore } from '@/stores/authStore';
-import { mdiEmailOutline } from '@mdi/js';
+import { ref } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 
-const authStore = useAuthStore();
+const authStore = useAuthStore()
 
-const email = ref('');
+const email = ref('')
 
 // パスワードリセット
 const resetPassword = async () => {
 	if (!email.value) {
-		alert('メールアドレスが入力されていません');
-		return;
+		alert('メールアドレスが入力されていません')
+		return
 	}
 
 	try {
-		await authStore.resetPassword(email.value);
-		alert('パスワードリセットメールが送信されました');
+		await authStore.resetPassword(email.value)
+		alert('パスワードリセットメールが送信されました')
 	} catch(error) {
-		alert('パスワードリセットメールの送信に失敗しました');
+		alert('パスワードリセットメールの送信に失敗しました')
 	}
-};
+}
 </script>
 
 <style scoped>

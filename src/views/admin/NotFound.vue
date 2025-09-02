@@ -1,9 +1,9 @@
 <template>
-  <div class="not-found">
-    <h1>404 - ページが見つかりません</h1>
-    <p>申し訳ありませんが、お探しのページは存在しません。</p>
-    <router-link to="/">ホームへ戻る</router-link>
-  </div>
+	<div class="not-found">
+		<h1>404 - ページが見つかりません</h1>
+		<p>申し訳ありませんが、お探しのページは存在しません。</p>
+		<router-link to="/">ホームへ戻る</router-link>
+	</div>
 </template>
 
 <script setup>

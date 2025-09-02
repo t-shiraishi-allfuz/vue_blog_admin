@@ -70,94 +70,78 @@
 </template>
 
 <script setup>
-import { ref, computed, defineEmits } from 'vue';
-import { useImagesFolderStore } from '@/stores/imagesFolderStore';
-import { format } from 'date-fns';
-import { mdiDelete } from '@mdi/js';
+import { ref, computed } from 'vue'
+import { useImagesFolderStore } from '@/stores/imagesFolderStore'
+import { format } from 'date-fns'
 
-const imagesFolderStore = useImagesFolderStore();
-const folderList = computed(() => imagesFolderStore.folderList);
+const imagesFolderStore = useImagesFolderStore()
+const folderList = computed(() => imagesFolderStore.folderList)
 
-const emit = defineEmits(["reFetchFolderList"]);
+const emit = defineEmits(["reFetchFolderList"])
 
-const createDialog = ref(false);
+const createDialog = ref(false)
 const folder = ref({
 	name: ""
-});
+})
 
-const updateDialog = ref(false);
-const folderToUpdate = ref(null);
+const updateDialog = ref(false)
+const folderToUpdate = ref(null)
 
-const deleteDialog = ref(false);
-const folderToDelete = ref(null);
+const deleteDialog = ref(false)
+const folderToDelete = ref(null)
 
 const headers = [
 	{title: "フォルダ名", value: "name" },
 	{title: "作成日時", value: "createdAt" },
 	{title: "削除", value: "actions", sortable: false },
-];
+]
 
 // 日時フォーマット関数
 const formatDate = (date) => {
-	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
-};
+	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
+}
 
 // フォルダ作成確認ダイアログを開く
 const openCreateDialog = () => {
-	createDialog.value = true;
-};
+	createDialog.value = true
+}
 
 // フォルダ更新確認ダイアログを開く
 const openUpdateDialog = (folder) => {
-	folderToUpdate.value = folder;
-	updateDialog.value = true;
-};
+	folderToUpdate.value = folder
+	updateDialog.value = true
+}
 
 // フォルダ削除確認ダイアログを開く
 const openDeleteDialog = (image) => {
-	folderToDelete.value = image;
-	deleteDialog.value = true;
-};
+	folderToDelete.value = image
+	deleteDialog.value = true
+}
 
 // 新規フォルダ作成
 const createFolder = async () => {
-	createDialog.value = false;
+	createDialog.value = false
 
-	try {
-		await imagesFolderStore.create(folder.value);
-		emit("reFetchFolderList");
-		alert('画像フォルダが作成されました');
-	} catch (error) {
-		alert(error);
-	}
+	await imagesFolderStore.create(folder.value)
+	emit("reFetchFolderList")
 }
 
 const updateFolder = async () => {
-	updateDialog.value = false;
+	updateDialog.value = false
 
-	try {
-		await imagesFolderStore.update(folderToUpdate.value);
-		folderToUpdate.value = null;
-		emit("reFetchFolderList");
-		alert('画像フォルダを更新しました');
-	} catch (error) {
-		alert(error);
-	}
+	await imagesFolderStore.update(folderToUpdate.value)
+	folderToUpdate.value = null
+	emit("reFetchFolderList")
 }
 
 // フォルダ削除
 const deleteFolder = async () => {
-	deleteDialog.value = false;
+	deleteDialog.value = false
 
-	try {
-		await imagesFolderStore.delete(folderToDelete.value.id);
-		folderToDelete.value = null;
-		emit("reFetchFolderList");
-		alert('画像フォルダが削除されました');
-	} catch (error) {
-		alert(error);
-	}
-};
+	await imagesFolderStore.deleteItem(folderToDelete.value.id)
+	folderToDelete.value = null
+	emit("reFetchFolderList")
+}
 </script>
 
 <style scoped>

@@ -34,7 +34,7 @@
 						label="サムネイル設定"
 						variant="flat"
 						v-model="selectThumb"
-						:prepend-icon="mdiImage"
+						prepend-icon="mdi-image"
 						@click="openImageDialog('thumb')">
 						サムネイル設定
 					</v-btn>
@@ -82,16 +82,14 @@
 <script setup>
 import {
 	ref,
-	defineProps,
 	computed,
 	watch,
 	onMounted
-} from 'vue';
-import { useBlogStore } from '@/stores/blogStore';
-import { useImagesStore } from '@/stores/imagesStore';
-import { useBlogCategoryStore } from '@/stores/blogCategoryStore';
-import { mdiImage } from '@mdi/js';
-import BlogCard from '@/components/BlogCard';
+} from 'vue'
+import { useBlogStore } from '@/stores/blogStore'
+import { useImagesStore } from '@/stores/imagesStore'
+import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
+import BlogCard from '@/components/BlogCard.vue'
 
 const props = defineProps({
 	blog: {
@@ -110,22 +108,22 @@ const props = defineProps({
 		type: Boolean,
 		required: true,
 	},
-});
-const blog = ref(props.blog);
-const shareBlog = ref(props.shareBlog);
-const shareSetting = ref(props.shareSetting);
-const isUpdate = ref(props.isUpdate);
+})
+const blog = ref(props.blog)
+const shareBlog = ref(props.shareBlog)
+const shareSetting = ref(props.shareSetting)
+const isUpdate = ref(props.isUpdate)
 
-const blogStore = useBlogStore();
-const imagesStore = useImagesStore();
-const blogCategoryStore = useBlogCategoryStore();
-const categoryList = computed(() => blogCategoryStore.categoryList);
+const blogStore = useBlogStore()
+const imagesStore = useImagesStore()
+const blogCategoryStore = useBlogCategoryStore()
+const categoryList = computed(() => blogCategoryStore.categoryList)
 
-const imageList = ref([]);
-const imageSelectDialog = ref(false);
-const quill = ref(null);
-const selectThumb = ref(null);
-const selectType = ref('content');
+const imageList = ref([])
+const imageSelectDialog = ref(false)
+const quill = ref(null)
+const selectThumb = ref(null)
+const selectType = ref('content')
 
 const editorOptions = ref({
 	theme: 'snow',
@@ -140,31 +138,31 @@ const editorOptions = ref({
 			],
 			handlers: {
 				image: function () {
-					quill.value = this.quill;
-					openImageDialog('content');
+					quill.value = this.quill
+					openImageDialog('content')
 				}
 			}
 		},
 	}
-});
+})
 
 // 画像選択ダイアログ表示
 const openImageDialog = (type) => {
-	selectType.value = type;
-	imageSelectDialog.value = true;
+	selectType.value = type
+	imageSelectDialog.value = true
 }
 
 // 画像を選択
 const selectImage = (imageUrl) => {
-	imageSelectDialog.value = false;
+	imageSelectDialog.value = false
 
 	if (selectType.value == 'content') {
-		const range = quill.value.getSelection();
-		quill.value.insertEmbed(range.index, 'image', imageUrl);
-		quill.value.setSelection(range.index + 1);
+		const range = quill.value.getSelection()
+		quill.value.insertEmbed(range.index, 'image', imageUrl)
+		quill.value.setSelection(range.index + 1)
 	} else {
-		selectThumb.value = imageUrl;
-		blog.value.thumbUrl = imageUrl;
+		selectThumb.value = imageUrl
+		blog.value.thumbUrl = imageUrl
 	}
 }
 
@@ -176,34 +174,33 @@ const submitPost = async () => {
 
 	try {
 		if (isUpdate.value) {
-			await blogStore.update(blog.value);
+			await blogStore.update(blog.value)
 		} else {
-			blog.value.share_blog_id = shareBlog.value ? shareBlog.value.id : null;
-			console.log(blog.value);
-			await blogStore.create(blog.value);
+			blog.value.share_blog_id = shareBlog.value ? shareBlog.value.id : null
+			await blogStore.create(blog.value)
 		}
 
 		if (blog.value.isPublished) {
 			if (isUpdate.value) {
-				alert("ブログが更新されました");
+				alert("ブログが更新されました")
 			} else {
-				alert("ブログが投稿されました");
+				alert("ブログが投稿されました")
 			}
 		} else {
-			alert("下書き保存されました");
+			alert("下書き保存されました")
 		}
 	} catch (error) {
-		alert(error);
+		alert(error)
 	}
-};
+}
 
 watch(blog.value.category_id, (newValue) => {
-	blog.value.category_id = newValue;
-});
+	blog.value.category_id = newValue
+})
 
 onMounted(async() => {
-	categoryList.value = await blogCategoryStore.getList();
-	imageList.value = await imagesStore.getList(null);
+	categoryList.value = await blogCategoryStore.getList()
+	imageList.value = await imagesStore.getList(null)
 })
 </script>
 

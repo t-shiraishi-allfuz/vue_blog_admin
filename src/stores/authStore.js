@@ -1,6 +1,6 @@
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-import { auth } from '@/setting/firebase';
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import { auth } from '@/setting/firebase'
 import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
@@ -11,9 +11,9 @@ import {
 	sendPasswordResetEmail,
 	verifyPasswordResetCode,
 	confirmPasswordReset
-} from 'firebase/auth';
-import { useUsersStore } from '@/stores/usersStore';
-import { useBlogSettingStore } from '@/stores/blogSettingStore';
+} from 'firebase/auth'
+import { useUsersStore } from '@/stores/usersStore'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
 
 export const useAuthStore = defineStore('auth', () => {
 	const usersStore = useUsersStore();

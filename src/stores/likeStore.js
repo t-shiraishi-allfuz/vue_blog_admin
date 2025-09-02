@@ -1,160 +1,166 @@
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-import { db } from '@/setting/firebase';
-import {
-	collection,
-	query,
-	where,
-	getDocs,
-	addDoc,
-	deleteDoc,
-	doc
-} from 'firebase/firestore';
-import { useAuthStore } from '@/stores/authStore';
-import { useBlogSettingStore } from '@/stores/blogSettingStore';
+import BaseAPI from '@/api/base'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
 
 export const useLikeStore = defineStore('like', () => {
-	const authStore = useAuthStore();
-	const blogSettingStore = useBlogSettingStore();
+	const authStore = useAuthStore()
+	const blogSettingStore = useBlogSettingStore()
 
 	const create = async (blog_id) => {
-		const userInfo = authStore.userInfo;
+		const userInfo = authStore.userInfo
 
-		try {
-			const likesDocRefs = collection(db, "like");
-			await addDoc(likesDocRefs, {
+		await BaseAPI.addData(
+			{db_name: "like"},
+			{
 				uid: userInfo.uid,
 				blog_id: blog_id,
 				createdAt: new Date(),
 				updatedAt: new Date()
-			});
-		} catch (error) {
-			throw new Error('いいねに失敗しました');
-		}
+			}
+		)
 	}
 
 	// 指定のブログにいいねした
 	const getListForBlog = async (blog_id) => {
-		const result = [];
+		const filters = [
+			["blog_id", "==", blog_id]
+		]
 
-		try {
-			const likesDocRefs = collection(db, "like");
-			const querySnapshot = await getDocs(query(
-				likesDocRefs,
-				where("blog_id", "==", blog_id)
-			));
-			const likeList = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() };
-				if (data.createdAt && data.createdAt.toDate) {
-					data.createdAt = data.createdAt.toDate();
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "like",
+				searchConditions: {
+					filters: filters,
 				}
-				return { ...data };
-			})
-
-			const settingList = await blogSettingStore.getForUids(
-				likeList.map((like) => like.uid)
-			)
-
-			for (const like of likeList) {
-				result.push({
-					...like,
-					user: settingList[like.uid] || null
-				})
 			}
-			return result;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
-		}
+		)
+
+		if (!querySnapshot) return []
+
+		const likeList = querySnapshot.docs.map((doc) => {
+			const data = { id: doc.id, ...doc.data() }
+			if (data.createdAt && data.createdAt.toDate) {
+				data.createdAt = data.createdAt.toDate()
+			}
+			return data
+		})
+
+		const settingList = await blogSettingStore.getForUids(
+			likeList.map((like) => like.uid)
+		)
+
+		return likeList.map(like => ({
+			...like,
+			user: settingList[like.uid] || null
+		}))
 	}
 
 	// 指定のユーザーがいいねした
 	const getListForUser = async () => {
-		const userInfo = authStore.userInfo;
-		const result = [];
-
-		try {
-			const likesDocRefs = collection(db, "like");
-			const querySnapshot = await getDocs(query(
-				likesDocRefs,
-				where("uid", "==", userInfo.uid)
-			));
-			querySnapshot.forEach(doc => {
-				const data = { id: doc.id, ...doc.data() };
-				if (data.createdAt && data.createdAt.toDate) {
-					data.createdAt = data.createdAt.toDate();
+		const userInfo = authStore.userInfo
+		const filters = [
+			["uid", "==", userInfo.uid]
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "like",
+				searchConditions: {
+					filters: filters,
 				}
-				result.push(data);
-			})
-			return result;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
-		}
+			}
+		)
+
+		if (!querySnapshot) return []
+
+		return querySnapshot.docs.map((doc) => {
+			const data = { id: doc.id, ...doc.data() }
+			if (data.createdAt && data.createdAt.toDate) {
+				data.createdAt = data.createdAt.toDate()
+			}
+			return data
+		})
 	}
 
 	const getLikeCounts = async (blogIds) => {
-		const counts = {};
-		for (const id of blogIds) {
-			counts[id] = await getLikeCount(id);
-		}
-		return counts;
+		const promises = blogIds.map(id => getLikeCount(id))
+		const results = await Promise.all(promises)
+		const counts = {}
+		blogIds.forEach((id, index) => {
+			counts[id] = results[index]
+		})
+		return counts
 	}
 
 	// 指定のブログにいいねした数
 	const getLikeCount = async (blog_id) => {
-		const result = ref(null);
-
-		try {
-			result.value = await getListForBlog(blog_id);
-			return result.value.length;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
-		}
+		const filters = [
+			["blog_id", "==", blog_id],
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "like",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+		return querySnapshot ? querySnapshot.size : 0
 	}
 
 	// 指定のブログにいいねしてるかどうか（一括）
 	const isLikes = async (blogIds) => {
-		const results = {};
-
-		for (const id of blogIds) {
-			results[id] = await isLike(id);
-		}
-		return results;
+		const promises = blogIds.map(id => isLike(id))
+		const results = await Promise.all(promises)
+		const likes = {}
+		blogIds.forEach((id, index) => {
+			likes[id] = results[index]
+		})
+		return likes
 	}
 
 	// 指定のブログにいいねしてるかどうか
 	const isLike = async (blog_id) => {
-		const userInfo = authStore.getUserInfo();
-
-		try {
-			const likesDocRefs = collection(db, "like");
-			const querySnapshot = await getDocs(query(
-				likesDocRefs,
-				where("blog_id", "==", blog_id),
-				where("uid", "==", userInfo.uid)
-			));
-			const result = querySnapshot.docs;
-			return result.length > 0 ? true : false;
-		} catch (error) {
-			throw new Error('データの取得に失敗しました');
-		}
+		const userInfo = authStore.getUserInfo()
+		const filters = [
+			["blog_id", "==", blog_id],
+			["uid", "==", userInfo.uid]
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "like",
+				searchConditions: {
+					filters: filters,
+					limit: 1
+				}
+			}
+		)
+		return !!querySnapshot?.docs.length
 	}
 
-	const deleteLike = async (blog_id) => {
-		const userInfo = authStore.getUserInfo();
+	const deleteItem = async (blog_id) => {
+		const userInfo = authStore.getUserInfo()
+		const filters = [
+			["blog_id", "==", blog_id],
+			["uid", "==", userInfo.uid]
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "like",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
 
-		try {
-			const likesDocRefs = collection(db, "like");
-			const querySnapshot = await getDocs(query(
-				likesDocRefs,
-				where("blog_id", "==", blog_id),
-				where("uid", "==", userInfo.uid)
-			));
+		if (querySnapshot) {
 			const deletePromises = querySnapshot.docs.map((docSnapshot) =>
-				deleteDoc(doc(likesDocRefs, docSnapshot.id))
-			);
-			await Promise.all(deletePromises);
-		} catch (error) {
-			throw new Error('いいねの削除に失敗しました');
+				BaseAPI.deleteData(
+					{db_name: "like", item_id: docSnapshot.id},
+				)
+			)
+			await Promise.all(deletePromises)
 		}
 	}
 
@@ -166,6 +172,6 @@ export const useLikeStore = defineStore('like', () => {
 		getLikeCount,
 		isLikes,
 		isLike,
-		deleteLike
+		deleteItem
 	}
 })

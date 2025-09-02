@@ -25,7 +25,7 @@
 						{{ setting.name }}
 					</div>
 					<div class="ml-1 mb-1">
-						<v-icon :icon="mdiClock" start />
+						<v-icon icon="mdi-clock" start />
 						{{ formatDate(blog.createdAt) }}
 					</div>
 				</v-col>
@@ -46,13 +46,8 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue';
-import { format } from 'date-fns';
-import {
-	mdiClock,
-	mdiHeart,
-	mdiHeartOutline
-} from '@mdi/js';
+import { ref } from 'vue'
+import { format } from 'date-fns'
 
 const props = defineProps({
 	blog: {
@@ -63,22 +58,22 @@ const props = defineProps({
 		type: Object,
 		required: true
 	}
-});
-const blog = ref(props.blog);
-const setting = ref(props.setting);
+})
+const blog = ref(props.blog)
+const setting = ref(props.setting)
 
 // 日時フォーマット関数
 const formatDate = (date) => {
-	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
-};
+	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
+}
 
 // アイコン設定
 const formatLike = (blog) => {
-	return blog.is_like ? mdiHeart : mdiHeartOutline;
+	return blog.is_like ? "mdi-heart" : "mdi-heart-outline"
 }
 // アイコン設定（カラー）
 const colorIconPink = (flag) => {
-	return flag ? "pink" : "black";
+	return flag ? "pink" : "black"
 }
 </script>
 

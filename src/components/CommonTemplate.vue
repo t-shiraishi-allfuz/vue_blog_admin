@@ -17,18 +17,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useBlogSettingStore } from '@/stores/blogSettingStore';
-import CommonHeader from '@/components/CommonHeader.vue';
-import CommonSidemenu from '@/components/CommonSidemenu.vue';
+import { ref, onMounted } from 'vue'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import CommonHeader from '@/components/CommonHeader.vue'
+import CommonSidemenu from '@/components/CommonSidemenu.vue'
 
-const blogSettingStore = useBlogSettingStore();
+const blogSettingStore = useBlogSettingStore()
 
-const isLoading = ref(false);
+const isLoading = ref(false)
 
 onMounted(async () => {
-	await blogSettingStore.get();
-	isLoading.value = true;
+	await blogSettingStore.getDetail()
+	isLoading.value = true
 })
 </script>
 

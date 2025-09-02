@@ -112,126 +112,110 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps, defineEmits, watch } from 'vue';
-import { useImagesStore } from '@/stores/imagesStore';
-import { useImagesFolderStore } from '@/stores/imagesFolderStore';
-import { mdiDelete, mdiImageMove } from '@mdi/js';
+import { ref, computed, watch } from 'vue'
+import { useImagesStore } from '@/stores/imagesStore'
+import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 
 const props = defineProps({
 	selectedFolder: {
 		type: Object,
 		required: true
 	}
-});
-const selectedFolder = ref(props.selectedFolder);
-const emit = defineEmits(["changeFolderList"]);
+})
+const selectedFolder = ref(props.selectedFolder)
+const emit = defineEmits(["changeFolderList"])
 
 // 画像取得
-const imagesStore = useImagesStore();
-const imageList = computed(() => imagesStore.imageList);
+const imagesStore = useImagesStore()
+const imageList = computed(() => imagesStore.imageList)
 
-const imagesFolderStore = useImagesFolderStore();
-const folderList = computed(() => imagesFolderStore.folderList);
+const imagesFolderStore = useImagesFolderStore()
+const folderList = computed(() => imagesFolderStore.folderList)
 
 // フォルダリストにデフォルト値を追加
-const defaultSelect = ref({id: null, name: '指定なし'});
+const defaultSelect = ref({id: null, name: '指定なし'})
 const extendedFolderList = computed(() => {
-	return [defaultSelect.value, ...folderList.value];
-});
+	return [defaultSelect.value, ...folderList.value]
+})
 
 // モーダル用データ
-const imageViewerDialog = ref(false);
-const currentImage = ref(null);
+const imageViewerDialog = ref(false)
+const currentImage = ref(null)
 
-const selectedMoveFolder = ref(null);
-const moveDialog = ref(false);
-const imageToMove = ref(null);
+const selectedMoveFolder = ref(null)
+const moveDialog = ref(false)
+const imageToMove = ref(null)
 
-const selectedForDelete = ref([]); // 削除用の選択画像リスト
-const deleteDialog = ref(false);
-const batchDeleteDialog = ref(false);
-const imageToDelete = ref(null);
+const selectedForDelete = ref([]) // 削除用の選択画像リスト
+const deleteDialog = ref(false)
+const batchDeleteDialog = ref(false)
+const imageToDelete = ref(null)
 
 const isAllSelectedComputed = computed({
 	get: () => selectedForDelete.value.length === imageList.value.length && imageList.value.length > 0,
 	set: (value) => {
-		selectedForDelete.value = value ? [...imageList.value] : [];
+		selectedForDelete.value = value ? [...imageList.value] : []
 	},
-});
+})
 
 const openImageViewer = (imageUrl) => {
-	currentImage.value = imageUrl;
-	imageViewerDialog.value = true;
+	currentImage.value = imageUrl
+	imageViewerDialog.value = true
 }
 
 // 移動確認ダイアログを開く
 const openMoveDialog = (image) => {
-	imageToMove.value = image;
-	moveDialog.value = true;
-};
+	imageToMove.value = image
+	moveDialog.value = true
+}
 
 // 画像移動
 const moveImage = async () => {
-	moveDialog.value = false;
+	moveDialog.value = false
 
-	try {
-		await imagesStore.update(imageToMove.value, selectedMoveFolder.value.id);
-		emit('changeFolderList', selectedFolder.value);
-		alert('指定のフォルダに画像を移動しました');
-	} catch (error) {
-		alert(error);
-	}
-};
+	await imagesStore.update(imageToMove.value, selectedMoveFolder.value.id)
+	emit('changeFolderList', selectedFolder.value)
+}
 
 // 個別削除確認ダイアログを開く
 const openDeleteDialog = (image) => {
-	imageToDelete.value = image;
-	deleteDialog.value = true;
-};
+	imageToDelete.value = image
+	deleteDialog.value = true
+}
 
 // 一括削除確認ダイアログを開く
 const openBatchDeleteDialog = () => {
-	if (selectedForDelete.value.length === 0) return;
-	batchDeleteDialog.value = true;
-};
+	if (selectedForDelete.value.length === 0) return
+	batchDeleteDialog.value = true
+}
 
 // 画像削除
 const deleteImage = async () => {
-	deleteDialog.value = false;
+	deleteDialog.value = false
 
-	try {
-		await imagesStore.delete(imageToDelete.value);
-		imageToDelete.value = null;
-		emit('changeFolderList', selectedFolder.value);
-		alert('画像が削除されました');
-	} catch (error) {
-		alert(error);
-	}
-};
+	await imagesStore.deleteItem(imageToDelete.value)
+	imageToDelete.value = null
+	emit('changeFolderList', selectedFolder.value)
+}
 
 // 一括削除
 const deleteSelectedImages = async () => {
-	batchDeleteDialog.value = false;
+	batchDeleteDialog.value = false
 
-	if (selectedForDelete.value.length === 0) return;
+	if (selectedForDelete.value.length === 0) return
 
-	try {
-		await Promise.all(selectedForDelete.value.map((image) => imagesStore.delete(image)));
-		selectedForDelete.value = [];
-		emit('changeFolderList', selectedFolder.value);
-		alert('選択した画像が削除されました');
-	} catch (error) {
-		alert(error);
-	}
-};
+	await Promise.all(selectedForDelete.value.map((image) => imagesStore.deleteItem(image)))
+	selectedForDelete.value = []
+	emit('changeFolderList', selectedFolder.value)
+}
 
 watch(selectedFolder, (newValue) => {
-	emit('changeFolderList', newValue);
-});
+	emit('changeFolderList', newValue)
+})
 
 watch(() => props.selectedFolder, (newValue) => {
-	selectedFolder.value = newValue;
-});
+	selectedFolder.value = newValue
+})
 </script>
 
 <style scoped lang="scss">

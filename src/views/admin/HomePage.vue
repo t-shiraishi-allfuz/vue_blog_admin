@@ -1,19 +1,17 @@
 <template>
-	<CommonTemplate>
-		<v-tabs v-model="activeTab">
-			<v-tab v-for="(tab, index) in tabs" :key="index">{{ tab }}</v-tab>
-		</v-tabs>
-		<v-window v-model="activeTab">
-			<v-window-item
-				v-for="(component, index) in tabComponents"
-				:key="index"
-				transition="none"
-				reverse-transition="none"
-			>
-				<component :is="component" />
-			</v-window-item>
-		</v-window>
-	</CommonTemplate>
+	<v-tabs v-model="activeTab">
+		<v-tab v-for="(tab, index) in tabs" :key="index">{{ tab }}</v-tab>
+	</v-tabs>
+	<v-window v-model="activeTab">
+		<v-window-item
+			v-for="(component, index) in tabComponents"
+			:key="index"
+			transition="none"
+			reverse-transition="none"
+		>
+			<component :is="component" />
+		</v-window-item>
+	</v-window>
 </template>
 
 <script setup>

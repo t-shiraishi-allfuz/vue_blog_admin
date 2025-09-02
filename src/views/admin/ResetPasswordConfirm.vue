@@ -30,55 +30,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/authStore';
-import {
-	mdiEyeOff,
-	mdiEye,
-	mdiLockOutline
-} from '@mdi/js';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
-const route = useRoute();
-const oobCode = route.query.oobCode;
+const route = useRoute()
+const oobCode = route.query.oobCode
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter()
+const authStore = useAuthStore()
 
-const password = ref('');
-const confirmPassword = ref('');
-const visibleIcon = ref(mdiEyeOff);
-const visibleType = ref('password');
+const password = ref('')
+const confirmPassword = ref('')
+const visibleIcon = ref("mdi-eye-off")
+const visibleType = ref('password')
 
 // 入力タイプ切り替え
 const changeVisible = () => {
-	visibleIcon.value = visibleIcon.value === mdiEyeOff ? mdiEye : mdiEyeOff;
-	visibleType.value = visibleType.value === 'password' ? 'text' : 'password';
+	visibleIcon.value = visibleIcon.value === "mdi-eye-off" ? "mdi-eye" : "mdi-eye-off"
+	visibleType.value = visibleType.value === 'password' ? 'text' : 'password'
 }
 
 // パスワードリセット
 const resetPassword = async () => {
 	if (password.value !== confirmPassword.value) {
-		alert('パスワードが一致しません');
-		return;
+		alert('パスワードが一致しません')
+		return
 	}
 
 	try {
-		await authStore.resetPasswordConfirm(oobCode, password.value);
-		alert('パスワードがリセットされました');
+		await authStore.resetPasswordConfirm(oobCode, password.value)
+		alert('パスワードがリセットされました')
 
-		await authStore.initializeAuth();
-		router.push('/user_login');
+		await authStore.initializeAuth()
+		router.push({path: "/user_login"})
 	} catch(error) {
-		alert(error);
+		alert(error)
 	}
 };
 
 onMounted(async () => {
 	if (!oobCode) {
-		alert('パスワード再設定コードがありません');
+		alert('パスワード再設定コードがありません')
 	}
-});
+})
 </script>
 
 <style scoped>
