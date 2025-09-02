@@ -15,6 +15,7 @@
 					/>
 					<VueEditor
 						v-model="blog.content"
+						:editorOptions="editorOptions"
 					/>
 					<v-text-field
 						type="text"
@@ -122,8 +123,35 @@ const {
 } = storeToRefs(blogCategoryStore)
 
 const imageSelectDialog = ref(false)
+const selectInnerImage = ref(null)
 const selectThumb = ref(null)
 const selectType = ref('content')
+
+let quillEditor = null
+let cursorPosition = null
+
+const editorOptions = ref({
+	theme: 'snow',
+	modules: {
+		toolbar: {
+			container: [
+				[{ 'header': [1, 2, 3, false] }],
+				[{ 'font': [] }, {'size': ['small', false, 'large', 'huge'] }],
+				['bold', 'italic', 'underline'],
+				['image'],
+				[{ 'color': [] }, { 'background': [] }],
+			],
+			handlers: {
+				image: function () {
+					console.log("ほげ")
+					quillEditor = this.quill
+					cursorPosition = quillEditor.getSelection().index
+					openImageDialog('content')
+				}
+			}
+		},
+	}
+})
 
 // 画像選択ダイアログ表示
 const openImageDialog = (type) => {
@@ -136,6 +164,10 @@ const selectImage = (imageUrl) => {
 	imageSelectDialog.value = false
 
 	if (selectType.value == 'content') {
+		if (quillEditor && cursorPosition !== null) {
+			quillEditor.insertEmbed(cursorPosition, 'image', imageUrl)
+			quillEditor.setSelection(cursorPosition + 1)
+		}
 	} else {
 		selectThumb.value = imageUrl
 		blog.value.thumbUrl = imageUrl
@@ -143,7 +175,6 @@ const selectImage = (imageUrl) => {
 }
 
 const submitPost = async () => {
-	console.log(blog.value)
 	if (!blog.value.title || !blog.value.content) {
 		alert("タイトルまたは本文が入力されていません");
 		return;

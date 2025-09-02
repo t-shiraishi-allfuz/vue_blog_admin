@@ -40,6 +40,5 @@ const goToList = () => {
 
 onMounted(async () => {
 	await getBlog()
-	console.log(blogDetail.value)
 })
 </script>
