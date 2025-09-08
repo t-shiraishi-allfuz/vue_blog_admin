@@ -8,10 +8,10 @@
 						label="タイトルを入力して下さい"
 						v-model="blog.title" />
 					<BlogCard
-						v-if="shareBlog"
+						v-if="props.shareBlog"
 						class="mb-5"
-						:blog="shareBlog"
-						:setting="shareSetting"
+						:blog="props.shareBlog"
+						:setting="props.shareSetting"
 					/>
 					<VueEditor
 						v-model="blog.content"
@@ -55,7 +55,7 @@
 				</v-card-text>
 				<v-card-actions>
 					<v-btn color="primary" variant="flat" type="submit">
-						{{ isUpdate ? '更新する' : '投稿する' }}
+						{{ props.isUpdate ? '更新する' : '投稿する' }}
 					</v-btn>
 				</v-card-actions>
 			</v-card>
@@ -65,10 +65,28 @@
 		<v-card>
 			<v-card-title>アップロード済みの画像を選択</v-card-title>
 			<v-card-text>
-				<div class="image-gallery">
-					<div v-for="image in imageList" :key="image.id" class="image-item">
-						<img :src="image.url" @click="selectImage(image.url)" alt="Image" />
-					</div>
+				<v-toolbar flat>
+					<v-spacer></v-spacer>
+					<v-select
+						v-if="extendedFolderList.length > 0"
+						label="画像フォルダ選択"
+						:items="extendedFolderList"
+						item-title="name"
+						item-value="id"
+						v-model="selectedFolderId"
+						hide-details
+					/>
+				</v-toolbar>
+				<div class="fileBox">
+					<ul class="image-list" v-if="extendedImageList.length > 0">
+						<li class="thumbnail" v-for="(image, index) in extendedImageList" :key="index">
+							<div class="image-gallery">
+								<span class="image-item">
+									<img :src="image.url" @click="selectImage(image.url)" alt="Image" />
+								</span>
+							</div>
+						</li>
+					</ul>
 				</div>
 			</v-card-text>
 			<v-card-actions>
@@ -83,6 +101,7 @@ import { ref, computed, watch, onMounted} from 'vue'
 import { storeToRefs } from "pinia"
 import { useBlogStore } from '@/stores/blogStore'
 import { useImagesStore } from '@/stores/imagesStore'
+import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { VueEditor } from "vue3-editor"
 import BlogCard from '@/components/BlogCard.vue'
@@ -106,17 +125,19 @@ const props = defineProps({
 	},
 })
 const blog = ref(props.blog)
-const shareBlog = ref(props.shareBlog)
-const shareSetting = ref(props.shareSetting)
-const isUpdate = ref(props.isUpdate)
 
 const blogStore = useBlogStore()
 const imagesStore = useImagesStore()
+const imagesFolderStore = useImagesFolderStore()
 const blogCategoryStore = useBlogCategoryStore()
 
 const {
 	imageList
 } = storeToRefs(imagesStore)
+
+const {
+	folderList
+} = storeToRefs(imagesFolderStore)
 
 const {
 	categoryList
@@ -126,6 +147,8 @@ const imageSelectDialog = ref(false)
 const selectInnerImage = ref(null)
 const selectThumb = ref(null)
 const selectType = ref('content')
+const defaultSelect = ref({id: null, name: '指定なし'})
+const selectedFolderId = ref(null)
 
 let quillEditor = null
 let cursorPosition = null
@@ -143,7 +166,6 @@ const editorOptions = ref({
 			],
 			handlers: {
 				image: function () {
-					console.log("ほげ")
 					quillEditor = this.quill
 					cursorPosition = quillEditor.getSelection().index
 					openImageDialog('content')
@@ -151,6 +173,19 @@ const editorOptions = ref({
 			}
 		},
 	}
+})
+
+// フォルダリストにデフォルト値を追加
+const extendedFolderList = computed(() => {
+	return [defaultSelect.value, ...folderList.value]
+})
+
+watch(selectedFolderId, async (newId) => {
+	await fetchImageList()
+})
+
+const extendedImageList = computed(() => {
+	return imageList.value || []
 })
 
 // 画像選択ダイアログ表示
@@ -181,15 +216,15 @@ const submitPost = async () => {
 	}
 
 	try {
-		if (isUpdate.value) {
+		if (props.isUpdate) {
 			await blogStore.update(blog.value)
 		} else {
-			blog.value.share_blog_id = shareBlog.value ? shareBlog.value.id : null
+			blog.value.share_blog_id = props.shareBlog ? props.shareBlog.id : null
 			await blogStore.create(blog.value)
 		}
 
 		if (blog.value.isPublished) {
-			if (isUpdate.value) {
+			if (props.isUpdate) {
 				alert("ブログが更新されました")
 			} else {
 				alert("ブログが投稿されました")
@@ -202,21 +237,40 @@ const submitPost = async () => {
 	}
 }
 
+// データ再取得
+const fetchImageList = async () => {
+	await imagesStore.getList(selectedFolderId.value)
+}
+
 watch(blog.value.category_id, (newValue) => {
 	blog.value.category_id = newValue
 })
 
 onMounted(async() => {
 	await blogCategoryStore.getList()
-	await imagesStore.getList(null)
+	await fetchImageList()
+	await imagesFolderStore.getList()
 })
 </script>
 
 <style scoped lang="scss">
-	.image-gallery {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
+	.fileBox {
+		padding-top: 16px;
+		clear: both;
+	}
+	ul.image-list{
+		width: 100%;
+		overflow: hidden;
+		border: 1px solid #ddd;
+		background: #f9f9f9;
+		margin: 0;
+		padding: 5px;
+		text-align: center;
+
+		li.thumbnail {
+			margin: 4px;
+			float: left;
+		}
 	}
 	.image-item img {
 		width: 100px;
