@@ -1,6 +1,6 @@
 <template>
 	<v-container class="image-upload">
-		<v-form v-if="isLoading" @submit.prevent="submitImages">
+		<v-form v-if="!isLoading" @submit.prevent="submitImages">
 			<v-card class="post-image-list">
 				<v-card-title>画像アップロード</v-card-title>
 				<v-card-text>
@@ -20,9 +20,9 @@
 						:items="extendedFolderList"
 						item-title="name"
 						item-value="id"
-						v-model="selectedFolder"
-						return-object
-						hide-details />
+						v-model="selectedFolderId"
+						hide-details
+					/>
 				</v-card-text>
 				<v-card-text v-if="previewFiles.length > 0">
 					<div class="image-gallery">
@@ -38,13 +38,19 @@
 		</v-form>
 	</v-container>
 
-	<div v-if="isLoading">
+	<div v-if="!isLoading">
 		<v-tabs v-model="activeTab">
 			<v-tab v-for="(tab, index) in tabs" :key="index">{{ tab }}</v-tab>
 		</v-tabs>
 		<v-window v-model="activeTab">
 			<v-window-item v-for="(component, index) in tabComponents" :key="index" transition="none" reverse-transition="none">
-				<component :is="component" :selectedFolder="selectedFolder" @changeFolderList="changeFolderList" @reFetchFolderList="reFetchFolderList" />
+				<component
+					:is="component"
+					v-model:folderList="extendedFolderList"
+					:selectedFolderId="selectedFolderId"
+					@changeFolderList="changeFolderList"
+					@reFetchFolderList="fetchFolderList"
+				/>
 			</v-window-item>
 		</v-window>
 	</div>
@@ -80,7 +86,9 @@ const {
 
 // 画像フォルダ取得
 const imagesFolderStore = useImagesFolderStore()
-const folderList = computed(() => imagesFolderStore.folderList)
+const {
+	folderList
+} = storeToRefs(imagesFolderStore)
 
 const tabs = ['画像管理', '画像フォルダ管理']
 const tabComponents = [
@@ -93,8 +101,8 @@ const fileInputValue = ref(null)
 const selectedFiles = ref([]) // 選択した画像ファイル
 const previewFiles = ref([])
 const defaultSelect = ref({id: null, name: '指定なし'})
-const selectedFolder = ref(defaultSelect.value)
-const isLoading = ref(false)
+const selectedFolderId = ref(null)
+const isLoading = ref(true)
 
 // モーダル用データ
 const imageViewerDialog = ref(false)
@@ -135,7 +143,7 @@ const submitImages = async () => {
 
 	try {
 		await Promise.all(selectedFiles.value.map((file) => imagesStore.create(file, selectedFolder.value.id)))
-		await reFetchImageList()
+		await fetchImageList()
 		// アップロード完了後、選択ファイルをリセット
 		selectedFiles.value = []
 		previewFiles.value = []
@@ -153,30 +161,26 @@ const openImageViewer = (imageUrl) => {
 }
 
 // フォルダ切り替え
-const changeFolderList = async (newValue) => {
-	selectedFolder.value = newValue
-	await reFetchImageList()
+const changeFolderList = async (newValueId) => {
+	selectedFolderId.value = newValueId
+	await fetchImageList()
 }
 
 // データ再取得
-const reFetchImageList = async () => {
-	await imagesStore.getList(selectedFolder.value.id)
+const fetchImageList = async () => {
+	await imagesStore.getList(selectedFolderId.value)
 }
 
 // データ再取得
-const reFetchFolderList = async () => {
+const fetchFolderList = async () => {
 	await imagesFolderStore.getList()
 }
-
-watch(selectedFolder, async (newValue) => {
-	selectedFolder.value = newValue
-	await reFetchImageList()
-})
 
 onMounted(async() => {
-	await imagesStore.getList(null)
-	await imagesFolderStore.getList()
-	isLoading.value = true
+	await fetchImageList()
+	await fetchFolderList()
+	console.log(folderList.value)
+	isLoading.value = false
 })
 </script>
 

@@ -11,50 +11,110 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 	const authStore = useAuthStore()
 	const blogStore = useBlogStore()
 
+	const mapDocToCategory = (doc) => {
+		const data = doc.data()
+		if (data.createdAt && data.createdAt.toDate) {
+			data.createdAt = data.createdAt.toDate()
+		}
+		if (data.updatedAt && data.updatedAt.toDate) {
+			data.updatedAt = data.updatedAt.toDate()
+		}
+		return {
+			id: doc.id,
+			blog_count: 0, // getListで後から設定
+			...data
+		}
+	}
+
 	const create = async (category) => {
 		const userInfo = authStore.userInfo;
 		const payload = {
 			uid: userInfo.uid,
-			pre_category_id: category.pre_category_id,
+			pre_category_id: category.pre_category_id || null,
 			name: category.name,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		}
 
-		await BaseAPI.addData(
-			{db_name: "blog_category"},
-			payload
-		)
+		try {
+			await BaseAPI.addData(
+				{db_name: "blog_category"},
+				payload
+			)
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
+		}
 	}
 
 	const update = async (category) => {
 		const payload = {
-			pre_category_id: category.pre_category_id,
+			pre_category_id: category.pre_category_id || null,
 			name: category.name,
 			updatedAt: new Date()
 		}
 
-		await BaseAPI.setData(
-			{db_name: "blog_category", item_id: category.id},
-			payload
-		)
+		try {
+			await BaseAPI.setData(
+				{db_name: "blog_category", item_id: category.id},
+				payload
+			)
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
+		}
 	}
 
 	const getDetail = async (category_id) => {
-		const doc = await BaseAPI.getData(
-			{db_name: "blog_category", item_id: category_id},
-		)
-		return doc ? doc.data() : null
+		try {
+			const doc = await BaseAPI.getData(
+				{db_name: "blog_category", item_id: category_id},
+			)
+			return doc ? mapDocToCategory(doc) : null
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
+		}
 	}
 
 	const deleteItem = async (category) => {
-		// 親カテゴリーを削除する場合は、子カテゴリーの紐付きも削除する
-		if (category.pre_category_id == null) {
-			const userInfo = authStore.userInfo
-			const filters = [
-				["uid", "==", userInfo.uid],
-				["pre_category_id", "==", category.id]
-			]
+		try {
+			// 親カテゴリーを削除する場合は、子カテゴリーの紐付きも削除する
+			if (category.pre_category_id == null) {
+				const userInfo = authStore.userInfo
+				const filters = [
+					["uid", "==", userInfo.uid],
+					["pre_category_id", "==", category.id]
+				]
+				const querySnapshot = await BaseAPI.getDataWithQuery(
+					{
+						db_name: "blog_category",
+						searchConditions: {
+							filters: filters,
+						}
+					}
+				)
+				const updatePromises = querySnapshot.docs.map((doc) => {
+					return BaseAPI.setData(
+						{db_name: "blog_category", item_id: doc.id},
+						{pre_category_id: null, updatedAt: new Date()}
+					)
+				})
+				await Promise.all(updatePromises)
+
+				await BaseAPI.deleteData(
+					{db_name: "blog_category", item_id: category.id},
+				)
+			}
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
+		}
+	}
+
+	const getList = async () => {
+		const userInfo = authStore.userInfo;
+		const filters = [
+			["uid", "==", userInfo.uid],
+		]
+
+		try {
 			const querySnapshot = await BaseAPI.getDataWithQuery(
 				{
 					db_name: "blog_category",
@@ -63,55 +123,21 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 					}
 				}
 			)
-			const updatePromises = querySnapshot.docs.map(async (doc) => {
-				const childDocRef = doc.ref
-				BaseAPI.setData(
-					{db_name: "blog_category", item_id: childDocRef.id},
-					{pre_category_id: null}
-				)
-			})
-			await Promise.all(updatePromises)
 
-			await BaseAPI.deleteData(
-				{db_name: "blog_category", item_id: category.id},
-			)
-		}
-	}
-
-	// 親カテゴリーのみ取得
-	const getList = async () => {
-		const userInfo = authStore.userInfo;
-		const filters = [
-			["uid", "==", userInfo.uid],
-		]
-
-		const querySnapshot = await BaseAPI.getDataWithQuery(
-			{
-				db_name: "blog_category",
-				searchConditions: {
-					filters: filters,
-				}
+			if (!querySnapshot) {
+				categoryList.value = []
+				return []
 			}
-		)
 
-		if (querySnapshot) {
-			const allCategories = querySnapshot.docs.map(doc => {
-				const data = doc.data()
-				if (data.createdAt && data.createdAt.toDate) {
-					data.createdAt = data.createdAt.toDate()
-				}
-				return {
-					id: doc.id,
-					blog_count: 0,
-					pre_category_id: data.pre_category_id,
-					...data
-				}
-			})
+			const rawCategories = querySnapshot.docs.map(mapDocToCategory)
 
 			// ブログカウントを取得
-			for (const category of allCategories) {
-				category.blog_count = await blogStore.getListForCategoryCount(category.id)
-			}
+			const countPromises = rawCategories.map(async (category) => {
+				const count = await blogStore.getListForCategoryCount(category.id)
+				return { ...category, blog_count: count }
+			})
+			const allCategories = await Promise.all(countPromises)
+
 			// 親カテゴリー順に並べ替え、子カテゴリーを末尾に追加
 			const categoryMap = new Map()
 			// ID でマッピング
@@ -143,8 +169,8 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 						})
 				})
 			categoryList.value = sortedCategories
-		} else {
-			return null
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 

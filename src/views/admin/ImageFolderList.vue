@@ -19,7 +19,13 @@
 					{{ formatDate(item.createdAt) }}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
+					<v-icon
+						class="delete-icon"
+						icon="mdi-delete"
+						aria-label="削除"
+						role="button"
+						@click="openDeleteDialog(item)"
+					/>
 				</template>
 			</v-data-table>
 		</v-card>
@@ -30,7 +36,8 @@
 					<v-text-field
 						type="text"
 						label="フォルダ名を入力して下さい"
-						v-model="folder.name" />
+						v-model="folder.name"
+					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
@@ -46,7 +53,8 @@
 					<v-text-field
 						type="text"
 						label="フォルダ名を入力して下さい"
-						v-model="folder.name" />
+						v-model="folder.name"
+					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
@@ -71,13 +79,16 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { storeToRefs } from "pinia"
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
 
 const imagesFolderStore = useImagesFolderStore()
-const folderList = computed(() => imagesFolderStore.folderList)
+const {
+	folderList
+} = storeToRefs(imagesFolderStore)
 
-const emit = defineEmits(["reFetchFolderList"])
+const emit = defineEmits(["fetchFolderList"])
 
 const createDialog = ref(false)
 const folder = ref({
@@ -123,7 +134,7 @@ const createFolder = async () => {
 	createDialog.value = false
 
 	await imagesFolderStore.create(folder.value)
-	emit("reFetchFolderList")
+	emit("fetchFolderList")
 }
 
 const updateFolder = async () => {
@@ -131,7 +142,7 @@ const updateFolder = async () => {
 
 	await imagesFolderStore.update(folderToUpdate.value)
 	folderToUpdate.value = null
-	emit("reFetchFolderList")
+	emit("fetchFolderList")
 }
 
 // フォルダ削除
@@ -140,7 +151,7 @@ const deleteFolder = async () => {
 
 	await imagesFolderStore.deleteItem(folderToDelete.value.id)
 	folderToDelete.value = null
-	emit("reFetchFolderList")
+	emit("fetchFolderList")
 }
 </script>
 

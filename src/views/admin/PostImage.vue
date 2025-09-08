@@ -15,11 +15,12 @@
 					<v-select
 						v-if="extendedFolderList.length > 0"
 						label="画像フォルダ選択"
-						:items="folderList"
+						:items="extendedFolderList"
 						item-title="name"
-						v-model="selectedFolder"
-						return-object
-						hide-details />
+						item-value="id"
+						v-model="selectedFolderId"
+						hide-details
+					/>
 				</v-toolbar>
 				<div class="fileBox">
 					<ul class="image-list" v-if="imageList.length > 0">
@@ -34,11 +35,11 @@
 								</span>
 								<div class="delete-image">
 									<span>
-										<v-icon class="delete-icon" :icon="mdiImageMove" @click="openMoveDialog(image)" />
+										<v-icon class="delete-icon" icon="mdi-image-move" @click="openMoveDialog(image)" />
 									</span>
 									<span class="text-delete">移動</span>
 									<span>
-										<v-icon class="delete-icon" :icon="mdiDelete" @click="openDeleteDialog(image)" />
+										<v-icon class="delete-icon" icon="mdi-delete" @click="openDeleteDialog(image)" />
 									</span>
 									<span class="text-delete">削除</span>
 								</div>
@@ -71,10 +72,10 @@
 					<v-select
 						v-if="extendedFolderList.length > 0"
 						label="移動する画像フォルダ選択を選択して下さい"
-						:items="folderList"
+						:items="extendedFolderList"
 						item-title="name"
-						v-model="selectedMoveFolder"
-						return-object
+						item-id="id"
+						v-model="selectedMoveFolderId"
 						hide-details />
 				</v-card-text>
 				<v-card-actions>
@@ -118,13 +119,15 @@ import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 
 const props = defineProps({
-	selectedFolder: {
-		type: Object,
+	selectedFolderId: {
+		type: String,
 		required: true
 	}
 })
-const selectedFolder = ref(props.selectedFolder)
+const selectedFolderId = ref(props.selectedFolderId)
 const emit = defineEmits(["changeFolderList"])
+
+const extendedFolderList = defineModel("folderList")
 
 // 画像取得
 const imagesStore = useImagesStore()
@@ -132,21 +135,12 @@ const imagesFolderStore = useImagesFolderStore()
 const {
 	imageList,
 } = storeToRefs(imagesStore)
-const {
-	folderList
-} = storeToRefs(imagesFolderStore)
-
-// フォルダリストにデフォルト値を追加
-const defaultSelect = ref({id: null, name: '指定なし'})
-const extendedFolderList = computed(() => {
-	return [defaultSelect.value, ...folderList.value]
-})
 
 // モーダル用データ
 const imageViewerDialog = ref(false)
 const currentImage = ref(null)
 
-const selectedMoveFolder = ref(null)
+const selectedMoveFolderId = ref(null)
 const moveDialog = ref(false)
 const imageToMove = ref(null)
 
@@ -177,8 +171,8 @@ const openMoveDialog = (image) => {
 const moveImage = async () => {
 	moveDialog.value = false
 
-	await imagesStore.update(imageToMove.value, selectedMoveFolder.value.id)
-	emit('changeFolderList', selectedFolder.value)
+	await imagesStore.update(imageToMove.value, selectedMoveFolderId.value)
+	emit('changeFolderList', selectedFolderId.value)
 }
 
 // 個別削除確認ダイアログを開く
@@ -199,7 +193,7 @@ const deleteImage = async () => {
 
 	await imagesStore.deleteItem(imageToDelete.value)
 	imageToDelete.value = null
-	emit('changeFolderList', selectedFolder.value)
+	emit('changeFolderList', selectedFolderId.value)
 }
 
 // 一括削除
@@ -210,15 +204,15 @@ const deleteSelectedImages = async () => {
 
 	await Promise.all(selectedForDelete.value.map((image) => imagesStore.deleteItem(image)))
 	selectedForDelete.value = []
-	emit('changeFolderList', selectedFolder.value)
+	emit('changeFolderList', selectedFolderId.value)
 }
 
-watch(selectedFolder, (newValue) => {
+watch(selectedFolderId, (newValue) => {
 	emit('changeFolderList', newValue)
 })
 
-watch(() => props.selectedFolder, (newValue) => {
-	selectedFolder.value = newValue
+watch(() => props.selectedFolderId, (newValue) => {
+	selectedFolderId.value = newValue
 })
 </script>
 

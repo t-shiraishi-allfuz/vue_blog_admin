@@ -22,7 +22,7 @@
 					{{ setting.name }}
 				</div>
 				<div class="ml-1 mb-1">
-					<v-icon :icon="mdiClock" start />
+					<v-icon :icon="mdi-clock" start />
 					{{ formatDate(blog.createdAt) }}
 				</div>
 			</v-col>
@@ -46,7 +46,7 @@
 			</div>
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
-					:icon="mdiShareOutline"
+					icon="mdi-share-outline"
 					:color="colorIconPink(false)"
 					variant="text"
 					@click="addShare()"
@@ -77,14 +77,14 @@
 	<v-dialog v-model="shareDialog" max-width="400px">
 		<v-list>
 			<v-list-item
-				:prepend-icon="mdiLinkVariant"
+				:prepend-icon="mdi-link-variant"
 				title="リンクをコピー"
 				value="copy"
 				@click="copyUrl()"
 			/>
 			<v-divider></v-divider>
 			<v-list-item
-				:prepend-icon="mdiNoteEdit"
+				:prepend-icon="mdi-note-edit"
 				title="リブログ"
 				@click="reblog()"
 			/>
@@ -108,6 +108,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useRoute, useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
@@ -125,8 +126,8 @@ const blogSettingStore = useBlogSettingStore()
 const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
 
-const blog = ref(null)
 const setting = ref(null)
+const blog = ref(null)
 const shareBlog = ref(null)
 const shareSetting = ref(null)
 const isLoading = ref(false)

@@ -107,11 +107,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 
 const blogCategoryStore = useBlogCategoryStore()
-const categoryList = computed(() => blogCategoryStore.categoryList)
+const {
+	categoryList
+} = storeToRefs(blogCategoryStore)
 
 const isLoading = ref(false)
 

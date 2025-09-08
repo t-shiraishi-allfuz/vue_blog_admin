@@ -13,7 +13,6 @@ export const useBlogStore = defineStore('blog', () => {
 	const bookmarkStore = useBookmarkStore()
 
 	const blogList = ref([])
-	const blogDetail = ref(null)
 	const selectType = ref(0)
 
 	const tempBlog = ref({
@@ -82,9 +81,11 @@ export const useBlogStore = defineStore('blog', () => {
 			}
 
 			if (data.createdAt?.toDate) {
-				data.createdAt = data.createdAt.toDate();
+				data.createdAt = data.createdAt.toDate()
 			}
-			blogDetail.value = data
+			return data
+		} else {
+			return null
 		}
 	}
 
@@ -273,7 +274,7 @@ export const useBlogStore = defineStore('blog', () => {
 		const userInfo = authStore.userInfo
 		const filters = [
 			["uid", "==", userInfo.uid],
-			["isPublished", "==", true]
+			["category_id", "==", category_id]
 		]
 		const sorters = [
 			["createdAt", "desc"]
@@ -289,18 +290,12 @@ export const useBlogStore = defineStore('blog', () => {
 				}
 			}
 		)
-
-		if (querySnapshot) {
-			return querySnapshot.size
-		} else {
-			return 0
-		}
+		return querySnapshot ? querySnapshot.size : 0
 	}
 
 	return {
 		selectType,
 		blogList,
-		blogDetail,
 		tempBlog,
 		setSelectType,
 		create,
