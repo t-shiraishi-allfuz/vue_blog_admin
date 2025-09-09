@@ -179,7 +179,6 @@ const fetchFolderList = async () => {
 onMounted(async() => {
 	await fetchImageList()
 	await fetchFolderList()
-	console.log(folderList.value)
 	isLoading.value = false
 })
 </script>

@@ -40,6 +40,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useRoute, useRouter } from 'vue-router'
 import { useCommentStore } from '@/stores/commentStore'
 import { format } from 'date-fns'
@@ -47,7 +48,10 @@ import { format } from 'date-fns'
 const route = useRoute()
 const router = useRouter()
 const commentStore = useCommentStore()
-const commentList = ref([])
+
+const {
+	commentList
+} = storeToRefs(commentStore)
 
 const deleteDialog = ref(false)
 const commentToDelete = ref(null)
@@ -61,11 +65,7 @@ const headers = [
 
 // 一覧取得
 const fetchCommentList = async () => {
-	try {
-		commentList.value = await commentStore.getList(route.params.blog_id)
-	} catch (error) {
-		alert(error)
-	}
+	await commentStore.getList(route.params.blog_id)
 }
 
 // 個別削除確認ダイアログを開く
@@ -76,12 +76,9 @@ const openDeleteDialog = (blog) => {
 
 // 個別削除を確定する
 const deleteComment = async () => {
-	try {
-		await commentStore.deleteItem(commentToDelete.value.id)
-		commentList.value = commentList.value.filter(comment => comment.id !== commentToDelete.value.id)
-	} catch (error) {
-		alert(error)
-	}
+	await commentStore.deleteItem(commentToDelete.value.id)
+	commentList.value.filter(comment => comment.id !== commentToDelete.value.id)
+
 	deleteDialog.value = false
 }
 

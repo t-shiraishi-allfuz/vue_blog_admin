@@ -34,7 +34,7 @@ const tabComponents = [
 ]
 
 onMounted(() => {
-	const tab = route.params.activeTab
+	const tab = route.query.tab
 	if (tab !== undefined) {
 		activeTab.value = parseInt(tab)
 	}

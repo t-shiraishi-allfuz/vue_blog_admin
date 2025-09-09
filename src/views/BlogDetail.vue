@@ -6,33 +6,33 @@
 		max-width="800"
 	>
 		<div class="header-image mb-4">
-			<img :src="blog.thumbUrl" />
+			<img :src="blogDetail.thumbUrl" />
 		</div>
-		<h4 class="text-h5 font-weight-bold mb-4">{{ blog.title }}</h4>
-		<div class="mb-4 text-body-3">{{ blog.summary }}</div>
+		<h4 class="text-h5 font-weight-bold mb-4">{{ blogDetail.title }}</h4>
+		<div class="mb-4 text-body-3">{{ blogDetail.summary }}</div>
 		<div class="mb-4 d-flex">
 			<v-row>
 				<v-avatar
 					class="mt-2"
 					size="48"
-					:image="setting.profileUrl"
+					:image="blogDetail.setting.profileUrl"
 					end
 				/>
 				<v-col cols="3">
 					<div class="ml-1 mb-1">
-						{{ setting.name }}
+						{{ blogDetail.setting.name }}
 					</div>
 					<div class="ml-1 mb-1">
 						<v-icon icon="mdi-clock" start />
-						{{ formatDate(blog.createdAt) }}
+						{{ formatDate(blogDetail.createdAt) }}
 					</div>
 				</v-col>
-				<div v-if="userInfo.uid !== blog.uid">
+				<div v-if="userInfo.uid !== blogDetail.uid">
 					<v-col>
-						<div v-if="setting.is_follower === true">
+						<div v-if="blogDetail.setting.is_follower === true">
 							<v-btn @click="deleteFollowUser">フォロー中</v-btn>
 						</div>
-						<div v-else-if="setting.is_following === true">
+						<div v-else-if="blogDetail.setting.is_following === true">
 							<v-btn @click="followUser">フォローバック</v-btn>
 						</div>
 						<div v-else>
@@ -43,48 +43,113 @@
 			</v-row>
 		</div>
 		<BlogCard
-			v-if="shareBlog"
+			v-if="blogDetail.shareBlog"
 			class="mb-5"
-			:blog="shareBlog"
-			:setting="shareSetting"
+			:blog="blogDetail.shareBlog"
+			:setting="blogDetail.shareBlog.setting"
 		/>
-		<div class="mb-4 text-body-1" v-html="blog.content"></div>
+		<div class="mb-4 text-body-1" v-html="blogDetail.content"></div>
 		<div class="d-flex">
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
-					:icon="formatLike(blog)"
-					:color="colorIconPink(blog.is_like)"
+					:icon="formatLike"
+					:color="colorIconPink('like')"
 					variant="text"
-					@click="addLike(blog)"
+					@click="addLike"
 				/>
-				<div class="text-truncate">{{ blog.like_count }}</div>
+				<div class="text-truncate">{{ blogDetail.like_count }}</div>
 			</div>
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
 					icon="mdi-share-outline"
-					:color="colorIconPink(false)"
+					color="black"
 					variant="text"
-					@click="addShare()"
+					@click="addShare"
 				/>
 			</div>
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
-					:icon="formatComment(blog.comment_count)"
-					:color="colorIconPink(blog.comment_count)"
+					:icon="formatComment"
+					:color="colorIconPink('comment')"
 					variant="text"
-					@click="addComment(blog)"
+					@click="addComment"
 				/>
-				<div class="text-truncate">{{ blog.comment_count }}</div>
+				<div class="text-truncate">{{ blogDetail.comment_count }}</div>
 			</div>
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
-					:icon="formatBookmark(blog)"
-					:color="colorIconPrimary(blog.is_bookmark)"
+					:icon="formatBookmark"
+					:color="colorIconPrimary"
 					variant="text"
-					@click="addBookmark(blog)"
+					@click="addBookmark"
 				/>
 			</div>
 		</div>
+		<v-divider />
+		<div class="my-4">
+			<div class="pa-4">
+				コメント数&nbsp;{{ blogDetail.comment_count }}
+			</div>
+			<div v-if="commentList.length > 0">
+				<div v-for="(comment, index) in commentList" :key="index">
+					<div class="pa-4 mb-4">
+						<v-row class="d-flex">
+							<v-avatar
+								class="mt-2"
+								size="48"
+								:image="comment.setting.profileUrl"
+								end
+							/>
+							<v-col>
+								<div class="ml-1 mb-1">
+									{{ comment.setting.name }}
+								</div>
+								<div class="ml-1 mb-1">
+									<v-icon icon="mdi-clock" start />
+									{{ formatDate(comment.createdAt) }}
+								</div>
+								<div class="ml-1 mb-1">
+									<div v-if="comment.reply_id">
+										<div class="pa-4 mb-2 bg-pink-lighten-5 rounded">
+											<v-icon icon="mdi-message-reply-text" start />
+											<div v-html="comment.reply.body.replace(/\n/g, '<br>')"></div>
+										</div>
+									</div>
+									<div v-html="comment.body.replace(/\n/g, '<br>')"></div>
+								</div>
+							</v-col>
+							<v-col>
+								<v-row class="d-flex justify-end ma-2">
+									<div class="mx-2">
+										<v-icon
+											icon="mdi-reply-outline"
+											start
+											@click="replyComment(comment)"
+										/>
+									</div>
+									<div class="mx-2">
+										<v-icon
+											icon="mdi-delete"
+											start
+											@click="deleteComment(comment)"
+										/>
+									</div>
+								</v-row>
+							</v-col>
+						</v-row>
+					</div>
+				</div>
+			</div>
+			<div v-else>
+				<div class="pa-4">
+					コメントはありません
+				</div>
+			</div>
+		</div>
+		<v-divider />
+		<v-card-actions>
+			<v-btn @click="goToHome">一覧に戻る</v-btn>
+		</v-card-actions>
 	</v-sheet>
 	<v-sheet v-if="!isLoading" class="pa-6 mx-auto text-center">
 		<v-progress-circular indeterminate />
@@ -95,40 +160,65 @@
 				:prepend-icon="mdi-link-variant"
 				title="リンクをコピー"
 				value="copy"
-				@click="copyUrl()"
+				@click="copyUrl"
 			/>
-			<v-divider></v-divider>
+			<v-divider />
 			<v-list-item
 				:prepend-icon="mdi-note-edit"
 				title="リブログ"
-				@click="reblog()"
+				@click="reblog"
 			/>
-			<v-divider></v-divider>
+			<v-divider />
+			<div class="d-flex justify-end my-2">
+				<v-btn
+					class="mx-2"
+					color="grey-lighten-2"
+					@click="shareDialog = false"
+				>
+					閉じる
+				</v-btn>
+			</div>
+		</v-list>
+	</v-dialog>
+	<v-dialog v-model="commentDialog" max-width="400px">
+		<v-list>
 			<v-list-item>
-				<v-list-item-action class="align-center">
-					<v-spacer></v-spacer>
-					<v-btn
-						color="grey-lighten-2"
-						variant="flat"
-						@click="shareDialog = false"
-					>
-						閉じる
-					</v-btn>
-					<v-spacer></v-spacer>
-				</v-list-item-action>
+				<v-textarea
+					label="コメント"
+					type="string"
+					v-model="comment.body"
+					solo
+				/>
 			</v-list-item>
+			<v-divider />
+			<div class="d-flex justify-end my-2">
+				<v-btn
+					class="mx-2"
+					color="success"
+					@click="executeComment"
+				>
+					コメント
+				</v-btn>
+				<v-btn
+					class="mx-2"
+					color="grey-lighten-2"
+					@click="commentDialog = false"
+				>
+					閉じる
+				</v-btn>
+			</div>
 		</v-list>
 	</v-dialog>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { storeToRefs } from "pinia"
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
-import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useLikeStore } from '@/stores/likeStore'
+import { useCommentStore } from '@/stores/commentStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { format } from 'date-fns'
@@ -141,8 +231,8 @@ const blog_id = route.query.blog_id
 
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
-const blogSettingStore = useBlogSettingStore()
 const likeStore = useLikeStore()
+const commentStore = useCommentStore()
 const bookmarkStore = useBookmarkStore()
 const followUsersStore = useFollowUsersStore()
 
@@ -150,12 +240,27 @@ const {
 	userInfo
 } = storeToRefs(authStore)
 
-const setting = ref(null)
-const blog = ref(null)
-const shareBlog = ref(null)
-const shareSetting = ref(null)
+const {
+	blogDetail
+} = storeToRefs(blogStore)
+
+const {
+	commentList
+} = storeToRefs(commentStore)
+
 const isLoading = ref(false)
 const shareDialog = ref(false)
+
+const reply_id = ref(null)
+const commentDialog = ref(false)
+const comment = ref({
+	uid: '',
+	body: '',
+	blog_id: '',
+	reply_id: '',
+	createdAt: '',
+	updatedAt: '',
+})
 
 // 日時フォーマット関数
 const formatDate = (date) => {
@@ -163,34 +268,43 @@ const formatDate = (date) => {
 }
 
 // アイコン設定
-const formatLike = (blog) => {
-	return blog.is_like ? "mdi-heart" : "mdi-heart-outline"
-}
-const formatComment = (count) => {
-	return count > 0 ? "mdi-comment" : "mdi-comment-outline"
-}
-const formatBookmark = (blog) => {
-	return blog.is_bookmark ? "mdi-bookmark-plus" : "mdi-bookmark-plus-outline"
-}
+const formatLike = computed(() => {
+	return blogDetail.value.is_like ? "mdi-heart" : "mdi-heart-outline"
+})
+
+const formatComment = computed(() => {
+	return blogDetail.value.comment_count > 0 ? "mdi-comment" : "mdi-comment-outline"
+})
+
+const formatBookmark = computed(() => {
+	return blogDetail.value.is_bookmark ? "mdi-bookmark-plus" : "mdi-bookmark-plus-outline"
+})
 
 // アイコン設定（カラー）
-const colorIconPink = (flag) => {
-	return flag ? "pink" : "black"
-}
-const colorIconPrimary = (flag) => {
-	return flag ? "blue" : "black"
-}
+const colorIconPink = computed(() => (type) => {
+	if (type === "like") {
+		return blogDetail.value.is_like ? "pink" : "black"
+	} else if (type === "comment") {
+		return blogDetail.value.comment_count > 0 ? "pink" : "black"
+	} else {
+		return "black"
+	}
+})
+
+const colorIconPrimary = computed(() => {
+	return blogDetail.value.is_bookmark ? "blue" : "black"
+})
 
 // いいね
-const addLike = async (blog) => {
-	if (blog.is_like) {
-		await likeStore.deleteItem(blog.id)
-		blog.is_like = false
-		blog.like_count--
+const addLike = async () => {
+	if (blogDetail.value.is_like) {
+		await likeStore.deleteItem(blogDetail.value.id)
+		blogDetail.value.is_like = false
+		blogDetail.value.like_count--
 	} else {
-		await likeStore.create(blog.id)
-		blog.is_like = true
-		blog.like_count++
+		await likeStore.create(blogDetail.id)
+		blogDetail.value.is_like = true
+		blogDetail.value.like_count++
 	}
 }
 
@@ -214,48 +328,84 @@ const copyUrl = async () => {
 // リブログ
 const reblog = async () => {
 	// キャッシュしておく
-	localStorage.setItem("shareBlog", JSON.stringify(blog.value))
-	localStorage.setItem("shareSetting", JSON.stringify(setting.value))
+	localStorage.setItem("shareBlog", JSON.stringify(blogDetail.value))
+	localStorage.setItem("shareSetting", JSON.stringify(blogDetail.value.setting))
 
 	router.push('/admin/0')
 }
 
 // コメント
-const addComment = (blog) => {
+const addComment = () => {
+	commentDialog.value = true
+}
+
+const replyComment = (comment) => {
+	reply_id.value = comment.id
+	commentDialog.value = true
+}
+
+const deleteComment = async (comment) => {
+	await commentStore.deleteItem(comment.id)
+	await fetchCommentList()
+	blogDetail.value.comment_count--
+}
+
+const executeComment = async () => {
+	if (!comment.value.body) return
+
+	comment.value.uid = userInfo.value.uid
+	comment.value.blog_id = blogDetail.value.id
+	comment.value.createdAt = new Date()
+	comment.value.updatedAt = new Date()
+
+	if (reply_id.value) {
+		comment.value.reply_id = reply_id.value
+		reply_id.value = ''
+	}
+
+	await commentStore.create(comment.value)
+	await fetchCommentList()
+	blogDetail.value.comment_count++
+
+	commentDialog.value = false
+}
+
+const fetchCommentList = async () => {
+	await commentStore.getList(blogDetail.value.id)
 }
 
 // お気に入り登録
-const addBookmark = async (blog) => {
-	if (blog.is_bookmark) {
-		await bookmarkStore.deleteItem(blog.id)
-		blog.is_bookmark = false
+const addBookmark = async () => {
+	if (blogDetail.value.is_bookmark) {
+		await bookmarkStore.deleteItem(blogDetail.value.id)
+		blogDetail.value.is_bookmark = false
 	} else {
-		await bookmarkStore.create(blog.id)
-		blog.is_bookmark = true
+		await bookmarkStore.create(blogDetail.value.id)
+		blogDetail.value.is_bookmark = true
 	}
 }
 
 // フォロー
 const followUser = async () => {
-	await followUsersStore.create(blog.value.uid)
+	await followUsersStore.create(blogDetail.value.uid)
 }
 
 // フォロー外す
 const deleteFollowUser = async () => {
-	await followUsersStore.deleteItem(blog.value.uid)
+	await followUsersStore.deleteItem(blogDetail.value.uid)
 }
 
 // ブログデータ取得
 onMounted(async () => {
-	blog.value = await blogStore.getDetail(blog_id)
-	setting.value = await blogSettingStore.getForUid(blog.value.uid)
+	await blogStore.getDetail(blog_id)
+	await fetchCommentList()
 
-	if (blog.value.share_blog_id) {
-		shareBlog.value = await blogStore.getDetail(blog.value.share_blog_id)
-		shareSetting.value = await blogSettingStore.getForUid(shareBlog.value.uid)
-	}
 	isLoading.value = true
 })
+
+const goToHome = () => {
+	router.push({path: '/'})
+}
 </script>
 
 <style scoped>

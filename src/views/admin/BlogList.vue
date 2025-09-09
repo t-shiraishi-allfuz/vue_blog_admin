@@ -102,12 +102,13 @@ const deleteBlog = async () => {
 	deleteDialog.value = false
 
 	await blogStore.deleteItem(blogToDelete.value.id)
-	blogList.value = blogList.value.filter(blog => blog.id !== blogToDelete.value.id)
+	await fetchBlogList()
 }
 
 // 検索条件に基づく投稿フィルタリング
 const filteredBlogList = computed(() => {
 	if (!search.value) return blogList.value
+
 	return blogList.value.filter(blog =>
 		blog.title.toLowerCase().includes(search.value.toLowerCase())
 	)

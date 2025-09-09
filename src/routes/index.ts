@@ -48,7 +48,6 @@ router.beforeEach(async (to, _, next) => {
 
 	// 初期化待ち
 	await storeAuth.initializeAuth()
-	console.log(isLogin.value)
 
 	const isAuthRequired = to.matched.some(record => record.meta.requiresAuth)
 	const isLoginPage = ['UserLogin', 'UserCreate', 'ResetPassword'].includes(to.name as string)
