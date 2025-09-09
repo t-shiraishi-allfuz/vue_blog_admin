@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { storage } from '@/setting/firebase'
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { useAuthStore } from '@/stores/authStore'
+import { useFollowUsersStore } from '@/stores/followUsersStore'
 
 export const useBlogSettingStore = defineStore('blogSetting', () => {
 	const tempSetting = ref({
@@ -11,6 +12,8 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		description: "仮説明",
 		name: "名無しさん",
 		profileUrl: null,
+		is_follower: false,
+		is_following: false,
 		createdAt: null,
 		updatedAt: null,
 	})
@@ -18,13 +21,14 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 	const blogSetting = ref(null)
 
 	const authStore = useAuthStore()
+	const followUsersStore = useFollowUsersStore()
 
 	const setBlogSetting = (setting) => {
-		return tempSetting.value = { ...setting };
+		return tempSetting.value = { ...setting }
 	}
 
 	const getBlogSetting = () => {
-		return blogSetting.value;
+		return blogSetting.value
 	}
 
 	const create = async () => {
@@ -106,7 +110,14 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		const doc = await BaseAPI.getData(
 			{db_name: "blog_setting", item_id: uid},
 		)
-		return doc ? doc.data() : null
+
+		if (!doc) return null
+
+		blogSetting.value = doc.data()
+		blogSetting.value.is_follower = await followUsersStore.isFollower(uid)
+		blogSetting.value.is_following = await followUsersStore.isFollowing(uid)
+
+		return blogSetting.value
 	}
 
 	// タイトルの重複チェック

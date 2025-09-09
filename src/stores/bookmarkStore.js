@@ -37,8 +37,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
 		return querySnapshot.docs.map((doc) => {
 			const data = doc.data()
-			data.push(doc.blog_id)
-			return data
+			return data.blog_id
 		})
 	}
 

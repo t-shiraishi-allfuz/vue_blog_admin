@@ -1,9 +1,9 @@
 <template>
 	<v-container fluid>
 		<v-row class="horizontal-scroll" no-gutters>
-			<v-slide-group v-if="blogList.length > 0" show-arrows>
+			<v-slide-group v-if="extendBlogList.length > 0" show-arrows>
 				<v-slide-group-item
-					v-for="(item, index) in blogList"
+					v-for="(item, index) in extendBlogList"
 					:key="index"
 				>
 					<v-card
@@ -47,7 +47,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { storeToRefs } from "pinia"
 import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { useLikeStore } from '@/stores/likeStore'
@@ -57,17 +58,28 @@ const router = useRouter()
 const blogStore = useBlogStore()
 const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
+const {
+	blogList
+} = storeToRefs(blogStore)
 
-const blogList = ref([])
+const extendBlogList = computed(() => {
+	if (!blogList.value) {
+		return []
+	}
+	return blogList.value
+})
 
 // 一覧取得
 const fetchBlogList = async (type) => {
 	switch (+type) {
+		case 1:
+			await blogStore.getListForFollow()
+			break
 		case 2:
-			blogList.value = await blogStore.getListForBookmark()
+			await blogStore.getListForBookmark()
 			break
 		default:
-			blogList.value = await blogStore.getListForAll()
+			await blogStore.getListForAll()
 			break
 	}
 }

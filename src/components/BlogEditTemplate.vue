@@ -32,7 +32,7 @@
 						color="light-blue-lighten-4"
 						label="サムネイル設定"
 						variant="flat"
-						v-model="selectThumb"
+						v-model="blog.thumbUrl"
 						prepend-icon="mdi-image"
 						@click="openImageDialog('thumb')">
 						サムネイル設定
@@ -144,8 +144,6 @@ const {
 } = storeToRefs(blogCategoryStore)
 
 const imageSelectDialog = ref(false)
-const selectInnerImage = ref(null)
-const selectThumb = ref(null)
 const selectType = ref('content')
 const defaultSelect = ref({id: null, name: '指定なし'})
 const selectedFolderId = ref(null)
@@ -204,7 +202,6 @@ const selectImage = (imageUrl) => {
 			quillEditor.setSelection(cursorPosition + 1)
 		}
 	} else {
-		selectThumb.value = imageUrl
 		blog.value.thumbUrl = imageUrl
 	}
 }

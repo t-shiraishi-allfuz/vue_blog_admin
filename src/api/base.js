@@ -18,6 +18,10 @@ class BaseAPI {
 		return collection(db, dbName)
 	}
 
+	static getDoc(dbName) {
+		return doc(db, dbName)
+	}
+
 	static getDocRef(dbName, itemId) {
 		return doc(db, dbName, itemId)
 	}

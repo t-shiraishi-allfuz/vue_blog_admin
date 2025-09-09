@@ -10,23 +10,38 @@
 		</div>
 		<h4 class="text-h5 font-weight-bold mb-4">{{ blog.title }}</h4>
 		<div class="mb-4 text-body-3">{{ blog.summary }}</div>
-		<v-row class="mb-4 d-flex">
-			<v-avatar
-				class="mt-2"
-				size="48"
-				:image="setting.profileUrl"
-				end
-			/>
-			<v-col>
-				<div class="ml-1 mb-1">
-					{{ setting.name }}
+		<div class="mb-4 d-flex">
+			<v-row>
+				<v-avatar
+					class="mt-2"
+					size="48"
+					:image="setting.profileUrl"
+					end
+				/>
+				<v-col cols="3">
+					<div class="ml-1 mb-1">
+						{{ setting.name }}
+					</div>
+					<div class="ml-1 mb-1">
+						<v-icon icon="mdi-clock" start />
+						{{ formatDate(blog.createdAt) }}
+					</div>
+				</v-col>
+				<div v-if="userInfo.uid !== blog.uid">
+					<v-col>
+						<div v-if="setting.is_follower === true">
+							<v-btn @click="deleteFollowUser">フォロー中</v-btn>
+						</div>
+						<div v-else-if="setting.is_following === true">
+							<v-btn @click="followUser">フォローバック</v-btn>
+						</div>
+						<div v-else>
+							<v-btn @click="followUser">フォロー</v-btn>
+						</div>
+					</v-col>
 				</div>
-				<div class="ml-1 mb-1">
-					<v-icon :icon="mdi-clock" start />
-					{{ formatDate(blog.createdAt) }}
-				</div>
-			</v-col>
-		</v-row>
+			</v-row>
+		</div>
 		<BlogCard
 			v-if="shareBlog"
 			class="mb-5"
@@ -110,10 +125,12 @@
 import { ref, onMounted } from 'vue'
 import { storeToRefs } from "pinia"
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
+import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { format } from 'date-fns'
 import BlogCard from '@/components/BlogCard.vue'
 
@@ -121,10 +138,17 @@ const route = useRoute()
 const router = useRouter()
 
 const blog_id = route.query.blog_id
+
+const authStore = useAuthStore()
 const blogStore = useBlogStore()
 const blogSettingStore = useBlogSettingStore()
 const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
+const followUsersStore = useFollowUsersStore()
+
+const {
+	userInfo
+} = storeToRefs(authStore)
 
 const setting = ref(null)
 const blog = ref(null)
@@ -209,6 +233,16 @@ const addBookmark = async (blog) => {
 		await bookmarkStore.create(blog.id)
 		blog.is_bookmark = true
 	}
+}
+
+// フォロー
+const followUser = async () => {
+	await followUsersStore.create(blog.value.uid)
+}
+
+// フォロー外す
+const deleteFollowUser = async () => {
+	await followUsersStore.deleteItem(blog.value.uid)
 }
 
 // ブログデータ取得

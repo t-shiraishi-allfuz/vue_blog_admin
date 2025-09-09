@@ -115,44 +115,38 @@ export const useBlogStore = defineStore('blog', () => {
 			}
 		)
 
-		const result = []
-		if (querySnapshot) {
-			const results = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() }
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate()
-				}
-				return { ...data, rawDoc: doc }
-			})
-			
-			const commentCounts = await commentStore.getCommentCounts(
-				results.map((blog) => blog.id)
-			)
+		if (!querySnapshot) return []
 
-			const likeCounts = await likeStore.getLikeCounts(
-				results.map((blog) => blog.id)
-			)
-
-			const isLikes = await likeStore.isLikes(
-				results.map((blog) => blog.id)
-			)
-
-			const isBookmarks = await bookmarkStore.isBookmarks(
-				results.map((blog) => blog.id)
-			)
-
-			// 結果を組み立てる
-			for (const blog of results) {
-				result.push({
-					...blog,
-					comment_count: commentCounts[blog.id] || 0,
-					like_count: likeCounts[blog.id] || 0,
-					is_like: isLikes[blog.id] || false,
-					is_bookmark: isBookmarks[blog.id] || false
-				})
+		const results = querySnapshot.docs.map((doc) => {
+			const data = { id: doc.id, ...doc.data() }
+			if (data.createdAt?.toDate) {
+				data.createdAt = data.createdAt.toDate()
 			}
-			blogList.value = result
-		}
+			return { ...data, rawDoc: doc }
+		})
+		const commentCounts = await commentStore.getCommentCounts(
+			results.map((blog) => blog.id)
+		)
+		const likeCounts = await likeStore.getLikeCounts(
+			results.map((blog) => blog.id)
+		)
+		const isLikes = await likeStore.isLikes(
+			results.map((blog) => blog.id)
+		)
+		const isBookmarks = await bookmarkStore.isBookmarks(
+			results.map((blog) => blog.id)
+		)
+		// 結果を組み立てる
+		blogList.value = results.map((blog) => {
+			return {
+				...blog,
+				reply_count: 0, // 必要なら更新
+				comment_count: commentCounts[blog.id] || 0,
+				like_count: likeCounts[blog.id] || 0,
+				is_like: isLikes[blog.id] | false,
+				is_bookmark: isBookmarks[blog.id] || false
+			}
+		})
 	}
 
 	// 全ユーザーのブログデータ取得
@@ -175,39 +169,38 @@ export const useBlogStore = defineStore('blog', () => {
 			}
 		)
 
-		const result = []
-		if (querySnapshot) {
-			const blogList = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() }
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate()
-				}
-				return { ...data, rawDoc: doc }
-			})
-			const commentCounts = await commentStore.getCommentCounts(
-				blogList.map((blog) => blog.id)
-			)
-			const likeCounts = await likeStore.getLikeCounts(
-				blogList.map((blog) => blog.id)
-			)
-			const isLikes = await likeStore.isLikes(
-				blogList.map((blog) => blog.id)
-			)
-			const isBookmarks = await bookmarkStore.isBookmarks(
-				blogList.map((blog) => blog.id)
-			)
-			// 結果を組み立てる
-			for (const blog of blogList) {
-				result.push({
-					...blog,
-					comment_count: commentCounts[blog.id] || 0,
-					like_count: likeCounts[blog.id] || 0,
-					is_like: isLikes[blog.id] || false,
-					is_bookmark: isBookmarks[blog.id] || false
-				})
+		if (!querySnapshot) return []
+
+		const results = querySnapshot.docs.map((doc) => {
+			const data = { id: doc.id, ...doc.data() }
+			if (data.createdAt?.toDate) {
+				data.createdAt = data.createdAt.toDate()
 			}
-		}
-		return result
+			return { ...data, rawDoc: doc }
+		})
+		const commentCounts = await commentStore.getCommentCounts(
+			results.map((blog) => blog.id)
+		)
+		const likeCounts = await likeStore.getLikeCounts(
+			results.map((blog) => blog.id)
+		)
+		const isLikes = await likeStore.isLikes(
+			results.map((blog) => blog.id)
+		)
+		const isBookmarks = await bookmarkStore.isBookmarks(
+			results.map((blog) => blog.id)
+		)
+		// 結果を組み立てる
+		blogList.value = results.map((blog) => {
+			return {
+				...blog,
+				reply_count: 0, // 必要なら更新
+				comment_count: commentCounts[blog.id] || 0,
+				like_count: likeCounts[blog.id] || 0,
+				is_like: isLikes[blog.id] | false,
+				is_bookmark: isBookmarks[blog.id] || false
+			}
+		})
 	}
 
 	// フォロー中ユーザーのブログデータ取得
@@ -230,43 +223,77 @@ export const useBlogStore = defineStore('blog', () => {
 			}
 		)
 
-		const result = []
-		if (querySnapshot) {
-			const blogList = querySnapshot.docs.map((doc) => {
-				const data = { id: doc.id, ...doc.data() }
-				if (data.createdAt?.toDate) {
-					data.createdAt = data.createdAt.toDate()
-				}
-				return { ...data, rawDoc: doc }
-			})
-			const commentCounts = await commentStore.getCommentCounts(
-				blogList.map((blog) => blog.id)
-			)
-			const likeCounts = await likeStore.getLikeCounts(
-				blogList.map((blog) => blog.id)
-			)
-			// 結果を組み立てる
-			for (const blog of blogList) {
-				result.push({
-					...blog,
-					reply_count: 0, // 必要なら更新
-					comment_count: commentCounts[blog.id] || 0,
-					like_count: likeCounts[blog.id] || 0,
-				})
+		if (!querySnapshot) return []
+
+		const results = querySnapshot.docs.map((doc) => {
+			const data = { id: doc.id, ...doc.data() }
+			if (data.createdAt?.toDate) {
+				data.createdAt = data.createdAt.toDate()
 			}
-		}
-		return result
+			return { ...data, rawDoc: doc }
+		})
+		const commentCounts = await commentStore.getCommentCounts(
+			results.map((blog) => blog.id)
+		)
+		const likeCounts = await likeStore.getLikeCounts(
+			results.map((blog) => blog.id)
+		)
+		const isLikes = await likeStore.isLikes(
+			results.map((blog) => blog.id)
+		)
+		const isBookmarks = await bookmarkStore.isBookmarks(
+			results.map((blog) => blog.id)
+		)
+		// 結果を組み立てる
+		blogList.value = results.map((blog) => {
+			return {
+				...blog,
+				reply_count: 0, // 必要なら更新
+				comment_count: commentCounts[blog.id] || 0,
+				like_count: likeCounts[blog.id] || 0,
+				is_like: isLikes[blog.id] | false,
+				is_bookmark: isBookmarks[blog.id] || false
+			}
+		})
 	}
 
 	// お気に入りのブログデータ取得
 	const getListForBookmark = async () => {
-		const result = []
-
 		const blogIds = await bookmarkStore.getBlogIds()
-		for (const blogId of blogIds) {
-			result.push(await getDetail(blogId))
-		}
-		return result
+		const detailPromises = blogIds.map(blogId => getDetail(blogId))
+		const result = await Promise.all(detailPromises)
+
+		if (!result) return []
+
+		const results = result.map((blog) => {
+			if (blog.createdAt?.toDate) {
+				blog.createdAt = blog.createdAt.toDate()
+			}
+			return { ...blog }
+		})
+		const commentCounts = await commentStore.getCommentCounts(
+			results.map((blog) => blog.id)
+		)
+		const likeCounts = await likeStore.getLikeCounts(
+			results.map((blog) => blog.id)
+		)
+		const isLikes = await likeStore.isLikes(
+			results.map((blog) => blog.id)
+		)
+		const isBookmarks = await bookmarkStore.isBookmarks(
+			results.map((blog) => blog.id)
+		)
+		// 結果を組み立てる
+		blogList.value = results.map((blog) => {
+			return {
+				...blog,
+				reply_count: 0, // 必要なら更新
+				comment_count: commentCounts[blog.id] || 0,
+				like_count: likeCounts[blog.id] || 0,
+				is_like: isLikes[blog.id] | false,
+				is_bookmark: isBookmarks[blog.id] || false
+			}
+		})
 	}
 
 	// カテゴリーIDに一致するブログ数取得
