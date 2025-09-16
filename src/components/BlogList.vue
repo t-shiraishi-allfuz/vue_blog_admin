@@ -59,7 +59,8 @@ const blogStore = useBlogStore()
 const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
 const {
-	blogList
+	blogList,
+	selectType
 } = storeToRefs(blogStore)
 
 const extendBlogList = computed(() => {
@@ -108,7 +109,7 @@ const goToDetail = (blog) => {
 // いいね
 const addLike = async (blog) => {
 	if (blog.is_like) {
-		await likeStore.deleteLike(blog.id)
+		await likeStore.deleteItem(blog.id)
 		blog.is_like = false
 		blog.like_count--
 	} else {
@@ -116,17 +117,19 @@ const addLike = async (blog) => {
 		blog.is_like = true
 		blog.like_count++
 	}
+	await fetchBlogList(selectType.value)
 }
 
 // お気に入り登録
 const addBookmark = async (blog) => {
 	if (blog.is_bookmark) {
-		await bookmarkStore.deleteBookmark(blog.id)
+		await bookmarkStore.deleteItem(blog.id)
 		blog.is_bookmark = false
 	} else {
 		await bookmarkStore.create(blog.id)
 		blog.is_bookmark = true
 	}
+	await fetchBlogList(selectType.value)
 }
 
 watch(() => blogStore.selectType, async (newType) => {
@@ -135,7 +138,7 @@ watch(() => blogStore.selectType, async (newType) => {
 
 // 初回ロード
 onMounted(async () => {
-	await fetchBlogList(0)
+	await fetchBlogList(selectType.value)
 })
 </script>
 
