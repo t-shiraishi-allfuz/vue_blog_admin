@@ -33,6 +33,16 @@
 				<template v-slot:[`item.isPublished`]="{ item }">
 					{{ item.isPublished ? '公開' : '下書き' }}
 				</template>
+				<template v-slot:[`item.viewCount`]="{ item }">
+					<v-chip
+						:color="getViewCountColor(item.viewCount)"
+						size="small"
+						variant="outlined"
+					>
+						<v-icon start icon="mdi-eye" />
+						{{ item.viewCount || 0 }}
+					</v-chip>
+				</template>
 				<template v-slot:[`item.comment_count`]="{ item }">
 					<div v-if="item.comment_count > 0">
 						<a href="#" @click.prevent="goToCommentList(item)">
@@ -100,6 +110,7 @@ const headers = [
 	{title: "記事タイトル", value: "title" },
 	{title: "投稿日時", value: "createdAt" },
 	{title: "ステータス", value: "isPublished" },
+	{title: "アクセス数", value: "viewCount" },
 	{title: "コメント", value: "comment_count" },
 	{title: "いいね", value: "like_count" },
 	{title: "削除", value: "actions", sortable: false },
@@ -136,6 +147,15 @@ const filteredBlogList = computed(() => {
 // 日時フォーマット関数
 const formatDate = (date) => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
+}
+
+// アクセス数に応じた色を返す関数
+const getViewCountColor = (viewCount) => {
+	if (!viewCount || viewCount === 0) return 'grey'
+	if (viewCount < 10) return 'blue'
+	if (viewCount < 50) return 'green'
+	if (viewCount < 100) return 'orange'
+	return 'red'
 }
 
 // 詳細ページに移動

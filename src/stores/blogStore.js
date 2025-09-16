@@ -7,6 +7,7 @@ import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
+import { useAccessLogStore } from '@/stores/accessLogStore'
 
 export const useBlogStore = defineStore('blog', () => {
 	const authStore = useAuthStore()
@@ -15,10 +16,12 @@ export const useBlogStore = defineStore('blog', () => {
 	const bookmarkStore = useBookmarkStore()
 	const blogSettingStore = useBlogSettingStore()
 	const followUsersStore = useFollowUsersStore()
+	const accessLogStore = useAccessLogStore()
 
 	const blogList = ref([])
 	const blogDetail = ref({})
 	const selectType = ref(0)
+	const accessCounts = ref({})
 
 	const tempBlog = ref({
 		uid: null,
@@ -30,6 +33,7 @@ export const useBlogStore = defineStore('blog', () => {
 		isPublished: false,
 		thumbUrl: null,
 		share_blog_id: null,
+		viewCount: 0,
 		createdAt: null,
 		updatedAt: null
 	})
@@ -43,9 +47,11 @@ export const useBlogStore = defineStore('blog', () => {
 		const likeCount = await likeStore.getLikeCount(doc.id)
 		const isLike = await likeStore.isLike(doc.id)
 		const isBookmark = await bookmarkStore.isBookmark(doc.id)
-		
+		const viewCount = doc.data().viewCount || 0
+
 		const data = {
 			id: doc.id,
+			viewCount: viewCount,
 			comment_count: commentCount,
 			like_count: likeCount,
 			is_like: isLike,
@@ -65,6 +71,7 @@ export const useBlogStore = defineStore('blog', () => {
 	const create = async(blog) => {
 		const userInfo = authStore.userInfo
 		blog.uid = userInfo.uid
+		blog.viewCount = 0
 		blog.createdAt = new Date()
 		blog.updatedAt = new Date()
 
@@ -84,6 +91,7 @@ export const useBlogStore = defineStore('blog', () => {
 				thumbUrl: blog.thumbUrl,
 				category_id: blog.category_id,
 				isPublished: blog.isPublished,
+				viewCount: blog.viewCount,
 				updatedAt: new Date(),
 			}
 		)
@@ -106,6 +114,34 @@ export const useBlogStore = defineStore('blog', () => {
 					blogDetail.value.shareBlog = await setBlogData(share_doc)
 				}
 			}
+		}
+	}
+
+	// ブログ詳細表示時にアクセス数をカウント
+	const getDetailWithAccessCount = async (blog_id) => {
+		await getDetail(blog_id)
+		
+		// 公開されているブログの場合のみアクセス数をカウント
+		if (blogDetail.value.isPublished) {
+			blogDetail.value.viewCount ++ 
+			await incrementAccessCount(blog_id)
+		}
+	}
+
+	// ブログのアクセス数をインクリメント
+	const incrementAccessCount = async (blog_id) => {
+		try {
+			const newCount = blogDetail.value.viewCount
+
+			// アクセス数を更新
+			await BaseAPI.setData(
+				{ db_name: "blog", item_id: blog_id },
+				{ viewCount: newCount }
+			)
+			// アクセスログを記録（オプション）
+			await accessLogStore.create(blog_id)
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 
@@ -177,7 +213,6 @@ export const useBlogStore = defineStore('blog', () => {
 			// ログイン中のユーザーがフォローしているユーザーリストを取得
 			await followUsersStore.getListFollowers(userInfo.uid)
 			const followerUserIds = followUsersStore.followersList
-			console.log(followerUserIds)
 			
 			// フォローしているユーザーがいない場合は空配列を返す
 			if (followerUserIds.length === 0) {
@@ -231,6 +266,35 @@ export const useBlogStore = defineStore('blog', () => {
 		blogList.value = result.filter(item => item !== null)
 	}
 
+	// おすすめのブログデータ取得
+	const getListForRecomend = async () => {
+		const filters = [
+			["isPublished", "==", true],
+			["viewCount", ">", 0]
+		]
+		const sorters = [
+			["viewCount", "desc"],
+			["createdAt", "desc"]
+		]
+
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+					sorters: sorters,
+					limit: 10
+				}
+			}
+		)
+
+		if (querySnapshot) {
+			const promises = querySnapshot.docs.map(doc => setBlogData(doc))
+			const result = await Promise.all(promises)
+			blogList.value = result
+		}
+	}
+
 	// カテゴリーIDに一致するブログ数取得
 	const getListForCategoryCount = async (category_id) => {
 		const userInfo = authStore.userInfo
@@ -255,6 +319,35 @@ export const useBlogStore = defineStore('blog', () => {
 		return querySnapshot ? querySnapshot.size : 0
 	}
 
+	// ユーザーの全ブログのアクセス数合計を取得
+	const getTotalAccessCount = async () => {
+		const userInfo = authStore.userInfo
+
+		try {
+			const filters = [
+				["uid", "==", userInfo.uid],
+				["isPublished", "==", true]
+			]
+			const querySnapshot = await BaseAPI.getDataWithQuery({
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+				}
+			})
+
+			let totalCount = 0
+			if (querySnapshot) {
+				querySnapshot.docs.forEach(doc => {
+					const data = doc.data()
+					totalCount += data.viewCount || 0
+				})
+			}
+			return totalCount
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
+		}
+	}
+
 	return {
 		selectType,
 		blogList,
@@ -265,11 +358,15 @@ export const useBlogStore = defineStore('blog', () => {
 		create,
 		update,
 		getDetail,
+		getDetailWithAccessCount,
+		incrementAccessCount,
 		deleteItem,
 		getList,
 		getListForAll,
 		getListForFollow,
 		getListForBookmark,
-		getListForCategoryCount
+		getListForRecomend,
+		getListForCategoryCount,
+		getTotalAccessCount
 	}
 })

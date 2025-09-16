@@ -21,15 +21,17 @@ import BlogCreate from '@/views/admin/BlogCreate.vue'
 import BlogList from '@/views/admin/BlogList.vue'
 import PostImageList from '@/views/admin/PostImageList.vue'
 import SettingList from '@/views/admin/SettingList.vue'
+import AccessStats from '@/views/admin/AccessStats.vue'
 
 const route = useRoute()
 const activeTab = ref(0)
 
-const tabs = ['記事を書く', '記事一覧', '画像一覧', '設定']
+const tabs = ['記事を書く', '記事一覧', '画像一覧', 'アクセス統計', '設定']
 const tabComponents = [
 	BlogCreate,
 	BlogList,
 	PostImageList,
+	AccessStats,
 	SettingList
 ]
 

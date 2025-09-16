@@ -61,6 +61,14 @@
 			</div>
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
+					icon="mdi-eye"
+					color="grey"
+					variant="text"
+				/>
+				<div class="text-truncate">{{ blogDetail.view_count || 0 }}</div>
+			</div>
+			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+				<v-btn
 					icon="mdi-share-outline"
 					color="black"
 					variant="text"
@@ -397,7 +405,7 @@ const deleteFollowUser = async () => {
 
 // ブログデータ取得
 onMounted(async () => {
-	await blogStore.getDetail(blog_id)
+	await blogStore.getDetailWithAccessCount(blog_id)
 	await fetchCommentList()
 
 	isLoading.value = true
