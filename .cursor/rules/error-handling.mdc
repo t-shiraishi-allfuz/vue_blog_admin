@@ -1,0 +1,77 @@
+---
+globs: *.vue,*.js,*.ts
+---
+
+# エラーハンドリング ルール
+
+## 基本方針
+- すべての非同期処理でエラーハンドリングを実装
+- ユーザーに分かりやすいエラーメッセージを表示
+- 日本語でのエラーメッセージを統一
+
+## 非同期処理のエラーハンドリング
+
+### API呼び出し
+```javascript
+try {
+  const result = await BaseAPI.getData(params)
+  // 成功時の処理
+} catch (error) {
+  console.error('データ取得エラー:', error)
+  // エラー表示
+  this.$swal.fire({
+    title: 'エラー',
+    text: 'データの取得に失敗しました',
+    icon: 'error'
+  })
+}
+```
+
+### ストア内のエラーハンドリング
+```javascript
+const getData = async () => {
+  try {
+    const data = await BaseAPI.getData(params)
+    if (data) {
+      state.value = data
+    }
+  } catch (error) {
+    console.error('ストアエラー:', error)
+    throw new Error('データの取得に失敗しました')
+  }
+}
+```
+
+## バリデーション
+- フォーム入力のバリデーション
+- 必須項目チェック
+- データ形式チェック
+
+```javascript
+const rules = {
+  required: (value) => !!value || '必須項目です',
+  email: (value) => {
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return pattern.test(value) || '有効なメールアドレスを入力してください'
+  }
+}
+```
+
+## ローディング状態
+- 非同期処理中はローディング表示
+- ユーザーに処理状況を伝える
+
+```vue
+<template>
+  <v-progress-circular
+    v-if="loading"
+    indeterminate
+    color="primary"
+  />
+</template>
+```
+
+## エラー表示
+- SweetAlert2を使用したエラー表示
+- 適切なアイコンとメッセージ
+- ユーザーが次に取るべきアクションを明示

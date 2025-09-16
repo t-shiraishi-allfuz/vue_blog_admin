@@ -1,0 +1,65 @@
+---
+globs: src/api/*.js,src/api/*.ts,src/setting/*.js,src/setting/*.ts
+---
+
+# Firebase API 使用ルール
+
+## BaseAPI クラス使用
+[src/api/base.js](mdc:src/api/base.js)のBaseAPIクラスを必ず使用する：
+
+```javascript
+import BaseAPI from '@/api/base'
+
+// 単一データ取得
+const doc = await BaseAPI.getData({
+  db_name: "collection_name", 
+  item_id: "document_id"
+})
+
+// クエリ付きデータ取得
+const querySnapshot = await BaseAPI.getDataWithQuery({
+  db_name: "collection_name",
+  searchConditions: {
+    filters: [["field", "==", "value"]],
+    sorters: [["field", "desc"]],
+    limit: 10
+  }
+})
+
+// データ追加
+await BaseAPI.addData(
+  {db_name: "collection_name"},
+  dataObject
+)
+
+// データ更新
+await BaseAPI.setData(
+  {db_name: "collection_name", item_id: "document_id"},
+  updateData
+)
+
+// データ削除
+await BaseAPI.deleteData({
+  db_name: "collection_name", 
+  item_id: "document_id"
+})
+```
+
+## エラーハンドリング
+- すべてのFirebase操作でtry-catchを使用
+- エラーメッセージは日本語で統一
+- データが存在しない場合はnullを返す
+
+## データ構造
+- コレクション名は英語の複数形（例: `blogs`, `users`, `comments`）
+- ドキュメントIDはFirebaseが自動生成するか、意味のある文字列を使用
+- 日時フィールドはFirebase Timestamp型を使用
+
+## クエリ最適化
+- インデックスを適切に設定
+- 必要最小限のフィールドのみ取得
+- ページネーションにはlimitを使用
+
+## セキュリティ
+- クライアントサイドでのバリデーションは参考程度
+- 重要なバリデーションはFirestore Security Rulesで実装

@@ -2,11 +2,11 @@
 	<v-container>
 		<v-card class="category-list">
 			<v-data-table
-				v-if="isLoading"
+				v-if="!isLoading"
 				class="category-list"
 				:headers="headers"
 				:items="categoryList"
-				:items-per-page="30"
+				items-per-page="30"
 				no-data-text="カテゴリーがありません"
 			>
 				<template v-slot:top>
@@ -14,14 +14,21 @@
 						<v-toolbar-title>カテゴリー一覧</v-toolbar-title>
 						<v-divider class="mx-4" inset vertical />
 						<v-spacer></v-spacer>
-						<v-btn color="primary" variant="flat" @click="openCreateDialog">新しいカテゴリーを作る</v-btn>
+						<v-btn
+							class="mx-2"
+							color="success"
+							variant="flat"
+							@click="openCreateDialog"
+						>
+							新しいカテゴリーを作る
+						</v-btn>
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.name`]="{ item }">
 					<v-icon
 						v-if="item.pre_category_id"
-						:icon="mdiSubdirectoryArrowRight"
-						:style="{ marginLeft: '20px' }"
+						icon="mdi-subdirectory-arrow-right"
+						style="marginLeft: 20px"
 					/>
 					<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
 						{{ item.name }}（{{ item.blog_count }}）
@@ -33,7 +40,7 @@
 				<template v-slot:[`item.actions`]="{ item }">
 					<v-icon
 						class="delete-icon"
-						:icon="mdiDelete"
+						icon="mdi-delete"
 						aria-label="削除"
 						role="button"
 						@click="openDeleteDialog(item)"
@@ -41,6 +48,7 @@
 				</template>
 			</v-data-table>
 		</v-card>
+
 		<v-dialog v-model="createDialog" max-width="400px">
 			<v-card>
 				<v-card-title>カテゴリー作成</v-card-title>
@@ -48,7 +56,8 @@
 					<v-text-field
 						type="text"
 						label="カテゴリー名を入力して下さい"
-						v-model="category.name" />
+						v-model="category.name"
+					/>
 				</v-card-text>
 				<v-card-text v-if="categoryList.length > 0">
 					<v-select
@@ -57,15 +66,17 @@
 						item-title="name"
 						item-value="id"
 						v-model="selectedPreCategoryID"
-						hide-details />
+						hide-details
+					/>
 				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="createDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="createCategory">作成</v-btn>
-				</v-card-actions>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn class="mx-2" color="grey-lighten-2" @click="createDialog = false">閉じる</v-btn>
+					<v-btn class="mx-2" color="success" @click="createCategory">作成</v-btn>
+				</div>
 			</v-card>
 		</v-dialog>
+
 		<v-dialog v-model="updateDialog" max-width="400px">
 			<v-card>
 				<v-card-title>カテゴリー編集</v-card-title>
@@ -73,7 +84,8 @@
 					<v-text-field
 						type="text"
 						label="カテゴリー名を入力して下さい"
-						v-model="categoryToUpdate.name" />
+						v-model="categoryToUpdate.name"
+					/>
 				</v-card-text>
 				<v-card-text v-if="categoryList.length > 0">
 					<v-select
@@ -82,24 +94,26 @@
 						item-title="name"
 						item-value="id"
 						v-model="categoryToUpdate.pre_category_id"
-						hide-details />
+						hide-details
+					/>
 				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="updateDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="updateCategory">更新</v-btn>
-				</v-card-actions>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn class="mx-2" color="grey-lighten-2" @click="updateDialog = false">閉じる</v-btn>
+					<v-btn class="mx-2" color="success" @click="updateCategory">更新</v-btn>
+				</div>
 			</v-card>
 		</v-dialog>
+
 		<v-dialog v-model="deleteDialog" max-width="400px">
 			<v-card>
 				<v-card-title>削除確認</v-card-title>
 				<v-card-text>このカテゴリーを本当に削除しますか？</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="deleteCategory">削除</v-btn>
-				</v-card-actions>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn class="mx-2" color="grey-lighten-2" @click="deleteDialog = false">閉じる</v-btn>
+					<v-btn class="mx-2" color="success" @click="deleteCategory">削除</v-btn>
+				</div>
 			</v-card>
 		</v-dialog>
 	</v-container>
@@ -116,7 +130,7 @@ const {
 	categoryList
 } = storeToRefs(blogCategoryStore)
 
-const isLoading = ref(false)
+const isLoading = ref(true)
 
 const createDialog = ref(false)
 const category = ref({
@@ -165,7 +179,8 @@ const createCategory = async () => {
 	category.value.pre_category_id = selectedPreCategoryID.value
 
 	await blogCategoryStore.create(category.value)
-	await reFetch()
+	await fetchCategoryList()
+
 	selectedPreCategoryID.value = null
 	category.value = { pre_category_id: null, name: "" }
 	alert('カテゴリーが作成されました')
@@ -182,7 +197,8 @@ const updateCategory = async () => {
 	}
 
 	await blogCategoryStore.update(categoryToUpdate.value)
-	await reFetch()
+	await fetchCategoryList()
+
 	categoryToUpdate.value = null
 	alert('カテゴリーを更新しました')
 }
@@ -192,19 +208,20 @@ const deleteCategory = async () => {
 	deleteDialog.value = false
 
 	await blogCategoryStore.deleteItem(categoryToDelete.value)
-	await reFetch()
+	await fetchCategoryList()
+
 	categoryToDelete.value = null
 	alert('カテゴリーが削除されました')
 };
 
 // 再取得
-const reFetch = async () => {
+const fetchCategoryList = async () => {
 	await blogCategoryStore.getList()
 }
 
 onMounted(async() => {
-	await blogCategoryStore.getList()
-	isLoading.value = true
+	await fetchCategoryList()
+	isLoading.value = false
 })
 </script>
 

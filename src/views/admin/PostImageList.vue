@@ -11,7 +11,8 @@
 						accept="image/png, image/jpg, image/jpeg"
 						multiple
 						v-model="fileInputValue"
-						@change="handleFileUpload" />
+						@change="handleFileUpload"
+					/>
 				</v-card-text>
 				<v-card-text>
 					<v-select
@@ -32,7 +33,7 @@
 					</div>
 				</v-card-text>
 				<v-card-actions>
-					<v-btn color="primary" variant="flat" type="submit">画像をアップロード</v-btn>
+					<v-btn color="success" variant="flat" type="submit">画像をアップロード</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-form>
@@ -43,7 +44,12 @@
 			<v-tab v-for="(tab, index) in tabs" :key="index">{{ tab }}</v-tab>
 		</v-tabs>
 		<v-window v-model="activeTab">
-			<v-window-item v-for="(component, index) in tabComponents" :key="index" transition="none" reverse-transition="none">
+			<v-window-item
+				v-for="(component, index) in tabComponents"
+				:key="index"
+				transition="none"
+				reverse-transition="none"
+			>
 				<component
 					:is="component"
 					v-model:folderList="extendedFolderList"

@@ -1,13 +1,25 @@
 <template>
 	<v-container>
 		<v-card class="blog-list">
-			<v-data-table class="blog-list" :headers="headers" :items="filteredBlogList" :items-per-page="30" no-data-text="記事がありません">
+			<v-data-table
+				class="blog-list"
+				:headers="headers"
+				:items="filteredBlogList"
+				:items-per-page="30"
+				no-data-text="記事がありません"
+			>
 				<template v-slot:top>
 					<v-toolbar flat>
 						<v-toolbar-title>記事一覧</v-toolbar-title>
 						<v-divider class="mx-4" inset vertical />
 						<v-spacer></v-spacer>
-						<v-text-field :loading="loading" v-model="search" label="検索" :append-inner-icon="mdiMagnify" single-line hide-details />
+						<v-text-field
+							label="検索"
+							v-model="search"
+							append-inner-icon="mdi-magnify"
+							single-line
+							hide-details
+						/>
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.title`]="{ item }">
@@ -42,10 +54,17 @@
 					</div>
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
+					<v-icon
+						class="delete-icon"
+						icon="mdi-delete"
+						aria-label="削除"
+						role="button"
+						@click="openDeleteDialog(item)"
+					/>
 				</template>
 			</v-data-table>
 		</v-card>
+
 		<v-dialog v-model="deleteDialog" max-width="400px">
 			<v-card>
 				<v-card-title>削除確認</v-card-title>

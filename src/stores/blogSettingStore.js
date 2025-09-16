@@ -113,11 +113,10 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 
 		if (!doc) return null
 
-		blogSetting.value = doc.data()
-		blogSetting.value.is_follower = await followUsersStore.isFollower(uid)
-		blogSetting.value.is_following = await followUsersStore.isFollowing(uid)
-
-		return blogSetting.value
+		const setting = doc.data()
+		setting.is_follower = await followUsersStore.isFollower(uid)
+		setting.is_following = await followUsersStore.isFollowing(uid)
+		return setting
 	}
 
 	// タイトルの重複チェック

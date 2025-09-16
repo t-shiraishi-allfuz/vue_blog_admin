@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+# プロジェクト構造ガイド
+
+## ディレクトリ構造
+```
+src/
+├── api/           # API関連（BaseAPIクラス）
+├── assets/        # 静的リソース（画像、アイコン等）
+├── components/    # 共通コンポーネント
+├── plugins/       # プラグイン設定（Vuetify等）
+├── routes/        # ルーティング設定
+├── setting/       # 設定ファイル（Firebase等）
+├── stores/        # Piniaストア
+├── types/         # TypeScript型定義
+└── views/         # ページコンポーネント
+    ├── admin/     # 管理画面ページ
+    └── (その他)   # 一般ユーザー向けページ
+```
+
+## ファイル命名規則
+
+### コンポーネント
+- 共通コンポーネント: `Common{Name}.vue` (例: `CommonHeader.vue`)
+- 機能別コンポーネント: `{Feature}{Name}.vue` (例: `BlogCard.vue`)
+
+### ストア
+- ファイル名: `{name}Store.js` (例: `blogStore.js`)
+- ストア名: `use{Name}Store` (例: `useBlogStore`)
+
+### ルート
+- ファイル名: `{name}.ts` (例: `admin.ts`, `blog.ts`)
+- ルート名: PascalCase (例: `BlogList`, `UserLogin`)
+
+## インポート規則
+- 絶対パス（`@/`）を使用
+- 相対パスは避ける
+- グループ化して整理
+
+```javascript
+// 外部ライブラリ
+import { ref, computed } from 'vue'
+import { defineStore } from 'pinia'
+
+// 内部モジュール
+import BaseAPI from '@/api/base'
+import { useAuthStore } from '@/stores/authStore'
+```
+
+## コンポーネント設計
+- 単一責任の原則に従う
+- 再利用可能なコンポーネントを作成
+- propsとemitsを明確に定義
+- 適切なスコープでスタイルを定義
+
+## ルーティング
+- 管理画面は`/admin`配下
+- 認証が必要なページには`meta: { requiresAuth: true }`を設定
+- ネストしたルート構造を活用

@@ -1,5 +1,5 @@
 <template>
-	<v-app v-if="isLoading">
+	<v-app>
 		<CommonHeader />
 		<v-main>
 			<v-container fluid>
@@ -15,22 +15,6 @@
 		</v-main>
 	</v-app>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import CommonHeader from '@/components/CommonHeader.vue'
-import CommonSidemenu from '@/components/CommonSidemenu.vue'
-
-const blogSettingStore = useBlogSettingStore()
-
-const isLoading = ref(false)
-
-onMounted(async () => {
-	await blogSettingStore.getDetail()
-	isLoading.value = true
-})
-</script>
 
 <style scoped>
 	.sidebar-wrapper {

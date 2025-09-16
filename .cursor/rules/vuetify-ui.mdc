@@ -1,0 +1,70 @@
+---
+globs: *.vue
+---
+
+# Vuetify UI コンポーネント使用ルール
+
+## 基本方針
+- Vuetify 3のコンポーネントを優先的に使用
+- 一貫したデザインシステムを維持
+- レスポンシブデザインを考慮
+
+## よく使用するコンポーネント
+
+### レイアウト
+```vue
+<v-container>
+  <v-row>
+    <v-col cols="12" md="8">
+      <!-- コンテンツ -->
+    </v-col>
+  </v-row>
+</v-container>
+```
+
+### カード
+```vue
+<v-card>
+  <v-card-title>タイトル</v-card-title>
+  <v-card-text>コンテンツ</v-card-text>
+  <v-card-actions>
+    <v-btn>アクション</v-btn>
+  </v-card-actions>
+</v-card>
+```
+
+### フォーム
+```vue
+<v-form>
+  <v-text-field
+    v-model="value"
+    label="ラベル"
+    :rules="rules"
+  />
+  <v-btn type="submit">送信</v-btn>
+</v-form>
+```
+
+### ダイアログ
+```vue
+<v-dialog v-model="dialog">
+  <v-card>
+    <!-- ダイアログ内容 -->
+  </v-card>
+</v-dialog>
+```
+
+## テーマ設定
+- プライマリカラー: プロジェクトのブランドカラー
+- セカンダリカラー: アクセントカラー
+- ダークモード対応を考慮
+
+## レスポンシブ対応
+- `xs`, `sm`, `md`, `lg`, `xl`ブレークポイントを活用
+- モバイルファーストで設計
+- グリッドシステムを適切に使用
+
+## アクセシビリティ
+- 適切なラベルとaria属性を設定
+- キーボードナビゲーションを考慮
+- コントラスト比を確保

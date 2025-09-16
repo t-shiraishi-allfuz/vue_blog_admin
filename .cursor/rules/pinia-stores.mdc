@@ -1,0 +1,54 @@
+---
+globs: src/stores/*.js,src/stores/*.ts
+---
+
+# Pinia ストア管理ルール
+
+## ストア構造
+[src/stores/blogStore.js](mdc:src/stores/blogStore.js)を参考に、以下の構造に従う：
+
+```javascript
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+export const useStoreName = defineStore('storeName', () => {
+  // リアクティブ変数
+  const state = ref([])
+  
+  // アクション関数
+  const action = async () => {
+    // 処理
+  }
+  
+  // ゲッター関数
+  const getter = computed(() => {
+    // 計算処理
+  })
+  
+  return {
+    state,
+    action,
+    getter
+  }
+})
+```
+
+## 命名規則
+- ストアファイル名: `{name}Store.js` (例: `blogStore.js`)
+- ストア名: `use{Name}Store` (例: `useBlogStore`)
+- ストアID: `{name}` (例: `blog`)
+
+## エラーハンドリング
+- 非同期処理では適切なtry-catchを使用
+- エラーメッセージは日本語で記述
+- ユーザーに分かりやすいエラー表示を心がける
+
+## データ取得パターン
+- 単一データ: `getDetail(id)`
+- 一覧データ: `getList()`
+- 条件付き一覧: `getListFor{条件}()`
+
+## 状態管理
+- グローバル状態は最小限に
+- ローカル状態は可能な限りコンポーネント内で管理
+- 永続化が必要な状態のみPiniaで管理

@@ -4,12 +4,19 @@
 			<v-card-title>アップロード済みの画像</v-card-title>
 			<v-card-text>
 				<v-toolbar flat>
-					<v-btn color="primary" variant="flat" @click="openBatchDeleteDialog">一括削除</v-btn>
+					<v-btn
+						color="success"
+						variant="flat"
+						@click="openBatchDeleteDialog"
+					>
+						一括削除
+					</v-btn>
 					<v-checkbox
 						label="全選択"
 						v-if="imageList.length > 0"
 						v-model="isAllSelectedComputed"
-						hide-details />
+						hide-details
+					/>
 					<v-divider class="mx-4" inset vertical />
 					<v-spacer></v-spacer>
 					<v-select
@@ -46,7 +53,7 @@
 							</div>
 						</li>
 					</ul>
-					<p v-else>アップロードされた画像はありません。</p>
+					<div v-else class="pa-4">アップロードされた画像はありません。</div>
 				</div>
 			</v-card-text>
 		</v-card>
@@ -76,13 +83,14 @@
 						item-title="name"
 						item-id="id"
 						v-model="selectedMoveFolderId"
-						hide-details />
+						hide-details
+					/>
 				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="moveDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="moveImage">移動</v-btn>
-				</v-card-actions>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn class="mx-2" color="grey-lighten-2" @click="moveDialog = false">閉じる</v-btn>
+					<v-btn class="mx-2" color="success" @click="moveImage">移動</v-btn>
+				</div>
 			</v-card>
 		</v-dialog>
 
@@ -90,11 +98,11 @@
 			<v-card>
 				<v-card-title>削除確認</v-card-title>
 				<v-card-text>この画像を本当に削除しますか？</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="deleteImage">削除</v-btn>
-				</v-card-actions>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn class="mx-2" color="grey-lighten-2" @click="deleteDialog = false">閉じる</v-btn>
+					<v-btn class="mx-2" color="success" @click="deleteImage">削除</v-btn>
+				</div>
 			</v-card>
 		</v-dialog>
 
@@ -102,11 +110,11 @@
 			<v-card>
 				<v-card-title>一括削除確認</v-card-title>
 				<v-card-text>選択した画像をすべて削除しますか？</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="batchDeleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="deleteSelectedImages">削除</v-btn>
-				</v-card-actions>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn class="mx-2" color="grey-lighten-2" @click="batchDeleteDialog = false">閉じる</v-btn>
+					<v-btn class="mx-2" color="success" @click="deleteSelectedImages">削除</v-btn>
+				</div>
 			</v-card>
 		</v-dialog>
 	</v-container>

@@ -11,15 +11,16 @@
 				v-model="search"
 				append-inner-icon="mdi-magnify"
 				single-line
-				hide-details />
+				hide-details
+			/>
 		</v-app-bar-title>
 		<template v-slot:append>
-			<div v-if="setting">
+			<div v-if="blogSetting">
 				<v-menu>
 					<template v-slot:activator="{ props }">
-						<v-avatar v-bind="props" :image="setting.profileUrl" size="48" end />
+						<v-avatar v-bind="props" :image="blogSetting.profileUrl" size="48" end />
 					</template>
-					<CommonUsermenu :setting="setting" />
+					<CommonUsermenu :setting="blogSetting" />
 				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
@@ -32,7 +33,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
@@ -40,25 +42,28 @@ import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
 
 const router = useRouter()
+
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
 const blogSettingStore = useBlogSettingStore()
+const {
+	blogSetting
+} = storeToRefs(blogSettingStore)
 
 const search = ref('')
-const setting = computed(() => blogSettingStore.blogSetting)
+
+onMounted(async () => {
+	await blogSettingStore.getDetail()
+})
 
 const logout = async () => {
-	try {
-		await authStore.logout()
-		router.push('/')
-	} catch (error) {
-		alert(error)
-	}
+	await authStore.logout()
+	router.push({path: '/'})
 }
 
 const goToHome = () => {
 	blogStore.setSelectType(0)
-	router.push('/')
+	router.push({path: '/'})
 }
 </script>
 
