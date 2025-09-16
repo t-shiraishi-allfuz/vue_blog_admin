@@ -108,11 +108,11 @@ const blogToDelete = ref(null)
 
 const headers = [
 	{title: "記事タイトル", value: "title" },
-	{title: "投稿日時", value: "createdAt" },
-	{title: "ステータス", value: "isPublished" },
-	{title: "アクセス数", value: "viewCount" },
-	{title: "コメント", value: "comment_count" },
-	{title: "いいね", value: "like_count" },
+	{title: "投稿日時", value: "createdAt", sortable: true },
+	{title: "ステータス", value: "isPublished", sortable: true },
+	{title: "アクセス数", value: "viewCount", sortable: true },
+	{title: "コメント", value: "comment_count", sortable: true },
+	{title: "いいね", value: "like_count", sortable: true },
 	{title: "削除", value: "actions", sortable: false },
 ]
 
