@@ -6,6 +6,7 @@ import { useCommentStore } from '@/stores/commentStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import { useFollowUsersStore } from '@/stores/followUsersStore'
 
 export const useBlogStore = defineStore('blog', () => {
 	const authStore = useAuthStore()
@@ -13,6 +14,7 @@ export const useBlogStore = defineStore('blog', () => {
 	const likeStore = useLikeStore()
 	const bookmarkStore = useBookmarkStore()
 	const blogSettingStore = useBlogSettingStore()
+	const followUsersStore = useFollowUsersStore()
 
 	const blogList = ref([])
 	const blogDetail = ref({})
@@ -169,28 +171,47 @@ export const useBlogStore = defineStore('blog', () => {
 
 	// フォロー中ユーザーのブログデータ取得
 	const getListForFollow = async () => {
-		const filters = [
-			["isPublished", "==", true]
-		]
-		const sorters = [
-			["createdAt", "desc"]
-		]
-
-		const querySnapshot = await BaseAPI.getDataWithQuery(
-			{
-				db_name: "blog",
-				searchConditions: {
-					filters: filters,
-					sorters: sorters,
-					limit: 10
-				}
+		const userInfo = authStore.userInfo
+		
+		try {
+			// ログイン中のユーザーがフォローしているユーザーリストを取得
+			await followUsersStore.getListFollowers(userInfo.uid)
+			const followerUserIds = followUsersStore.followersList
+			console.log(followerUserIds)
+			
+			// フォローしているユーザーがいない場合は空配列を返す
+			if (followerUserIds.length === 0) {
+				blogList.value = []
+				return
 			}
-		)
+			
+			// フォローしているユーザーのブログを取得
+			const filters = [
+				["isPublished", "==", true],
+				["uid", "in", followerUserIds]
+			]
+			const sorters = [
+				["createdAt", "desc"]
+			]
 
-		if (querySnapshot) {
-			const promises = querySnapshot.docs.map(doc => setBlogData(doc))
-			const result = await Promise.all(promises)
-			blogList.value = result
+			const querySnapshot = await BaseAPI.getDataWithQuery(
+				{
+					db_name: "blog",
+					searchConditions: {
+						filters: filters,
+						sorters: sorters,
+						limit: 10
+					}
+				}
+			)
+
+			if (querySnapshot) {
+				const promises = querySnapshot.docs.map(doc => setBlogData(doc))
+				const result = await Promise.all(promises)
+				blogList.value = result
+			}
+		} catch (error) {
+			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 
