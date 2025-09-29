@@ -311,7 +311,11 @@ const addLike = async () => {
 		blogDetail.value.is_like = false
 		blogDetail.value.like_count--
 	} else {
-		await likeStore.create(blogDetail.id)
+		await likeStore.create(
+			blogDetail.value.id,
+			blogDetail.value.title,
+			blogDetail.value.uid
+		)
 		blogDetail.value.is_like = true
 		blogDetail.value.like_count++
 	}
@@ -382,7 +386,11 @@ const executeComment = async () => {
 		reply_id.value = ''
 	}
 
-	await commentStore.create(comment.value)
+	await commentStore.create(
+		comment.value,
+		blogDetail.value.title,
+		blogDetail.value.uid
+	)
 	await fetchCommentList()
 	blogDetail.value.comment_count++
 

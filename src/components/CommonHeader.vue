@@ -16,6 +16,23 @@
 		</v-app-bar-title>
 		<template v-slot:append>
 			<div v-if="isLogin && blogSetting">
+				<!-- 通知・お知らせボタン -->
+				<v-btn
+					icon="mdi-bell"
+					variant="text"
+					@click="openNotificationDialog"
+					class="mr-2"
+				>
+					<v-badge
+						:content="totalUnreadCount"
+						:model-value="totalUnreadCount > 0"
+						color="error"
+						dot
+					>
+						<v-icon>mdi-bell</v-icon>
+					</v-badge>
+				</v-btn>
+				
 				<v-menu>
 					<template v-slot:activator="{ props }">
 						<v-avatar v-bind="props" :image="blogSetting.profileUrl" size="48" end />
@@ -36,6 +53,7 @@
 	</v-app-bar>
 	
 	<LoginDialog v-model:dialog="isLoginDialog" />
+	<NotificationDialog v-model="isNotificationDialogOpen" />
 </template>
 
 <script setup>
@@ -48,8 +66,10 @@ import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
+import NotificationDialog from '@/components/NotificationDialog.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -60,6 +80,7 @@ const blogSettingStore = useBlogSettingStore()
 const likeStore = useLikeStore()
 const imagesStore = useImagesStore()
 const followUsersStore = useFollowUsersStore()
+const notificationStore = useNotificationStore()
 const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
@@ -68,13 +89,18 @@ const {
 	isLogin
 } = storeToRefs(authStore)
 
+// 未読通知数を取得
+const totalUnreadCount = computed(() => notificationStore.totalUnreadCount)
+
 const search = ref('')
 const isLoginDialog = ref(false)
+const isNotificationDialogOpen = ref(false)
 
 onMounted(async () => {
 	// 認証状態に応じてブログ設定を取得
 	if (isLogin.value) {
 		await blogSettingStore.getDetail()
+		await notificationStore.initialize()
 	}
 })
 
@@ -83,6 +109,7 @@ watch(isLogin, async (newIsLogin) => {
 	if (newIsLogin) {
 		// ログインした場合、ブログ設定を取得
 		await blogSettingStore.getDetail()
+		await notificationStore.initialize()
 	} else {
 		// ログアウトした場合、ブログ設定をクリア
 		blogSettingStore.clearStore()
@@ -145,6 +172,21 @@ const goToHome = () => {
 
 const openLoginDialog = () => {
 	isLoginDialog.value = true
+}
+
+// 通知ダイアログを開く
+const openNotificationDialog = async () => {
+	isNotificationDialogOpen.value = true
+	
+	// データを取得して既読にする
+	await Promise.all([
+		notificationStore.fetchNotifications(),
+		notificationStore.fetchAnnouncements()
+	])
+	await Promise.all([
+		notificationStore.markAllNotificationsAsRead(),
+		notificationStore.markAllAnnouncementsAsRead()
+	])
 }
 </script>
 

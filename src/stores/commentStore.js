@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 export const useCommentStore = defineStore('comment', () => {
 	const commentList = ref([])
@@ -10,6 +11,7 @@ export const useCommentStore = defineStore('comment', () => {
 
 	const authStore = useAuthStore()
 	const blogSettingStore = useBlogSettingStore()
+	const notificationStore = useNotificationStore()
 
 	const setCommentData = async (doc) => {
 		const data = {
@@ -35,11 +37,22 @@ export const useCommentStore = defineStore('comment', () => {
 		return data
 	}
 
-	const create = async (payload) => {
+	const create = async (payload, blog_title, blog_author_uid) => {
 		await BaseAPI.addData(
 			{db_name: "comment"},
 			payload
 		)
+
+		// 自分の記事でない場合のみ通知を作成
+		if (blog_author_uid && blog_author_uid !== payload.uid) {
+			const userSetting = await blogSettingStore.getForUid(payload.uid)
+			await notificationStore.createNotification('comment', {
+				userId: blog_author_uid,
+				userName: userSetting?.title || 'ユーザー',
+				blogTitle: blog_title,
+				blogId: payload.blog_id
+			})
+		}
 	}
 
 	const getList = async (blog_id) => {

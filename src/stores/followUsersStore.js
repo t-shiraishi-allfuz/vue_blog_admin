@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 import { db } from '@/setting/firebase'
 import { writeBatch, increment } from 'firebase/firestore'
 import { useAuthStore } from '@/stores/authStore'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 // フォロー管理
 export const useFollowUsersStore = defineStore('follow_users', () => {
@@ -10,6 +12,8 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 	const followersList = ref([])
 
 	const authStore = useAuthStore()
+	const blogSettingStore = useBlogSettingStore()
+	const notificationStore = useNotificationStore()
 
 	const create = async (uid) => {
 		const userInfo = authStore.userInfo
@@ -37,6 +41,13 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 			batch.update(followingUserRef, { followerCount: increment(1) })
 
 			await batch.commit()
+
+			// フォロー通知を作成
+			const userSetting = await blogSettingStore.getForUid(userInfo.uid)
+			await notificationStore.createNotification('follow', {
+				userId: uid,
+				userName: userSetting?.title || 'ユーザー'
+			})
 		} catch (error) {
 			throw new Error(`エラーが発生しました': ${error.message}`)
 		}

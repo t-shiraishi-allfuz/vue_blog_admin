@@ -3,12 +3,14 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 export const useLikeStore = defineStore('like', () => {
 	const authStore = useAuthStore()
 	const blogSettingStore = useBlogSettingStore()
+	const notificationStore = useNotificationStore()
 
-	const create = async (blog_id) => {
+	const create = async (blog_id, blog_title, blog_author_uid) => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合はエラーを投げる
@@ -25,6 +27,17 @@ export const useLikeStore = defineStore('like', () => {
 				updatedAt: new Date()
 			}
 		)
+
+		// 自分の記事でない場合のみ通知を作成
+		if (blog_author_uid && blog_author_uid !== userInfo.uid) {
+			const userSetting = await blogSettingStore.getForUid(userInfo.uid)
+			await notificationStore.createNotification('like', {
+				userId: blog_author_uid,
+				userName: userSetting?.title || 'ユーザー',
+				blogTitle: blog_title,
+				blogId: blog_id
+			})
+		}
 	}
 
 	// 指定のブログにいいねした

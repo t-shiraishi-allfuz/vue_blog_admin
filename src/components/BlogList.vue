@@ -113,7 +113,7 @@ const addLike = async (blog) => {
 		blog.is_like = false
 		blog.like_count--
 	} else {
-		await likeStore.create(blog.id)
+		await likeStore.create(blog.id, blog.title, blog.uid)
 		blog.is_like = true
 		blog.like_count++
 	}
