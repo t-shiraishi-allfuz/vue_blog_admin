@@ -83,8 +83,10 @@ export const useAuthStore = defineStore('auth', () => {
 		let data = localStorage.getItem('user_info')
 		if (data != null) {
 			userInfo.value = JSON.parse(data)
+			isLogin.value = true
 		} else {
 			userInfo.value = null
+			isLogin.value = false
 		}
 	}
 
@@ -132,7 +134,7 @@ export const useAuthStore = defineStore('auth', () => {
 		return new Promise((resolve) => {
 			onAuthStateChanged(auth, (currentUser) => {
 				userInfo.value = currentUser
-				isLogin.value = true
+				isLogin.value = !!currentUser
 				resolve()
 			})
 		})

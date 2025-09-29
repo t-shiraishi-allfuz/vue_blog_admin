@@ -70,6 +70,12 @@ export const useBlogStore = defineStore('blog', () => {
 
 	const create = async(blog) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		blog.uid = userInfo.uid
 		blog.viewCount = 0
 		blog.createdAt = new Date()

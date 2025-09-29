@@ -7,6 +7,12 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
 	const create = async (blog_id) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		await BaseAPI.addData(
 			{db_name: "bookmark"},
 			{
@@ -21,6 +27,12 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	// ブックマークしているブログIDのリスト取得
 	const getBlogIds = async () => {
 		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合は空配列を返す
+		if (!userInfo || !userInfo.uid) {
+			return []
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid],
 		]
@@ -55,6 +67,12 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	// 指定のブログをブックマークしてるかどうか
 	const isBookmark = async (blog_id) => {
 		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合はfalseを返す
+		if (!userInfo || !userInfo.uid) {
+			return false
+		}
+		
 		const filters = [
 			["blog_id", "==", blog_id],
 			["uid", "==", userInfo.uid]
@@ -73,6 +91,12 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 
 	const deleteItem = async (blog_id) => {
 		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		const filters = [
 			["blog_id", "==", blog_id],
 			["uid", "==", userInfo.uid]

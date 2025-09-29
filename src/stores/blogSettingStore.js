@@ -84,6 +84,12 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 
 	const getDetail = async () => {
 		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合は処理を中断
+		if (!userInfo || !userInfo.uid) {
+			blogSetting.value = null
+			return
+		}
 
 		const doc = await BaseAPI.getData(
 			{
@@ -137,6 +143,21 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		return result.length > 0 ? false : true
 	}
 
+	// ストアをクリアする関数
+	const clearStore = () => {
+		blogSetting.value = null
+		tempSetting.value = {
+			title: "仮タイトル",
+			description: "仮説明",
+			name: "名無しさん",
+			profileUrl: null,
+			is_follower: false,
+			is_following: false,
+			createdAt: null,
+			updatedAt: null,
+		}
+	}
+
 	return {
 		tempSetting,
 		blogSetting,
@@ -148,6 +169,7 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		getDetail,
 		getForUids,
 		getForUid,
-		isTitleUnique
+		isTitleUnique,
+		clearStore
 	}
 })

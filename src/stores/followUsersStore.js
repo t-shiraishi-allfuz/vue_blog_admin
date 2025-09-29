@@ -13,6 +13,11 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 
 	const create = async (uid) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 
 		// 一括操作
 		const batch = writeBatch(db)
@@ -40,6 +45,11 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 	// 指定のユーザーをフォローしているかどうか
 	const isFollower = async (uid) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はfalseを返す
+		if (!userInfo || !userInfo.uid) {
+			return false
+		}
 
 		try {
 			const doc = await BaseAPI.getData({
@@ -55,6 +65,11 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 	// 指定のユーザーにフォローされているかどうか
 	const isFollowing = async (uid) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はfalseを返す
+		if (!userInfo || !userInfo.uid) {
+			return false
+		}
 
 		try {
 			const doc = await BaseAPI.getData({
@@ -103,6 +118,11 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 
 	const deleteItem = async (uid) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 
 		// 一括操作
 		const batch = writeBatch(db)
@@ -127,6 +147,12 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 		}
 	}
 
+	// ストアをクリアする関数（ログアウト時用）
+	const clearStore = () => {
+		followingList.value = []
+		followersList.value = []
+	}
+
 	return {
 		followingList,
 		followersList,
@@ -135,6 +161,7 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 		isFollowing,
 		getListFollowing,
 		getListFollowers,
-		deleteItem
+		deleteItem,
+		clearStore
 	}
 })

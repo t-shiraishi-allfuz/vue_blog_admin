@@ -39,13 +39,20 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import { useLikeStore } from '@/stores/likeStore'
+import { useImagesStore } from '@/stores/imagesStore'
+import { useFollowUsersStore } from '@/stores/followUsersStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
 const blogSettingStore = useBlogSettingStore()
+const likeStore = useLikeStore()
+const imagesStore = useImagesStore()
+const followUsersStore = useFollowUsersStore()
 const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
@@ -57,8 +64,34 @@ onMounted(async () => {
 })
 
 const logout = async () => {
-	await authStore.logout()
-	router.push({path: '/'})
+	try {
+		const result = await Swal.fire({
+			title: '確認',
+			text: 'ログアウトしますか？',
+			showCancelButton: true,
+			confirmButtonColor: '#F784C3',
+			cancelButtonColor: '#9e9e9e',
+			confirmButtonText: 'ログアウト',
+			cancelButtonText: 'キャンセル',
+			reverseButtons: true
+		})
+
+		if (result.isConfirmed) {
+			await authStore.logout()
+			// 各ストアをクリア
+			blogSettingStore.clearStore()
+			imagesStore.clearStore()
+			followUsersStore.clearStore()
+			router.push({path: '/'})
+		}
+	} catch (error) {
+		console.error('ログアウトエラー:', error)
+		Swal.fire({
+			title: 'エラー',
+			text: 'ログアウトに失敗しました',
+			icon: 'error'
+		})
+	}
 }
 
 const goToHome = () => {

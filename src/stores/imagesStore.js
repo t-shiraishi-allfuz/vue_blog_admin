@@ -16,6 +16,11 @@ export const useImagesStore = defineStore('images', () => {
 
 	const create = async (file, folder_id) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 
 		// 画像をstorageに保存
 		const storagePath = `images/${userInfo.uid}/${file.name}`
@@ -47,6 +52,13 @@ export const useImagesStore = defineStore('images', () => {
 
 	const getList = async (folder_id) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合は空配列を返す
+		if (!userInfo || !userInfo.uid) {
+			imageList.value = []
+			return []
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid],
 		]
@@ -74,6 +86,12 @@ export const useImagesStore = defineStore('images', () => {
 	// フォルダに格納されている画像数取得
 	const getImageCount = async (folder_id) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合は0を返す
+		if (!userInfo || !userInfo.uid) {
+			return 0
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid],
 			["folder_id", "==", folder_id]
@@ -91,6 +109,11 @@ export const useImagesStore = defineStore('images', () => {
 
 	const deleteItem = async (file) => {
 		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 
 		try {
 			// 画像をstorageから削除
@@ -106,12 +129,18 @@ export const useImagesStore = defineStore('images', () => {
 		)
 	}
 
+	// ストアをクリアする関数（ログアウト時用）
+	const clearStore = () => {
+		imageList.value = []
+	}
+
 	return {
 		imageList,
 		create,
 		update,
 		getList,
 		getImageCount,
-		deleteItem
+		deleteItem,
+		clearStore
 	}
 })
