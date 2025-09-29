@@ -33,11 +33,13 @@
 							</div>
 							<div v-else>
 								<v-list>
-									<v-list-item
-										v-for="notification in notifications"
-										:key="notification.id"
-										:class="{ 'bg-grey-lighten-5': !notification.isRead }"
-									>
+								<v-list-item
+									v-for="notification in notifications"
+									:key="notification.id"
+									:class="{ 'bg-grey-lighten-5': !notification.isRead }"
+									@click="goToUserProfile(notification.relatedData?.actorUserId)"
+									class="cursor-pointer"
+								>
 										<template #prepend>
 											<v-avatar size="40" color="primary" class="mr-3">
 												<v-icon :color="getNotificationIconColor(notification.type)">
@@ -109,9 +111,11 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 const notificationStore = useNotificationStore()
+const router = useRouter()
 
 const props = defineProps({
 	modelValue: {
@@ -144,6 +148,14 @@ const unreadAnnouncementCount = computed(() => notificationStore.unreadAnnouncem
 
 const closeDialog = () => {
 	emit('update:modelValue', false)
+}
+
+// ユーザープロフィールに遷移
+const goToUserProfile = (userId) => {
+	if (userId) {
+		router.push({ path: '/user_profile', query: { uid: userId } })
+		closeDialog()
+	}
 }
 
 const getNotificationIcon = (type) => {
@@ -205,5 +217,13 @@ const formatDate = (date) => {
 
 .v-list-item:last-child {
 	border-bottom: none;
+}
+
+.cursor-pointer {
+	cursor: pointer;
+}
+
+.cursor-pointer:hover {
+	background-color: rgba(0, 0, 0, 0.04);
 }
 </style>

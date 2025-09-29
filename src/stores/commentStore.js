@@ -50,7 +50,8 @@ export const useCommentStore = defineStore('comment', () => {
 				userId: blog_author_uid,
 				userName: userSetting?.title || 'ユーザー',
 				blogTitle: blog_title,
-				blogId: payload.blog_id
+				blogId: payload.blog_id,
+				actorUserId: payload.uid // コメントしたユーザーID
 			})
 		}
 	}

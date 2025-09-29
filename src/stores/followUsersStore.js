@@ -46,7 +46,8 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 			const userSetting = await blogSettingStore.getForUid(userInfo.uid)
 			await notificationStore.createNotification('follow', {
 				userId: uid,
-				userName: userSetting?.title || 'ユーザー'
+				userName: userSetting?.title || 'ユーザー',
+				actorUserId: userInfo.uid // フォローしたユーザーID
 			})
 		} catch (error) {
 			throw new Error(`エラーが発生しました': ${error.message}`)
@@ -127,6 +128,35 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 		}
 	}
 
+	// フォロー統計を取得
+	const getFollowStats = async (userId) => {
+		try {
+			const userDoc = await BaseAPI.getData({
+				db_name: 'users',
+				item_id: userId
+			})
+			
+			if (userDoc && userDoc.exists()) {
+				const data = userDoc.data()
+				return {
+					followerCount: data.followerCount || 0,
+					followingCount: data.followingCount || 0
+				}
+			}
+			
+			return {
+				followerCount: 0,
+				followingCount: 0
+			}
+		} catch (error) {
+			console.error('フォロー統計の取得に失敗しました:', error)
+			return {
+				followerCount: 0,
+				followingCount: 0
+			}
+		}
+	}
+
 	const deleteItem = async (uid) => {
 		const userInfo = authStore.userInfo
 		
@@ -172,7 +202,8 @@ export const useFollowUsersStore = defineStore('follow_users', () => {
 		isFollowing,
 		getListFollowing,
 		getListFollowers,
+		getFollowStats,
 		deleteItem,
-		clearStore
+		clearStore,
 	}
 })

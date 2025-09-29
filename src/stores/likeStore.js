@@ -35,7 +35,8 @@ export const useLikeStore = defineStore('like', () => {
 				userId: blog_author_uid,
 				userName: userSetting?.title || 'ユーザー',
 				blogTitle: blog_title,
-				blogId: blog_id
+				blogId: blog_id,
+				actorUserId: userInfo.uid // いいねをしたユーザーID
 			})
 		}
 	}

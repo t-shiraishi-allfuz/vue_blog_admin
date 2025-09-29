@@ -354,6 +354,57 @@ export const useBlogStore = defineStore('blog', () => {
 		}
 	}
 
+
+	// 特定ユーザーの記事数を取得
+	const getCountForUser = async (userId) => {
+		try {
+			const param = {
+				db_name: 'blog',
+				searchConditions: {
+					filters: [['uid', '==', userId]],
+					limit: 1
+				}
+			}
+			const result = await BaseAPI.getDataWithQuery(param)
+			return result.size
+		} catch (error) {
+			console.error('ユーザー記事数の取得に失敗しました:', error)
+			return 0
+		}
+	}
+
+	// 特定ユーザーの記事一覧を取得
+	const getListForUser = async (userId) => {
+		try {
+			const param = {
+				db_name: 'blog',
+				searchConditions: {
+					filters: [['uid', '==', userId]],
+					sorters: [['createdAt', 'desc']],
+					limit: 20
+				}
+			}
+			const result = await BaseAPI.getDataWithQuery(param)
+			const blogs = []
+			
+			result.forEach(doc => {
+				const data = { id: doc.id, ...doc.data() }
+				if (data.createdAt && data.createdAt.toDate) {
+					data.createdAt = data.createdAt.toDate()
+				}
+				if (data.updatedAt && data.updatedAt.toDate) {
+					data.updatedAt = data.updatedAt.toDate()
+				}
+				blogs.push(data)
+			})
+			
+			return blogs
+		} catch (error) {
+			console.error('ユーザー記事一覧の取得に失敗しました:', error)
+			return []
+		}
+	}
+
 	return {
 		selectType,
 		blogList,
@@ -373,6 +424,8 @@ export const useBlogStore = defineStore('blog', () => {
 		getListForBookmark,
 		getListForRecomend,
 		getListForCategoryCount,
-		getTotalAccessCount
+		getTotalAccessCount,
+		getCountForUser,
+		getListForUser
 	}
 })

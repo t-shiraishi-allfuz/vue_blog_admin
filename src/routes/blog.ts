@@ -9,6 +9,10 @@ const routes:RouteRecordRaw[] = [
 		path: '/blog_detail',
 		component: () => import("@/views/BlogDetail.vue"),
 	},
+	{
+		path: '/user_profile',
+		component: () => import("@/views/UserProfile.vue"),
+	},
 ] as const
 
 export default routes
