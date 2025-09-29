@@ -54,7 +54,7 @@
 					/>
 				</v-card-text>
 				<v-card-actions>
-					<v-btn color="primary" variant="flat" type="submit">
+					<v-btn color="success" variant="flat" type="submit">
 						{{ props.isUpdate ? '更新する' : '投稿する' }}
 					</v-btn>
 				</v-card-actions>

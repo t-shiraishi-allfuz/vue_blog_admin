@@ -198,7 +198,7 @@ const openDeleteDialog = async (category) => {
 			text: 'カテゴリーを削除しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
+			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -218,7 +218,7 @@ const createCategory = async () => {
 		text: 'カテゴリーが作成されました',
 		icon: 'success',
 		timer: 1500,
-		showConfirmButton: false
+		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -231,7 +231,8 @@ const updateCategory = async () => {
 		await Swal.fire({
 			title: 'エラー',
 			text: '同じカテゴリーは選択出来ません',
-			icon: 'error'
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
 		})
 		return
 	}
@@ -245,7 +246,7 @@ const updateCategory = async () => {
 		text: 'カテゴリーを更新しました',
 		icon: 'success',
 		timer: 1500,
-		showConfirmButton: false
+		confirmButtonColor: '#27C1A3',
 	})
 }
 

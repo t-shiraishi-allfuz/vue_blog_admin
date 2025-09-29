@@ -1,13 +1,19 @@
 <template>
 	<v-container>
 		<v-card class="folder-list">
-			<v-data-table class="folder-list" :headers="headers" :items="folderList" :items-per-page="30" no-data-text="画像フォルダがありません">
+			<v-data-table
+				class="folder-list"
+				:headers="headers"
+				:items="folderList"
+				:items-per-page="30"
+				no-data-text="画像フォルダがありません"
+			>
 				<template v-slot:top>
 					<v-toolbar flat>
 						<v-toolbar-title>画像フォルダ一覧</v-toolbar-title>
 						<v-divider class="mx-4" inset vertical />
 						<v-spacer></v-spacer>
-						<v-btn color="primary" variant="flat" @click="openCreateDialog">新しい画像フォルダを作る</v-btn>
+						<v-btn color="success" variant="flat" @click="openCreateDialog">新しい画像フォルダを作る</v-btn>
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.name`]="{ item }">
@@ -42,7 +48,7 @@
 				<v-card-actions>
 					<v-spacer></v-spacer>
 					<v-btn color="grey-lighten-2" variant="flat" @click="createDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="createFolder">作成</v-btn>
+					<v-btn color="success" variant="flat" @click="createFolder">作成</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -53,24 +59,13 @@
 					<v-text-field
 						type="text"
 						label="フォルダ名を入力して下さい"
-						v-model="folder.name"
+						v-model="changeName"
 					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer></v-spacer>
 					<v-btn color="grey-lighten-2" variant="flat" @click="updateDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="updateFolder">更新</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
-		<v-dialog v-model="deleteDialog" max-width="400px">
-			<v-card>
-				<v-card-title>削除確認</v-card-title>
-				<v-card-text>この画像フォルダを本当に削除しますか？</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="deleteFolder">削除</v-btn>
+					<v-btn color="success" variant="flat" @click="updateFolder">更新</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -78,17 +73,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from "pinia"
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
+import Swal from 'sweetalert2'
 
 const imagesFolderStore = useImagesFolderStore()
 const {
 	folderList
 } = storeToRefs(imagesFolderStore)
-
-const emit = defineEmits(["fetchFolderList"])
 
 const createDialog = ref(false)
 const folder = ref({
@@ -97,13 +91,13 @@ const folder = ref({
 
 const updateDialog = ref(false)
 const folderToUpdate = ref(null)
+const changeName = ref(null)
 
-const deleteDialog = ref(false)
 const folderToDelete = ref(null)
 
 const headers = [
-	{title: "フォルダ名", value: "name" },
-	{title: "作成日時", value: "createdAt" },
+	{title: "フォルダ名", value: "name", sortable: true },
+	{title: "作成日時", value: "createdAt", sortable: true },
 	{title: "削除", value: "actions", sortable: false },
 ]
 
@@ -120,13 +114,52 @@ const openCreateDialog = () => {
 // フォルダ更新確認ダイアログを開く
 const openUpdateDialog = (folder) => {
 	folderToUpdate.value = folder
+	changeName.value = folder.name
 	updateDialog.value = true
 }
 
 // フォルダ削除確認ダイアログを開く
-const openDeleteDialog = (image) => {
-	folderToDelete.value = image
-	deleteDialog.value = true
+const openDeleteDialog = async (folder) => {
+	folderToDelete.value = folder
+	
+	const result = await Swal.fire({
+		title: '削除確認',
+		text: 'この画像フォルダを本当に削除しますか？',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		cancelButtonColor: '#9e9e9e',
+		confirmButtonText: '削除',
+		cancelButtonText: 'キャンセル',
+		reverseButtons: true,
+		buttonsStyling: true,
+		customClass: {
+			confirmButton: 'swal2-confirm-fixed-width',
+			cancelButton: 'swal2-cancel-fixed-width'
+		},
+		didOpen: () => {
+			// ダイアログが開いた後にボタンのスタイルを適用
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			if (confirmBtn) confirmBtn.style.width = '150px'
+			if (cancelBtn) cancelBtn.style.width = '150px'
+		}
+	})
+
+	if (result.isConfirmed) {
+		await imagesFolderStore.deleteItem(folderToDelete.value.id)
+		await fetchList()
+		
+		// 削除完了メッセージ
+		Swal.fire({
+			title: '削除完了',
+			text: '画像フォルダを削除しました',
+			icon: 'success',
+			timer: 1500,
+			confirmButtonColor: '#27C1A3',
+		})
+		
+		folderToDelete.value = null
+	}
 }
 
 // 新規フォルダ作成
@@ -134,25 +167,29 @@ const createFolder = async () => {
 	createDialog.value = false
 
 	await imagesFolderStore.create(folder.value)
-	emit("fetchFolderList")
+	await fetchList()
+
+	folder.value.name = ""
 }
 
 const updateFolder = async () => {
 	updateDialog.value = false
 
+	// フォルダ名を更新
+	folderToUpdate.value.name = changeName.value
 	await imagesFolderStore.update(folderToUpdate.value)
+	await fetchList()
+
 	folderToUpdate.value = null
-	emit("fetchFolderList")
 }
 
-// フォルダ削除
-const deleteFolder = async () => {
-	deleteDialog.value = false
-
-	await imagesFolderStore.deleteItem(folderToDelete.value.id)
-	folderToDelete.value = null
-	emit("fetchFolderList")
+const fetchList = async () => {
+	await imagesFolderStore.getList()
 }
+
+onMounted(async () => {
+	await fetchList()
+})
 </script>
 
 <style scoped>

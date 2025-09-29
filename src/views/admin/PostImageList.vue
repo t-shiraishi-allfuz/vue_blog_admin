@@ -148,31 +148,35 @@ const submitImages = async () => {
 		await Swal.fire({
 			title: 'エラー',
 			text: '画像を選択してください',
-			icon: 'error'
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
 		})
 		return
 	}
 
 	try {
-		// フォルダIDを取得（nullの場合はundefinedを渡す）
 		const folderId = selectedFolderId.value === null ? undefined : selectedFolderId.value
 		await Promise.all(selectedFiles.value.map((file) => imagesStore.create(file, folderId)))
 		await fetchImageList()
-		// アップロード完了後、選択ファイルをリセット
+		await fetchFolderList()
+
 		selectedFiles.value = []
 		previewFiles.value = []
 		fileInputValue.value = null
+
 		await Swal.fire({
 			title: '成功',
 			text: '画像がアップロードされました',
-			icon: 'success'
+			icon: 'success',
+			confirmButtonColor: '#27C1A3',
 		})
 	} catch (error) {
 		console.error('画像アップロードエラー:', error)
 		await Swal.fire({
 			title: 'エラー',
 			text: '画像のアップロードに失敗しました',
-			icon: 'error'
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
