@@ -9,7 +9,9 @@ export const useUsersStore = defineStore('users', () => {
 			{db_name: "users", item_id: userInfo.uid},
 			{
 				email,
-				passwordHash
+				passwordHash,
+				provider: 'email',
+				createdAt: new Date()
 			}
 		)
 	}
@@ -47,9 +49,33 @@ export const useUsersStore = defineStore('users', () => {
 		}
 	}
 
+	// UIDでユーザーを取得
+	const getUserByUid = async (uid) => {
+		try {
+			const userData = await BaseAPI.getData({db_name: "users", item_id: uid})
+			return userData
+		} catch (error) {
+			return null
+		}
+	}
+
+	// Google認証ユーザーを作成
+	const createGoogleUser = async (user) => {
+		await BaseAPI.setData(
+			{db_name: "users", item_id: user.uid},
+			{
+				email: user.email,
+				provider: 'google',
+				createdAt: new Date()
+			}
+		)
+	}
+
 	return {
 		create,
 		update,
-		checkSame
+		checkSame,
+		getUserByUid,
+		createGoogleUser
 	}
 })

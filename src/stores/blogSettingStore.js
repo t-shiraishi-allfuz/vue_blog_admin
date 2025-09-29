@@ -40,46 +40,78 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 
 		await BaseAPI.setData(
 			{db_name: "blog_setting", item_id: userInfo.uid},
-			blogSetting
+			blogSetting.value
 		)
 	}
 
 	// プロフィール画像アップロード
 	const uploadProfileImage = async (image) => {
-		if (!image.value) return null
-
-		const userInfo = authStore.getUserInfo()
-
 		try {
-			const storagePath = `profile_images/${userInfo.uid}/${image.value.name}`
+			// 画像が存在しない場合はnullを返す
+			if (!image || !image.value) {
+				return null
+			}
+
+			const userInfo = authStore.getUserInfo()
+			
+			// ユーザー情報が存在しない場合はエラー
+			if (!userInfo || !userInfo.uid) {
+				throw new Error('ユーザー情報が取得できません')
+			}
+
+			// ファイル名にタイムスタンプを追加して重複を防ぐ
+			const timestamp = Date.now()
+			const fileName = `${timestamp}_${image.value.name}`
+			const storagePath = `profile_images/${userInfo.uid}/${fileName}`
 			const fileRef = storageRef(storage, storagePath)
 
 			// Firebase Storageに画像をアップロード
 			await uploadBytes(fileRef, image.value)
 			return await getDownloadURL(fileRef)
 		} catch (error) {
-			throw error.message
+			console.error('プロフィール画像アップロードエラー:', error)
+			throw new Error(`画像のアップロードに失敗しました: ${error.message}`)
 		}
 	}
 
 	const update = async (image, data) => {
-		const userInfo = authStore.getUserInfo()
-		data.updatedAt = new Date()
+		try {
+			const userInfo = authStore.getUserInfo()
+			
+			// ユーザー情報が存在しない場合はエラー
+			if (!userInfo || !userInfo.uid) {
+				throw new Error('ユーザー情報が取得できません')
+			}
 
-		const imageUrl = await uploadProfileImage(image)
-		if (imageUrl) data.profileUrl = imageUrl
+			// データのコピーを作成して更新日時を設定
+			const updateData = { ...data }
+			updateData.updatedAt = new Date()
 
-		// タイトル重複チェック
-		const isUnique = await isTitleUnique(userInfo.uid, data.title)
-		if (!isUnique) {
-			throw new Error("このブログタイトルは既に使用されています")
+			// プロフィール画像のアップロード
+			const imageUrl = await uploadProfileImage(image)
+			if (imageUrl) {
+				updateData.profileUrl = imageUrl
+			}
+
+			// タイトル重複チェック（現在のユーザー以外で同じタイトルがないか確認）
+			const isUnique = await isTitleUnique(userInfo.uid, updateData.title)
+			if (!isUnique) {
+				throw new Error("このブログタイトルは既に使用されています")
+			}
+
+			// Firestoreにデータを保存
+			await BaseAPI.setData(
+				{db_name: "blog_setting", item_id: userInfo.uid},
+				updateData
+			)
+			
+			// ローカルの状態を更新
+			blogSetting.value = updateData
+			
+		} catch (error) {
+			console.error('ブログ設定更新エラー:', error)
+			throw error
 		}
-
-		await BaseAPI.setData(
-			{db_name: "blog_setting", item_id: userInfo.uid},
-			data
-		)
-		blogSetting.value = data
 	}
 
 	const getDetail = async () => {
@@ -127,20 +159,30 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 
 	// タイトルの重複チェック
 	const isTitleUnique = async (uid, title) => {
-		const filters = [
-			["title", "==", title],
-		]
+		try {
+			const filters = [
+				["title", "==", title],
+			]
 
-		const querySnapshot = await BaseAPI.getDataWithQuery(
-			{
-				db_name: "blog_setting",
-				searchConditions: {
-					filters: filters,
+			const querySnapshot = await BaseAPI.getDataWithQuery(
+				{
+					db_name: "blog_setting",
+					searchConditions: {
+						filters: filters,
+					}
 				}
-			}
-		)
-		const result = querySnapshot.docs.filter(doc => doc.id !== uid)
-		return result.length > 0 ? false : true
+			)
+			
+			// 現在のユーザー以外で同じタイトルを使用しているドキュメントをフィルタ
+			const duplicateDocs = querySnapshot.docs.filter(doc => doc.id !== uid)
+			
+			// 重複がない場合はtrue（ユニーク）、重複がある場合はfalse
+			return duplicateDocs.length === 0
+		} catch (error) {
+			console.error('タイトル重複チェックエラー:', error)
+			// エラーの場合は安全のためfalseを返す（重複ありとみなす）
+			return false
+		}
 	}
 
 	// ストアをクリアする関数

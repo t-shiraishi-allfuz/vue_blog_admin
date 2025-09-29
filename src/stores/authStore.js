@@ -1,16 +1,18 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { auth } from '@/setting/firebase'
+import { auth, googleProvider } from '@/setting/firebase'
 import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
+	signInWithCredential,
 	signOut,
 	onAuthStateChanged,
 	setPersistence,
 	browserLocalPersistence,
 	sendPasswordResetEmail,
 	verifyPasswordResetCode,
-	confirmPasswordReset
+	confirmPasswordReset,
+	GoogleAuthProvider
 } from 'firebase/auth'
 import { useUsersStore } from '@/stores/usersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
@@ -21,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
 
 	const userInfo = ref(null)
 	const isLogin = ref(false)
+	const isNewUser = ref(false)
 
 		// ユーザー登録
 	const create = async (email, password) => {
@@ -66,6 +69,44 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
+	// Google認証でログイン（vue3-google-login用）
+	const loginWithGoogle = async (googleResponse) => {
+		try {
+			// 認証の永続化を設定
+			await setPersistence(auth, browserLocalPersistence)
+			
+			// Google認証レスポンスからFirebase認証情報を作成
+			const credential = GoogleAuthProvider.credential(googleResponse.credential)
+			
+			// Firebase認証でサインイン
+			const result = await signInWithCredential(auth, credential)
+			const user = result.user
+
+			// ユーザーデータをキャッシュ
+			localStorage.setItem("user_info", JSON.stringify(user))
+
+			// 既存ユーザーかチェック
+			const existingUser = await usersStore.getUserByUid(user.uid)
+			
+			if (!existingUser) {
+				// 新規ユーザーの場合、ユーザーデータを作成
+				isNewUser.value = true
+				await usersStore.createGoogleUser(user)
+				// デフォルトのブログ設定を作成
+				await blogSettingStore.create()
+			} else {
+				isNewUser.value = false
+			}
+
+			setUserInfo()
+		} catch (error) {
+			console.error('Google認証エラー詳細:', error)
+			console.error('エラーコード:', error.code)
+			console.error('エラーメッセージ:', error.message)
+			throw new Error(`Google認証に失敗しました: ${error.message}`)
+		}
+	}
+
 	// ログアウト
 	const logout = async () => {
 		try {
@@ -74,6 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
 			localStorage.removeItem('user_info')
 			userInfo.value = null
 			isLogin.value = false
+			isNewUser.value = false
 		} catch (error) {
 			throw new Error('ログアウトに失敗しました')
 		}
@@ -143,8 +185,10 @@ export const useAuthStore = defineStore('auth', () => {
 	return {
 		userInfo,
 		isLogin,
+		isNewUser,
 		create,
 		login,
+		loginWithGoogle,
 		logout,
 		setUserInfo,
 		getUserInfo,

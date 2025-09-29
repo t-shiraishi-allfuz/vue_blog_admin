@@ -16,6 +16,7 @@ declare module 'vue' {
     CommonSidemenu: typeof import('./components/CommonSidemenu.vue')['default']
     CommonTemplate: typeof import('./components/CommonTemplate.vue')['default']
     CommonUsermenu: typeof import('./components/CommonUsermenu.vue')['default']
+    LoginDialog: typeof import('./components/LoginDialog.vue')['default']
     ReblogTemplate: typeof import('./components/ReblogTemplate.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

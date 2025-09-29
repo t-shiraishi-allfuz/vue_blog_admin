@@ -15,7 +15,7 @@
 			/>
 		</v-app-bar-title>
 		<template v-slot:append>
-			<div v-if="blogSetting">
+			<div v-if="isLogin && blogSetting">
 				<v-menu>
 					<template v-slot:activator="{ props }">
 						<v-avatar v-bind="props" :image="blogSetting.profileUrl" size="48" end />
@@ -24,16 +24,22 @@
 				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
+			<div v-else-if="isLogin && !blogSetting">
+				<v-progress-circular indeterminate size="24" class="mr-2" />
+				<v-btn text @click="logout">ログアウト</v-btn>
+			</div>
 			<div v-else>
-				<v-btn text to="/user_login">ログイン</v-btn>
+				<v-btn text @click="openLoginDialog">ログイン</v-btn>
 				<v-btn text to="/user_create">登録</v-btn>
 			</div>
 		</template>
 	</v-app-bar>
+	
+	<LoginDialog v-model:dialog="isLoginDialog" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from "pinia"
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -43,6 +49,7 @@ import { useLikeStore } from '@/stores/likeStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
+import LoginDialog from '@/components/LoginDialog.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -57,10 +64,29 @@ const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
 
+const {
+	isLogin
+} = storeToRefs(authStore)
+
 const search = ref('')
+const isLoginDialog = ref(false)
 
 onMounted(async () => {
-	await blogSettingStore.getDetail()
+	// 認証状態に応じてブログ設定を取得
+	if (isLogin.value) {
+		await blogSettingStore.getDetail()
+	}
+})
+
+// 認証状態の変化を監視
+watch(isLogin, async (newIsLogin) => {
+	if (newIsLogin) {
+		// ログインした場合、ブログ設定を取得
+		await blogSettingStore.getDetail()
+	} else {
+		// ログアウトした場合、ブログ設定をクリア
+		blogSettingStore.clearStore()
+	}
 })
 
 const logout = async () => {
@@ -115,6 +141,10 @@ const logout = async () => {
 const goToHome = () => {
 	blogStore.setSelectType(0)
 	router.push({path: '/'})
+}
+
+const openLoginDialog = () => {
+	isLoginDialog.value = true
 }
 </script>
 

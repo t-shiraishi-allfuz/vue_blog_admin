@@ -25,14 +25,6 @@ const routes: RouteRecordRaw[] = [
 			...admin_router
 		]
 	},
-	{
-		path: '/user_login',
-		name: 'UserLogin',
-		component: () => import("@/components/CommonLoginTemplate.vue"),
-		children: [
-			...login_router
-		]
-	},
 ]
 
 // ルーターの作成
@@ -50,10 +42,10 @@ router.beforeEach(async (to, _, next) => {
 	await storeAuth.initializeAuth()
 
 	const isAuthRequired = to.matched.some(record => record.meta.requiresAuth)
-	const isLoginPage = ['UserLogin', 'UserCreate', 'ResetPassword'].includes(to.name as string)
+	const isLoginPage = ['UserCreate', 'ResetPassword'].includes(to.name as string)
 
 	if (isAuthRequired && !isLogin.value) {
-		next({ name: 'UserLogin' })
+		next({ name: 'Home' })
 	} else if (isLoginPage && isLogin.value) {
 		next({ name: 'Home' })
 	} else {
