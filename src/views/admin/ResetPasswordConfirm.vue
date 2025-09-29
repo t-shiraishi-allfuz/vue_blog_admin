@@ -33,6 +33,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const oobCode = route.query.oobCode
@@ -54,24 +55,43 @@ const changeVisible = () => {
 // パスワードリセット
 const resetPassword = async () => {
 	if (password.value !== confirmPassword.value) {
-		alert('パスワードが一致しません')
+		await Swal.fire({
+			title: 'エラー',
+			text: 'パスワードが一致しません',
+			icon: 'error'
+		})
 		return
 	}
 
 	try {
 		await authStore.resetPasswordConfirm(oobCode, password.value)
-		alert('パスワードがリセットされました')
+		await Swal.fire({
+			title: '成功',
+			text: 'パスワードがリセットされました',
+			icon: 'success',
+			timer: 1500,
+			showConfirmButton: false
+		})
 
 		await authStore.initializeAuth()
 		router.push({path: "/user_login"})
 	} catch(error) {
-		alert(error)
+		console.error('パスワードリセットエラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: 'パスワードのリセットに失敗しました',
+			icon: 'error'
+		})
 	}
 };
 
 onMounted(async () => {
 	if (!oobCode) {
-		alert('パスワード再設定コードがありません')
+		await Swal.fire({
+			title: 'エラー',
+			text: 'パスワード再設定コードがありません',
+			icon: 'error'
+		})
 	}
 })
 </script>

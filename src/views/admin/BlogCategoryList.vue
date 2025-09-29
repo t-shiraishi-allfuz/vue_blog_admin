@@ -104,18 +104,6 @@
 				</div>
 			</v-card>
 		</v-dialog>
-
-		<v-dialog v-model="deleteDialog" max-width="400px">
-			<v-card>
-				<v-card-title>削除確認</v-card-title>
-				<v-card-text>このカテゴリーを本当に削除しますか？</v-card-text>
-				<v-divider />
-				<div class="d-flex justify-end my-2">
-					<v-btn class="mx-2" color="grey-lighten-2" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn class="mx-2" color="success" @click="deleteCategory">削除</v-btn>
-				</div>
-			</v-card>
-		</v-dialog>
 	</v-container>
 </template>
 
@@ -124,6 +112,7 @@ import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from "pinia"
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
+import Swal from 'sweetalert2'
 
 const blogCategoryStore = useBlogCategoryStore()
 const {
@@ -142,7 +131,6 @@ const selectedPreCategoryID = ref(null)
 const updateDialog = ref(false)
 const categoryToUpdate = ref(null)
 
-const deleteDialog = ref(false)
 const categoryToDelete = ref(null)
 
 const headers = [
@@ -168,9 +156,51 @@ const openUpdateDialog = (category) => {
 }
 
 // カテゴリー削除確認ダイアログを開く
-const openDeleteDialog = (category) => {
+const openDeleteDialog = async (category) => {
 	categoryToDelete.value = category
-	deleteDialog.value = true
+	
+	const result = await Swal.fire({
+		title: '削除確認',
+		text: 'このカテゴリーを本当に削除しますか？',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		cancelButtonColor: '#9e9e9e',
+		confirmButtonText: '削除',
+		cancelButtonText: 'キャンセル',
+		reverseButtons: true,
+		buttonsStyling: true,
+		customClass: {
+			confirmButton: 'swal2-confirm-fixed-width',
+			cancelButton: 'swal2-cancel-fixed-width'
+		},
+		didOpen: () => {
+			// ダイアログが開いた後にボタンのスタイルを適用
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			if (confirmBtn) {
+				confirmBtn.style.minWidth = '150px'
+				confirmBtn.style.width = '150px'
+			}
+			if (cancelBtn) {
+				cancelBtn.style.minWidth = '150px'
+				cancelBtn.style.width = '150px'
+			}
+		}
+	})
+
+	if (result.isConfirmed) {
+		await blogCategoryStore.deleteItem(categoryToDelete.value)
+		await fetchCategoryList()
+		
+		// 削除完了メッセージ
+		Swal.fire({
+			title: '削除完了',
+			text: 'カテゴリーを削除しました',
+			icon: 'success',
+			timer: 1500,
+			showConfirmButton: false
+		})
+	}
 }
 
 // 新規カテゴリー作成
@@ -183,7 +213,13 @@ const createCategory = async () => {
 
 	selectedPreCategoryID.value = null
 	category.value = { pre_category_id: null, name: "" }
-	alert('カテゴリーが作成されました')
+	await Swal.fire({
+		title: '成功',
+		text: 'カテゴリーが作成されました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false
+	})
 }
 
 // カテゴリー更新
@@ -192,7 +228,11 @@ const updateCategory = async () => {
 
 	// 親と同一IDはNG
 	if (categoryToUpdate.value.pre_category_id == categoryToUpdate.value.id) {
-		alert('同じカテゴリーは選択出来ません')
+		await Swal.fire({
+			title: 'エラー',
+			text: '同じカテゴリーは選択出来ません',
+			icon: 'error'
+		})
 		return
 	}
 
@@ -200,19 +240,14 @@ const updateCategory = async () => {
 	await fetchCategoryList()
 
 	categoryToUpdate.value = null
-	alert('カテゴリーを更新しました')
+	await Swal.fire({
+		title: '成功',
+		text: 'カテゴリーを更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false
+	})
 }
-
-// カテゴリー削除
-const deleteCategory = async () => {
-	deleteDialog.value = false
-
-	await blogCategoryStore.deleteItem(categoryToDelete.value)
-	await fetchCategoryList()
-
-	categoryToDelete.value = null
-	alert('カテゴリーが削除されました')
-};
 
 // 再取得
 const fetchCategoryList = async () => {
@@ -229,4 +264,32 @@ onMounted(async() => {
 	.delete-icon {
 		color: red;
 	}
+
+	/* SweetAlert2ボタンの固定幅スタイル */
+	:deep(.swal2-confirm-fixed-width) {
+		min-width: 150px !important;
+		width: 150px !important;
+		box-sizing: border-box !important;
+	}
+
+	:deep(.swal2-cancel-fixed-width) {
+		min-width: 150px !important;
+		width: 150px !important;
+		box-sizing: border-box !important;
+	}
+</style>
+
+<style>
+/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
+.swal2-confirm-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+.swal2-cancel-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
 </style>

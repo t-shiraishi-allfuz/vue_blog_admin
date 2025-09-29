@@ -23,6 +23,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
 
@@ -31,15 +32,30 @@ const email = ref('')
 // パスワードリセット
 const resetPassword = async () => {
 	if (!email.value) {
-		alert('メールアドレスが入力されていません')
+		await Swal.fire({
+			title: 'エラー',
+			text: 'メールアドレスが入力されていません',
+			icon: 'error'
+		})
 		return
 	}
 
 	try {
 		await authStore.resetPassword(email.value)
-		alert('パスワードリセットメールが送信されました')
+		await Swal.fire({
+			title: '成功',
+			text: 'パスワードリセットメールが送信されました',
+			icon: 'success',
+			timer: 1500,
+			showConfirmButton: false
+		})
 	} catch(error) {
-		alert('パスワードリセットメールの送信に失敗しました')
+		console.error('パスワードリセットエラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: 'パスワードリセットメールの送信に失敗しました',
+			icon: 'error'
+		})
 	}
 }
 </script>

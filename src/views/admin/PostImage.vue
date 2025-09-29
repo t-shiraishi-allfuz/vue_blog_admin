@@ -93,30 +93,6 @@
 				</div>
 			</v-card>
 		</v-dialog>
-
-		<v-dialog v-model="deleteDialog" max-width="400px">
-			<v-card>
-				<v-card-title>削除確認</v-card-title>
-				<v-card-text>この画像を本当に削除しますか？</v-card-text>
-				<v-divider />
-				<div class="d-flex justify-end my-2">
-					<v-btn class="mx-2" color="grey-lighten-2" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn class="mx-2" color="success" @click="deleteImage">削除</v-btn>
-				</div>
-			</v-card>
-		</v-dialog>
-
-		<v-dialog v-model="batchDeleteDialog" max-width="400px">
-			<v-card>
-				<v-card-title>一括削除確認</v-card-title>
-				<v-card-text>選択した画像をすべて削除しますか？</v-card-text>
-				<v-divider />
-				<div class="d-flex justify-end my-2">
-					<v-btn class="mx-2" color="grey-lighten-2" @click="batchDeleteDialog = false">閉じる</v-btn>
-					<v-btn class="mx-2" color="success" @click="deleteSelectedImages">削除</v-btn>
-				</div>
-			</v-card>
-		</v-dialog>
 	</v-container>
 </template>
 
@@ -125,6 +101,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from "pinia"
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
+import Swal from 'sweetalert2'
 
 const props = defineProps({
 	selectedFolderId: {
@@ -153,8 +130,6 @@ const moveDialog = ref(false)
 const imageToMove = ref(null)
 
 const selectedForDelete = ref([]) // 削除用の選択画像リスト
-const deleteDialog = ref(false)
-const batchDeleteDialog = ref(false)
 const imageToDelete = ref(null)
 
 const isAllSelectedComputed = computed({
@@ -184,35 +159,108 @@ const moveImage = async () => {
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = (image) => {
+const openDeleteDialog = async (image) => {
 	imageToDelete.value = image
-	deleteDialog.value = true
+	
+	const result = await Swal.fire({
+		title: '削除確認',
+		text: 'この画像を本当に削除しますか？',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		cancelButtonColor: '#9e9e9e',
+		confirmButtonText: '削除',
+		cancelButtonText: 'キャンセル',
+		reverseButtons: true,
+		buttonsStyling: true,
+		customClass: {
+			confirmButton: 'swal2-confirm-fixed-width',
+			cancelButton: 'swal2-cancel-fixed-width'
+		},
+		didOpen: () => {
+			// ダイアログが開いた後にボタンのスタイルを適用
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			if (confirmBtn) {
+				confirmBtn.style.minWidth = '150px'
+				confirmBtn.style.width = '150px'
+			}
+			if (cancelBtn) {
+				cancelBtn.style.minWidth = '150px'
+				cancelBtn.style.width = '150px'
+			}
+		}
+	})
+
+	if (result.isConfirmed) {
+		await imagesStore.deleteItem(imageToDelete.value)
+		imageToDelete.value = null
+		emit('changeFolderList', selectedFolderId.value)
+		
+		// 削除完了メッセージ
+		Swal.fire({
+			title: '削除完了',
+			text: '画像を削除しました',
+			icon: 'success',
+			timer: 1500,
+			showConfirmButton: false
+		})
+	}
 }
 
 // 一括削除確認ダイアログを開く
-const openBatchDeleteDialog = () => {
+const openBatchDeleteDialog = async () => {
 	if (selectedForDelete.value.length === 0) return
-	batchDeleteDialog.value = true
-}
+	
+	const result = await Swal.fire({
+		title: '一括削除確認',
+		text: '選択した画像をすべて削除しますか？',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		cancelButtonColor: '#9e9e9e',
+		confirmButtonText: '削除',
+		cancelButtonText: 'キャンセル',
+		reverseButtons: true,
+		buttonsStyling: true,
+		customClass: {
+			confirmButton: 'swal2-confirm-fixed-width',
+			cancelButton: 'swal2-cancel-fixed-width'
+		},
+		didOpen: () => {
+			// ダイアログが開いた後にボタンのスタイルを適用
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			if (confirmBtn) {
+				confirmBtn.style.minWidth = '150px'
+				confirmBtn.style.width = '150px'
+			}
+			if (cancelBtn) {
+				cancelBtn.style.minWidth = '150px'
+				cancelBtn.style.width = '150px'
+			}
+		}
+	})
 
-// 画像削除
-const deleteImage = async () => {
-	deleteDialog.value = false
-
-	await imagesStore.deleteItem(imageToDelete.value)
-	imageToDelete.value = null
-	emit('changeFolderList', selectedFolderId.value)
+	if (result.isConfirmed) {
+		await deleteSelectedImages()
+	}
 }
 
 // 一括削除
 const deleteSelectedImages = async () => {
-	batchDeleteDialog.value = false
-
 	if (selectedForDelete.value.length === 0) return
 
 	await Promise.all(selectedForDelete.value.map((image) => imagesStore.deleteItem(image)))
 	selectedForDelete.value = []
 	emit('changeFolderList', selectedFolderId.value)
+	
+	// 削除完了メッセージ
+	Swal.fire({
+		title: '削除完了',
+		text: '選択した画像を削除しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false
+	})
 }
 
 watch(selectedFolderId, (newValue) => {
@@ -301,4 +349,32 @@ watch(() => props.selectedFolderId, (newValue) => {
 	.image-item img:hover {
 		transform: scale(1.1);
 	}
+
+	/* SweetAlert2ボタンの固定幅スタイル */
+	:deep(.swal2-confirm-fixed-width) {
+		min-width: 150px !important;
+		width: 150px !important;
+		box-sizing: border-box !important;
+	}
+
+	:deep(.swal2-cancel-fixed-width) {
+		min-width: 150px !important;
+		width: 150px !important;
+		box-sizing: border-box !important;
+	}
+</style>
+
+<style>
+/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
+.swal2-confirm-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+.swal2-cancel-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
 </style>

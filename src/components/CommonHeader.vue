@@ -69,11 +69,29 @@ const logout = async () => {
 			title: '確認',
 			text: 'ログアウトしますか？',
 			showCancelButton: true,
-			confirmButtonColor: '#F784C3',
+			confirmButtonColor: '#27C1A3',
 			cancelButtonColor: '#9e9e9e',
 			confirmButtonText: 'ログアウト',
 			cancelButtonText: 'キャンセル',
-			reverseButtons: true
+			reverseButtons: true,
+			buttonsStyling: true,
+			customClass: {
+				confirmButton: 'swal2-confirm-fixed-width',
+				cancelButton: 'swal2-cancel-fixed-width'
+			},
+			didOpen: () => {
+				// ダイアログが開いた後にボタンのスタイルを適用
+				const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
+				const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+				if (confirmBtn) {
+					confirmBtn.style.minWidth = '150px'
+					confirmBtn.style.width = '150px'
+				}
+				if (cancelBtn) {
+					cancelBtn.style.minWidth = '150px'
+					cancelBtn.style.width = '150px'
+				}
+			}
 		})
 
 		if (result.isConfirmed) {
@@ -101,4 +119,31 @@ const goToHome = () => {
 </script>
 
 <style scoped>
+/* SweetAlert2ボタンの固定幅スタイル */
+:deep(.swal2-confirm-fixed-width) {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+:deep(.swal2-cancel-fixed-width) {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+</style>
+
+<style>
+/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
+.swal2-confirm-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+.swal2-cancel-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
 </style>

@@ -74,18 +74,6 @@
 				</template>
 			</v-data-table>
 		</v-card>
-
-		<v-dialog v-model="deleteDialog" max-width="400px">
-			<v-card>
-				<v-card-title>削除確認</v-card-title>
-				<v-card-text>この記事を本当に削除しますか？</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="deleteBlog">削除</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
 	</v-container>
 </template>
 
@@ -95,6 +83,7 @@ import { storeToRefs } from "pinia"
 import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 const blogStore = useBlogStore()
@@ -103,7 +92,6 @@ const {
 } = storeToRefs(blogStore)
 
 const search = ref('')
-const deleteDialog = ref(false)
 const blogToDelete = ref(null)
 
 const headers = [
@@ -122,17 +110,51 @@ const fetchBlogList = async () => {
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = (blog) => {
+const openDeleteDialog = async (blog) => {
 	blogToDelete.value = blog
-	deleteDialog.value = true
-}
+	
+	const result = await Swal.fire({
+		title: '削除確認',
+		text: 'この記事を本当に削除しますか？',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		cancelButtonColor: '#9e9e9e',
+		confirmButtonText: '削除',
+		cancelButtonText: 'キャンセル',
+		reverseButtons: true,
+		buttonsStyling: true,
+		customClass: {
+			confirmButton: 'swal2-confirm-fixed-width',
+			cancelButton: 'swal2-cancel-fixed-width'
+		},
+		didOpen: () => {
+			// ダイアログが開いた後にボタンのスタイルを適用
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			if (confirmBtn) {
+				confirmBtn.style.minWidth = '150px'
+				confirmBtn.style.width = '150px'
+			}
+			if (cancelBtn) {
+				cancelBtn.style.minWidth = '150px'
+				cancelBtn.style.width = '150px'
+			}
+		}
+	})
 
-// 個別削除を確定する
-const deleteBlog = async () => {
-	deleteDialog.value = false
-
-	await blogStore.deleteItem(blogToDelete.value.id)
-	await fetchBlogList()
+	if (result.isConfirmed) {
+		await blogStore.deleteItem(blogToDelete.value.id)
+		await fetchBlogList()
+		
+		// 削除完了メッセージ
+		Swal.fire({
+			title: '削除完了',
+			text: '記事を削除しました',
+			icon: 'success',
+			timer: 1500,
+			showConfirmButton: false
+		})
+	}
 }
 
 // 検索条件に基づく投稿フィルタリング
@@ -182,4 +204,32 @@ onMounted(async () => {
 	.delete-icon {
 		color: red;
 	}
+
+	/* SweetAlert2ボタンの固定幅スタイル */
+	:deep(.swal2-confirm-fixed-width) {
+		min-width: 150px !important;
+		width: 150px !important;
+		box-sizing: border-box !important;
+	}
+
+	:deep(.swal2-cancel-fixed-width) {
+		min-width: 150px !important;
+		width: 150px !important;
+		box-sizing: border-box !important;
+	}
+</style>
+
+<style>
+/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
+.swal2-confirm-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+.swal2-cancel-fixed-width {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
 </style>

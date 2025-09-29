@@ -231,6 +231,7 @@ import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { format } from 'date-fns'
 import BlogCard from '@/components/BlogCard.vue'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
@@ -327,9 +328,19 @@ const copyUrl = async () => {
 
 	try {
 		await navigator.clipboard.writeText(window.location.href)
-		alert('リンクをコピーしました')
+		await Swal.fire({
+			title: '成功',
+			text: 'リンクをコピーしました',
+			icon: 'success',
+			timer: 1500,
+			showConfirmButton: false
+		})
 	} catch (error) {
-		alert('リンクのコピーに失敗しました')
+		await Swal.fire({
+			title: 'エラー',
+			text: 'リンクのコピーに失敗しました',
+			icon: 'error'
+		})
 	}
 }
 

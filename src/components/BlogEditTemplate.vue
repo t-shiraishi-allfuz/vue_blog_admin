@@ -105,6 +105,7 @@ import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { VueEditor } from "vue3-editor"
 import BlogCard from '@/components/BlogCard.vue'
+import Swal from 'sweetalert2'
 
 const props = defineProps({
 	blog: {
@@ -208,7 +209,11 @@ const selectImage = (imageUrl) => {
 
 const submitPost = async () => {
 	if (!blog.value.title || !blog.value.content) {
-		alert("タイトルまたは本文が入力されていません");
+		await Swal.fire({
+			title: 'エラー',
+			text: 'タイトルまたは本文が入力されていません',
+			icon: 'error'
+		})
 		return;
 	}
 
@@ -222,15 +227,38 @@ const submitPost = async () => {
 
 		if (blog.value.isPublished) {
 			if (props.isUpdate) {
-				alert("ブログが更新されました")
+				await Swal.fire({
+					title: '成功',
+					text: 'ブログが更新されました',
+					icon: 'success',
+					timer: 1500,
+					showConfirmButton: false
+				})
 			} else {
-				alert("ブログが投稿されました")
+				await Swal.fire({
+					title: '成功',
+					text: 'ブログが投稿されました',
+					icon: 'success',
+					timer: 1500,
+					showConfirmButton: false
+				})
 			}
 		} else {
-			alert("下書き保存されました")
+			await Swal.fire({
+				title: '成功',
+				text: '下書き保存されました',
+				icon: 'success',
+				timer: 1500,
+				showConfirmButton: false
+			})
 		}
 	} catch (error) {
-		alert(error)
+		console.error('ブログ投稿エラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: 'ブログの投稿に失敗しました',
+			icon: 'error'
+		})
 	}
 }
 

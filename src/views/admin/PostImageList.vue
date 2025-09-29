@@ -70,17 +70,19 @@
 	>
 		<v-card>
 			<v-card-text>
-				<img :src="currentImage" alt="Preview" style="width:100% height:auto;" @click="imageViewerDialog = false" />
+				<img :src="currentImage" alt="Preview" style="width:100%; height:auto;" @click="imageViewerDialog = false" />
 			</v-card-text>
 		</v-card>
 	</v-dialog>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import { storeToRefs } from "pinia"
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
+import Swal from 'sweetalert2'
+
 const PostImage = defineAsyncComponent(() => import('@/views/admin/PostImage.vue'))
 const ImageFolderList = defineAsyncComponent(() => import('@/views/admin/ImageFolderList.vue'))
 
@@ -143,20 +145,35 @@ const handleFileUpload = (event) => {
 // 画像をサーバーにアップロードする処理
 const submitImages = async () => {
 	if (selectedFiles.value.length === 0) {
-		alert("画像を選択してください")
+		await Swal.fire({
+			title: 'エラー',
+			text: '画像を選択してください',
+			icon: 'error'
+		})
 		return
 	}
 
 	try {
-		await Promise.all(selectedFiles.value.map((file) => imagesStore.create(file, selectedFolder.value.id)))
+		// フォルダIDを取得（nullの場合はundefinedを渡す）
+		const folderId = selectedFolderId.value === null ? undefined : selectedFolderId.value
+		await Promise.all(selectedFiles.value.map((file) => imagesStore.create(file, folderId)))
 		await fetchImageList()
 		// アップロード完了後、選択ファイルをリセット
 		selectedFiles.value = []
 		previewFiles.value = []
 		fileInputValue.value = null
-		alert("画像がアップロードされました")
+		await Swal.fire({
+			title: '成功',
+			text: '画像がアップロードされました',
+			icon: 'success'
+		})
 	} catch (error) {
-		alert(error)
+		console.error('画像アップロードエラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: '画像のアップロードに失敗しました',
+			icon: 'error'
+		})
 	}
 }
 
