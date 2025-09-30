@@ -55,14 +55,14 @@
 						size="small"
 						variant="text"
 						@click="openEditDialog(item)"
-					></v-btn>
+					/>
 					<v-btn
 						icon="mdi-delete"
 						size="small"
 						variant="text"
 						color="error"
 						@click="deleteAnnouncement(item)"
-					></v-btn>
+					/>
 				</template>
 			</v-data-table>
 		</v-card>
@@ -111,13 +111,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from "pinia"
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import AnnouncementCreateDialog from '@/components/AnnouncementCreateDialog.vue'
 import AnnouncementEditDialog from '@/components/AnnouncementEditDialog.vue'
 
 const announcementStore = useAnnouncementStore()
+const {
+	announcements
+} = storeToRefs(announcementStore)
 
-const announcements = ref([])
 const loading = ref(false)
 const createDialogOpen = ref(false)
 const editDialogOpen = ref(false)
@@ -163,7 +166,7 @@ const loadAnnouncements = async () => {
 	loading.value = true
 
 	try {
-		announcements.value = await announcementStore.getList()
+		await announcementStore.getList()
 	} catch (error) {
 		console.error('お知らせ一覧取得エラー:', error)
 		alert('お知らせ一覧の取得に失敗しました')
@@ -181,12 +184,12 @@ const openEditDialog = (announcement) => {
 	editDialogOpen.value = true
 }
 
-const onAnnouncementSaved = () => {
-	loadAnnouncements()
+const onAnnouncementSaved = async () => {
+	await loadAnnouncements()
 }
 
-const onAnnouncementUpdated = () => {
-	loadAnnouncements()
+const onAnnouncementUpdated = async () => {
+	await loadAnnouncements()
 }
 
 const deleteAnnouncement = (announcement) => {

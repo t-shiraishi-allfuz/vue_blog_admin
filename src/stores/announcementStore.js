@@ -1,12 +1,21 @@
 import BaseAPI from '@/api/base'
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 
 export const useAnnouncementStore = defineStore('announcement', () => {
+	const announcements = ref([])
+	
+	// 未読のお知らせ数を計算
+	const unreadAnnouncementCount = computed(() => {
+		return announcements.value?.filter(announcement => !announcement.isRead).length || 0
+	})
+
 	// お知らせを作成
 	const create = async (announcementData) => {
 		try {
 			const data = {
 				...announcementData,
+				isRead: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			}
@@ -33,12 +42,11 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 			})
 			
 			if (querySnapshot && querySnapshot.docs) {
-				return querySnapshot.docs.map(doc => ({
+				announcements.value = querySnapshot.docs.map(doc => ({
 					id: doc.id,
 					...doc.data()
 				}))
 			}
-			return []
 		} catch (error) {
 			console.error('お知らせ一覧取得エラー:', error)
 			throw new Error('お知らせ一覧の取得に失敗しました')
@@ -75,6 +83,40 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 		}
 	}
 
+	// お知らせを既読にする
+	const markAnnouncementAsRead = async (announcementId) => {
+		try {
+			await BaseAPI.setData(
+				{ db_name: "announcements", item_id: announcementId },
+				{ isRead: true, readAt: new Date() }
+			)
+			
+			// ローカルのお知らせを更新
+			const announcement = announcements.value?.find(a => a.id === announcementId)
+			if (announcement) {
+				announcement.isRead = true
+				announcement.readAt = new Date()
+			}
+		} catch (error) {
+			console.error('お知らせの既読更新に失敗しました:', error)
+			throw new Error('お知らせの既読更新に失敗しました')
+		}
+	}
+
+	// 全てのお知らせを既読にする
+	const markAllAnnouncementsAsRead = async () => {
+		try {
+			const unreadAnnouncements = announcements.value?.filter(a => !a.isRead) || []
+			
+			for (const announcement of unreadAnnouncements) {
+				await markAnnouncementAsRead(announcement.id)
+			}
+		} catch (error) {
+			console.error('お知らせの一括既読更新に失敗しました:', error)
+			throw new Error('お知らせの一括既読更新に失敗しました')
+		}
+	}
+
 	// 公開中のお知らせ一覧を取得（一般ユーザー向け）
 	const getPublicList = async () => {
 		try {
@@ -87,12 +129,11 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 			})
 			
 			if (querySnapshot && querySnapshot.docs) {
-				return querySnapshot.docs.map(doc => ({
+				announcements.value = querySnapshot.docs.map(doc => ({
 					id: doc.id,
 					...doc.data()
 				}))
 			}
-			return []
 		} catch (error) {
 			console.error('公開お知らせ一覧取得エラー:', error)
 			throw new Error('お知らせ一覧の取得に失敗しました')
@@ -100,10 +141,14 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	return {
+		announcements,
+		unreadAnnouncementCount,
 		create,
 		getList,
 		update,
 		deleteAnnouncement,
+		markAnnouncementAsRead,
+		markAllAnnouncementsAsRead,
 		getPublicList
 	}
 })

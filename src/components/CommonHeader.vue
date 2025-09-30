@@ -16,7 +16,6 @@
 		</v-app-bar-title>
 		<template v-slot:append>
 			<div v-if="isLogin && blogSetting">
-				<!-- 通知・お知らせボタン -->
 				<v-btn
 					icon="mdi-bell"
 					variant="text"
@@ -67,6 +66,7 @@ import { useLikeStore } from '@/stores/likeStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { useAnnouncementStore } from '@/stores/announcementStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import NotificationDialog from '@/components/NotificationDialog.vue'
@@ -81,6 +81,7 @@ const likeStore = useLikeStore()
 const imagesStore = useImagesStore()
 const followUsersStore = useFollowUsersStore()
 const notificationStore = useNotificationStore()
+const announcementStore = useAnnouncementStore()
 const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
@@ -89,8 +90,10 @@ const {
 	isLogin
 } = storeToRefs(authStore)
 
-// 未読通知数を取得
-const totalUnreadCount = computed(() => notificationStore.unreadNotificationCount)
+// 未読通知数とお知らせ数を取得
+const totalUnreadCount = computed(() => 
+	notificationStore.unreadNotificationCount + (announcementStore.unreadAnnouncementCount || 0)
+)
 
 const search = ref('')
 const isLoginDialog = ref(false)
@@ -101,6 +104,7 @@ onMounted(async () => {
 	if (isLogin.value) {
 		await blogSettingStore.getDetail()
 		await notificationStore.initialize()
+		await announcementStore.getList()
 	}
 })
 
@@ -110,6 +114,7 @@ watch(isLogin, async (newIsLogin) => {
 		// ログインした場合、ブログ設定を取得
 		await blogSettingStore.getDetail()
 		await notificationStore.initialize()
+		await announcementStore.getList()
 	} else {
 		// ログアウトした場合、ブログ設定をクリア
 		blogSettingStore.clearStore()
@@ -178,9 +183,11 @@ const openLoginDialog = () => {
 const openNotificationDialog = async () => {
 	isNotificationDialogOpen.value = true
 	
-	// 通知データを取得して既読にする
+	// 通知データとお知らせデータを取得して既読にする
 	await notificationStore.fetchNotifications()
+	await announcementStore.getList()
 	await notificationStore.markAllNotificationsAsRead()
+	await announcementStore.markAllAnnouncementsAsRead()
 }
 </script>
 

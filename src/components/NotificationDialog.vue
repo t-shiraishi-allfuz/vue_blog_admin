@@ -14,7 +14,14 @@
 						</v-badge>
 					</v-tab>
 					<v-tab value="announcements">
-						お知らせ
+						<v-badge
+							:content="unreadAnnouncementCount"
+							:model-value="unreadAnnouncementCount > 0"
+							color="error"
+							inline
+						>
+							お知らせ
+						</v-badge>
 					</v-tab>
 				</v-tabs>
 				
@@ -70,6 +77,9 @@
 									<v-list-item
 										v-for="announcement in announcements"
 										:key="announcement.id"
+										:class="{ 'bg-grey-lighten-5': !announcement.isRead }"
+										@click="markAnnouncementAsRead(announcement)"
+										class="cursor-pointer"
 									>
 										<template #prepend>
 											<v-avatar size="40" color="info" class="mr-3">
@@ -136,12 +146,9 @@ const activeTab = computed({
 })
 
 const notifications = computed(() => notificationStore.notifications)
-const announcements = computed(() => announcementStore.getPublicList ? announcementStore.getPublicList() : [])
+const announcements = computed(() => announcementStore.announcements)
 const unreadNotificationCount = computed(() => notificationStore.unreadNotificationCount)
-const unreadAnnouncementCount = computed(() => {
-	// お知らせは既読機能がないため、常に0を返す
-	return 0
-})
+const unreadAnnouncementCount = computed(() => announcementStore.unreadAnnouncementCount || 0)
 
 const closeDialog = () => {
 	emit('update:modelValue', false)
@@ -152,6 +159,17 @@ const goToUserProfile = (userId) => {
 	if (userId) {
 		router.push({ path: '/user_profile', query: { uid: userId } })
 		closeDialog()
+	}
+}
+
+// お知らせを既読にする
+const markAnnouncementAsRead = async (announcement) => {
+	if (!announcement.isRead) {
+		try {
+			await announcementStore.markAnnouncementAsRead(announcement.id)
+		} catch (error) {
+			console.error('お知らせ既読エラー:', error)
+		}
 	}
 }
 
