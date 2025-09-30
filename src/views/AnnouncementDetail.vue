@@ -4,7 +4,7 @@
 			<v-col cols="12" class="text-center">
 				<v-progress-circular
 					indeterminate
-					color="primary"
+					color="success"
 					size="64"
 				/>
 				<p class="mt-4 text-body-1">お知らせを読み込み中...</p>
