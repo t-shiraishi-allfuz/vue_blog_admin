@@ -39,7 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
 import { useCommentStore } from '@/stores/commentStore'
 import { format } from 'date-fns'
 

@@ -81,7 +81,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
 const route = useRoute()

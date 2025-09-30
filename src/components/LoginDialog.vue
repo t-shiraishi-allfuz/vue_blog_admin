@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { GoogleLogin } from 'vue3-google-login'

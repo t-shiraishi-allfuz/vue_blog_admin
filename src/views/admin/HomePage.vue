@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUsersStore } from '@/stores/usersStore'
 import BlogCreate from '@/views/admin/BlogCreate.vue'

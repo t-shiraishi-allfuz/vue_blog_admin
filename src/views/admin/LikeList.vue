@@ -20,7 +20,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
 import { useLikeStore } from '@/stores/likeStore'
 
 const route = useRoute()

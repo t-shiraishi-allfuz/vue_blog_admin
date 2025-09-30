@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 

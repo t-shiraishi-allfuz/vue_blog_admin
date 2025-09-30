@@ -84,7 +84,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
