@@ -52,8 +52,8 @@ export const useUsersStore = defineStore('users', () => {
 	// UIDでユーザーを取得
 	const getUserByUid = async (uid) => {
 		try {
-			const userData = await BaseAPI.getData({db_name: "users", item_id: uid})
-			return userData
+			const querySnapshot = await BaseAPI.getData({db_name: "users", item_id: uid})
+			return querySnapshot?.data()
 		} catch (error) {
 			return null
 		}
@@ -71,11 +71,46 @@ export const useUsersStore = defineStore('users', () => {
 		)
 	}
 
+	// オーナーユーザーかどうかを判定
+	const isOwner = async (uid) => {
+		try {
+			const querySnapshot = await BaseAPI.getData({db_name: "users", item_id: uid})
+			if (querySnapshot) {
+				const userData = querySnapshot.data()
+				return userData && userData.isOwner === true
+			} else {
+				return false
+			}
+		} catch (error) {
+			console.error('オーナー権限確認エラー:', error)
+			return false
+		}
+	}
+
+	// ユーザーをオーナーに設定
+	const setOwner = async (uid) => {
+		try {
+			await BaseAPI.setData(
+				{db_name: "users", item_id: uid},
+				{
+					isOwner: true,
+					updatedAt: new Date()
+				}
+			)
+			return true
+		} catch (error) {
+			console.error('オーナー設定エラー:', error)
+			throw new Error('オーナー権限の設定に失敗しました')
+		}
+	}
+
 	return {
 		create,
 		update,
 		checkSame,
 		getUserByUid,
-		createGoogleUser
+		createGoogleUser,
+		isOwner,
+		setOwner
 	}
 })

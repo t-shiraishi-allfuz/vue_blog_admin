@@ -8,23 +8,12 @@ export const useNotificationStore = defineStore('notification', () => {
 	
 	// 状態管理
 	const notifications = ref([])
-	const announcements = ref([])
 	const isDialogOpen = ref(false)
 	const activeTab = ref('notifications')
 	
 	// 未読の通知数を計算
 	const unreadNotificationCount = computed(() => {
 		return notifications.value.filter(notification => !notification.isRead).length
-	})
-	
-	// 未読のお知らせ数を計算
-	const unreadAnnouncementCount = computed(() => {
-		return announcements.value.filter(announcement => !announcement.isRead).length
-	})
-	
-	// 総未読数を計算
-	const totalUnreadCount = computed(() => {
-		return unreadNotificationCount.value + unreadAnnouncementCount.value
 	})
 	
 	// 通知一覧を取得
@@ -55,32 +44,6 @@ export const useNotificationStore = defineStore('notification', () => {
 		}
 	}
 	
-	// お知らせ一覧を取得
-	const fetchAnnouncements = async () => {
-		try {
-			if (!authStore.userInfo?.uid) return
-			
-			const param = {
-				db_name: 'announcements',
-				searchConditions: {
-					sorters: [['createdAt', 'desc']],
-					limit: 50
-				}
-			}
-			
-			const result = await BaseAPI.getDataWithQuery(param)
-			announcements.value = []
-			
-			result.forEach(doc => {
-				announcements.value.push({
-					id: doc.id,
-					...doc.data()
-				})
-			})
-		} catch (error) {
-			console.error('お知らせの取得に失敗しました:', error)
-		}
-	}
 	
 	// 通知を作成（いいね、コメント、フォロー時）
 	const createNotification = async (type, data) => {
@@ -110,29 +73,6 @@ export const useNotificationStore = defineStore('notification', () => {
 		}
 	}
 	
-	// お知らせを作成（運営用）
-	const createAnnouncement = async (title, message) => {
-		try {
-			const announcementData = {
-				title: title,
-				message: message,
-				isRead: false,
-				createdAt: new Date(),
-				createdBy: authStore.userInfo?.uid || 'admin'
-			}
-			
-			const param = {
-				db_name: 'announcements'
-			}
-			
-			await BaseAPI.addData(param, announcementData)
-			
-			// ローカルのお知らせリストを更新
-			await fetchAnnouncements()
-		} catch (error) {
-			console.error('お知らせの作成に失敗しました:', error)
-		}
-	}
 	
 	// 通知を既読にする
 	const markNotificationAsRead = async (notificationId) => {
@@ -154,25 +94,6 @@ export const useNotificationStore = defineStore('notification', () => {
 		}
 	}
 	
-	// お知らせを既読にする
-	const markAnnouncementAsRead = async (announcementId) => {
-		try {
-			const param = {
-				db_name: 'announcements',
-				item_id: announcementId
-			}
-			
-			await BaseAPI.setData(param, { isRead: true })
-			
-			// ローカルのお知らせを更新
-			const announcement = announcements.value.find(a => a.id === announcementId)
-			if (announcement) {
-				announcement.isRead = true
-			}
-		} catch (error) {
-			console.error('お知らせの既読更新に失敗しました:', error)
-		}
-	}
 	
 	// 全ての通知を既読にする
 	const markAllNotificationsAsRead = async () => {
@@ -187,18 +108,6 @@ export const useNotificationStore = defineStore('notification', () => {
 		}
 	}
 	
-	// 全てのお知らせを既読にする
-	const markAllAnnouncementsAsRead = async () => {
-		try {
-			const unreadAnnouncements = announcements.value.filter(a => !a.isRead)
-			
-			for (const announcement of unreadAnnouncements) {
-				await markAnnouncementAsRead(announcement.id)
-			}
-		} catch (error) {
-			console.error('お知らせの一括既読更新に失敗しました:', error)
-		}
-	}
 	
 	// ダイアログを開く
 	const openDialog = async () => {
@@ -246,34 +155,24 @@ export const useNotificationStore = defineStore('notification', () => {
 	// 初期化
 	const initialize = async () => {
 		if (authStore.isLogin) {
-			await Promise.all([
-				fetchNotifications(),
-				fetchAnnouncements()
-			])
+			await fetchNotifications()
 		}
 	}
 	
 	return {
 		// 状態
 		notifications,
-		announcements,
 		isDialogOpen,
 		activeTab,
 		
 		// 計算プロパティ
 		unreadNotificationCount,
-		unreadAnnouncementCount,
-		totalUnreadCount,
 		
 		// メソッド
 		fetchNotifications,
-		fetchAnnouncements,
 		createNotification,
-		createAnnouncement,
 		markNotificationAsRead,
-		markAnnouncementAsRead,
 		markAllNotificationsAsRead,
-		markAllAnnouncementsAsRead,
 		openDialog,
 		closeDialog,
 		setActiveTab,

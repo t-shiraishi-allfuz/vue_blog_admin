@@ -21,6 +21,11 @@ const routes: RouteRecordRaw[] = [
 		path: '/admin/category_list',
 		component: () => import("@/views/admin/BlogCategoryList.vue"),
 	},
+	{
+		path: '/admin/announcement_list',
+		component: () => import("@/views/admin/AnnouncementList.vue"),
+		meta: { requiresAuth: true, requiresOwner: true }
+	},
 ] as const
 
 export default routes

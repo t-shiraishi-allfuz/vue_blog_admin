@@ -14,14 +14,7 @@
 						</v-badge>
 					</v-tab>
 					<v-tab value="announcements">
-						<v-badge
-							:content="unreadAnnouncementCount"
-							:model-value="unreadAnnouncementCount > 0"
-							color="error"
-							inline
-						>
-							お知らせ
-						</v-badge>
+						お知らせ
 					</v-tab>
 				</v-tabs>
 				
@@ -77,7 +70,6 @@
 									<v-list-item
 										v-for="announcement in announcements"
 										:key="announcement.id"
-										:class="{ 'bg-grey-lighten-5': !announcement.isRead }"
 									>
 										<template #prepend>
 											<v-avatar size="40" color="info" class="mr-3">
@@ -90,7 +82,7 @@
 										</v-list-item-title>
 										
 										<v-list-item-subtitle class="mt-1">
-											{{ announcement.message }}
+											{{ announcement.content }}
 										</v-list-item-subtitle>
 										
 										<template #append>
@@ -113,8 +105,10 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { useAnnouncementStore } from '@/stores/announcementStore'
 
 const notificationStore = useNotificationStore()
+const announcementStore = useAnnouncementStore()
 const router = useRouter()
 
 const props = defineProps({
@@ -142,9 +136,12 @@ const activeTab = computed({
 })
 
 const notifications = computed(() => notificationStore.notifications)
-const announcements = computed(() => notificationStore.announcements)
+const announcements = computed(() => announcementStore.getPublicList ? announcementStore.getPublicList() : [])
 const unreadNotificationCount = computed(() => notificationStore.unreadNotificationCount)
-const unreadAnnouncementCount = computed(() => notificationStore.unreadAnnouncementCount)
+const unreadAnnouncementCount = computed(() => {
+	// お知らせは既読機能がないため、常に0を返す
+	return 0
+})
 
 const closeDialog = () => {
 	emit('update:modelValue', false)

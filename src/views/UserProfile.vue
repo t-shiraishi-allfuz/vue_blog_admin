@@ -2,14 +2,13 @@
 	<v-container>
 		<v-row justify="center">
 			<v-col cols="12" md="8" lg="6">
-				<!-- プロフィール情報 -->
-				<v-card class="mb-6">
+				<v-card class="mb-4">
 					<v-card-text class="text-center pa-8">
 						<v-avatar
 							:image="userProfile?.profileUrl"
 							size="120"
 							class="mb-4"
-						></v-avatar>
+						/>
 						
 						<h2 class="text-h4 mb-2">{{ userProfile?.title || 'ユーザー' }}</h2>
 						<p class="text-body-1 text-grey mb-4">

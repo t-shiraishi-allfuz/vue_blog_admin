@@ -15,19 +15,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import { useUsersStore } from '@/stores/usersStore'
 import BlogCreate from '@/views/admin/BlogCreate.vue'
 import BlogList from '@/views/admin/BlogList.vue'
 import PostImageList from '@/views/admin/PostImageList.vue'
 import SettingList from '@/views/admin/SettingList.vue'
 import AccessStats from '@/views/admin/AccessStats.vue'
+import AnnouncementList from '@/views/admin/AnnouncementList.vue'
 
 const route = useRoute()
+const authStore = useAuthStore()
+const usersStore = useUsersStore()
 const activeTab = ref(0)
+const isOwner = ref(false)
 
-const tabs = ['記事を書く', '記事一覧', '画像一覧', 'アクセス統計', '設定']
-const tabComponents = [
+const baseTabs = ['記事を書く', '記事一覧', '画像一覧', 'アクセス統計', '設定']
+const baseTabComponents = [
 	BlogCreate,
 	BlogList,
 	PostImageList,
@@ -35,7 +41,36 @@ const tabComponents = [
 	SettingList
 ]
 
-onMounted(() => {
+// オーナーユーザーの場合のみお知らせ管理タブを追加
+const tabs = computed(() => {
+	if (isOwner.value) {
+		return [...baseTabs, 'お知らせ管理']
+	}
+	return baseTabs
+})
+
+const tabComponents = computed(() => {
+	if (isOwner.value) {
+		return [...baseTabComponents, AnnouncementList]
+	}
+	return baseTabComponents
+})
+
+const checkOwnerStatus = async () => {
+	if (authStore.isLogin && authStore.userInfo) {
+		try {
+			isOwner.value = await usersStore.isOwner(authStore.userInfo.uid)
+			console.log(isOwner.value)
+		} catch (error) {
+			console.error('オーナー権限確認エラー:', error)
+			isOwner.value = false
+		}
+	}
+}
+
+onMounted(async () => {
+	await checkOwnerStatus()
+	
 	const tab = route.query.tab
 	if (tab !== undefined) {
 		activeTab.value = parseInt(tab)

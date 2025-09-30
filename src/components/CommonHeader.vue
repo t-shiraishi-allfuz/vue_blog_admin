@@ -90,7 +90,7 @@ const {
 } = storeToRefs(authStore)
 
 // 未読通知数を取得
-const totalUnreadCount = computed(() => notificationStore.totalUnreadCount)
+const totalUnreadCount = computed(() => notificationStore.unreadNotificationCount)
 
 const search = ref('')
 const isLoginDialog = ref(false)
@@ -178,15 +178,9 @@ const openLoginDialog = () => {
 const openNotificationDialog = async () => {
 	isNotificationDialogOpen.value = true
 	
-	// データを取得して既読にする
-	await Promise.all([
-		notificationStore.fetchNotifications(),
-		notificationStore.fetchAnnouncements()
-	])
-	await Promise.all([
-		notificationStore.markAllNotificationsAsRead(),
-		notificationStore.markAllAnnouncementsAsRead()
-	])
+	// 通知データを取得して既読にする
+	await notificationStore.fetchNotifications()
+	await notificationStore.markAllNotificationsAsRead()
 }
 </script>
 
