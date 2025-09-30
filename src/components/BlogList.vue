@@ -1,5 +1,11 @@
 <template>
 	<v-container fluid>
+		<!-- 生年月日入力ダイアログ -->
+		<BirthDateDialog 
+			v-model="showBirthDateDialog" 
+			@saved="onBirthDateSaved"
+		/>
+		
 		<v-row class="horizontal-scroll" no-gutters>
 			<v-slide-group v-if="extendBlogList.length > 0" show-arrows>
 				<v-slide-group-item
@@ -10,10 +16,20 @@
 						class="blog-card d-inline-block"
 						@click="goToDetail(item)"
 						outlined
+						height="280"
 					>
 						<v-img :src="item.thumbUrl" aspect-ratio="16/9" cover></v-img>
-						<v-card-text>
+						<v-card-text class="d-flex flex-column" style="height: 60px;">
 							<strong class="text-h6">{{ item.title }}</strong>
+							<div class="chip-container" style="min-height: 10px;">
+								<v-chip 
+									v-if="item.isAdult" 
+									size="x-small" 
+									color="warning"
+								>
+									18歳以上向け
+								</v-chip>
+							</div>
 						</v-card-text>
 						<v-card-actions>
 							<div class="d-flex">
@@ -53,21 +69,46 @@ import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
+import { useUsersStore } from '@/stores/usersStore'
+import { useAuthStore } from '@/stores/authStore'
+import BirthDateDialog from '@/components/BirthDateDialog.vue'
 
 const router = useRouter()
 const blogStore = useBlogStore()
 const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
+const usersStore = useUsersStore()
+const authStore = useAuthStore()
 const {
 	blogList,
 	selectType
 } = storeToRefs(blogStore)
 
+const showBirthDateDialog = ref(false)
+const userData = ref(null)
+const isUserAdult = ref(false)
+
 const extendBlogList = computed(() => {
 	if (!blogList.value) {
 		return []
 	}
-	return blogList.value
+	
+	// 閲覧制限フィルタリング
+	return blogList.value.filter(blog => {
+		// 閲覧制限がないブログは常に表示
+		if (!blog.isAdult) {
+			return true
+		}
+		
+		// 閲覧制限があるブログの場合、ユーザーの年齢をチェック
+		// ログインしていない場合は表示しない
+		if (!authStore.isLogin) {
+			return false
+		}
+		
+		// ユーザーの年齢をチェック
+		return isUserAdult.value
+	})
 })
 
 // 一覧取得
@@ -136,9 +177,47 @@ watch(() => blogStore.selectType, async (newType) => {
 	await fetchBlogList(newType)
 })
 
+// 生年月日登録後の処理
+const onBirthDateSaved = async () => {
+	// ユーザー情報を再取得
+	await loadUserData()
+	// ブログ一覧を再取得
+	await fetchBlogList(selectType.value)
+}
+
+// ユーザー情報を取得して年齢チェック
+const loadUserData = async () => {
+	if (!authStore.isLogin) return
+	
+	try {
+		const data = await usersStore.getUserByUid(authStore.userInfo.uid)
+		userData.value = data
+		
+		if (data && data.birthDate) {
+			isUserAdult.value = usersStore.isAdult(data.birthDate)
+		} else {
+			isUserAdult.value = false
+		}
+	} catch (error) {
+		console.error('ユーザー情報取得エラー:', error)
+	}
+}
+
+// 生年月日未登録チェック
+const checkBirthDateRegistration = async () => {
+	if (!authStore.isLogin) return
+	
+	await loadUserData()
+	
+	if (!userData.value || !userData.value.birthDate) {
+		showBirthDateDialog.value = true
+	}
+}
+
 // 初回ロード
 onMounted(async () => {
 	await fetchBlogList(selectType.value)
+	await checkBirthDateRegistration()
 })
 </script>
 
@@ -150,13 +229,28 @@ onMounted(async () => {
 }
 .blog-card {
 	min-width: 200px;
-	min-height: 250px;
+	width: 200px;
+	height: 280px;
 	margin: 10px;
+	display: flex;
+	flex-direction: column;
 
 	.v-responsive {
 		min-width: 100%;
 		min-height: 150px;
 		max-height: 150px;
+	}
+
+	.v-card-text {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.chip-container {
+		display: flex;
+		align-items: center;
 	}
 }
 </style>

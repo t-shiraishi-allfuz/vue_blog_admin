@@ -10,6 +10,7 @@ declare module 'vue' {
     AnnouncementCard: typeof import('./components/AnnouncementCard.vue')['default']
     AnnouncementCreateDialog: typeof import('./components/AnnouncementCreateDialog.vue')['default']
     AnnouncementEditDialog: typeof import('./components/AnnouncementEditDialog.vue')['default']
+    BirthDateDialog: typeof import('./components/BirthDateDialog.vue')['default']
     BlogCard: typeof import('./components/BlogCard.vue')['default']
     BlogEditTemplate: typeof import('./components/BlogEditTemplate.vue')['default']
     BlogList: typeof import('./components/BlogList.vue')['default']

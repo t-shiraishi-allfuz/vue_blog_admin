@@ -104,6 +104,45 @@ export const useUsersStore = defineStore('users', () => {
 		}
 	}
 
+	// 生年月日を更新
+	const updateBirthDate = async (uid, birthDate) => {
+		try {
+			await BaseAPI.setData(
+				{db_name: "users", item_id: uid},
+				{
+					birthDate: birthDate,
+					updatedAt: new Date()
+				}
+			)
+			return true
+		} catch (error) {
+			console.error('生年月日更新エラー:', error)
+			throw new Error('生年月日の更新に失敗しました')
+		}
+	}
+
+	// 年齢を計算
+	const calculateAge = (birthDate) => {
+		if (!birthDate) return null
+		
+		const today = new Date()
+		const birth = new Date(birthDate)
+		let age = today.getFullYear() - birth.getFullYear()
+		const monthDiff = today.getMonth() - birth.getMonth()
+		
+		if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+			age--
+		}
+		
+		return age
+	}
+
+	// 18歳以上かチェック
+	const isAdult = (birthDate) => {
+		const age = calculateAge(birthDate)
+		return age !== null && age >= 18
+	}
+
 	return {
 		create,
 		update,
@@ -111,6 +150,9 @@ export const useUsersStore = defineStore('users', () => {
 		getUserByUid,
 		createGoogleUser,
 		isOwner,
-		setOwner
+		setOwner,
+		updateBirthDate,
+		calculateAge,
+		isAdult
 	}
 })
