@@ -1,9 +1,27 @@
 import BaseAPI from '@/api/base'
 import { defineStore } from 'pinia'
 import bcryptjs from 'bcryptjs'
+import type { User } from 'firebase/auth'
+
+// 型定義
+interface UserInfo {
+	uid: string
+	[key: string]: any
+}
+
+interface UserData {
+	email: string
+	passwordHash?: string
+	provider: string
+	createdAt: Date
+	updatedAt?: Date
+	birthDate?: string
+	isOwner?: boolean
+	[key: string]: any
+}
 
 export const useUsersStore = defineStore('users', () => {
-	const create = async (userInfo, email, password) => {
+	const create = async (userInfo: UserInfo, email: string, password: string): Promise<void> => {
 		const passwordHash = await bcryptjs.hash(password, 10)
 		await BaseAPI.setData(
 			{db_name: "users", item_id: userInfo.uid},
@@ -16,7 +34,7 @@ export const useUsersStore = defineStore('users', () => {
 		)
 	}
 
-	const update = async (userInfo, email, password) => {
+	const update = async (userInfo: UserInfo, _email: string, password: string): Promise<void> => {
 		const passwordHash = await bcryptjs.hash(password, 10)
 		await BaseAPI.setData(
 			{db_name: "users", item_id: userInfo.uid},
@@ -27,7 +45,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// パスワードチェック
-	const checkSame = async (email, password) => {
+	const checkSame = async (email: string, password: string): Promise<boolean> => {
 		const filters = [
 			["email", "==", email],
 		]
@@ -50,17 +68,17 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// UIDでユーザーを取得
-	const getUserByUid = async (uid) => {
+	const getUserByUid = async (uid: string): Promise<UserData | null> => {
 		try {
 			const querySnapshot = await BaseAPI.getData({db_name: "users", item_id: uid})
-			return querySnapshot?.data()
+			return querySnapshot?.data() || null
 		} catch (error) {
 			return null
 		}
 	}
 
 	// Google認証ユーザーを作成
-	const createGoogleUser = async (user) => {
+	const createGoogleUser = async (user: User): Promise<void> => {
 		await BaseAPI.setData(
 			{db_name: "users", item_id: user.uid},
 			{
@@ -72,7 +90,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// オーナーユーザーかどうかを判定
-	const isOwner = async (uid) => {
+	const isOwner = async (uid: string): Promise<boolean> => {
 		try {
 			const querySnapshot = await BaseAPI.getData({db_name: "users", item_id: uid})
 			if (querySnapshot) {
@@ -88,7 +106,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// ユーザーをオーナーに設定
-	const setOwner = async (uid) => {
+	const setOwner = async (uid: string): Promise<boolean> => {
 		try {
 			await BaseAPI.setData(
 				{db_name: "users", item_id: uid},
@@ -105,7 +123,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// 生年月日を更新
-	const updateBirthDate = async (uid, birthDate) => {
+	const updateBirthDate = async (uid: string, birthDate: string): Promise<boolean> => {
 		try {
 			await BaseAPI.setData(
 				{db_name: "users", item_id: uid},
@@ -122,7 +140,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// 年齢を計算
-	const calculateAge = (birthDate) => {
+	const calculateAge = (birthDate: string): number | null => {
 		if (!birthDate) return null
 		
 		const today = new Date()
@@ -138,7 +156,7 @@ export const useUsersStore = defineStore('users', () => {
 	}
 
 	// 18歳以上かチェック
-	const isAdult = (birthDate) => {
+	const isAdult = (birthDate: string): boolean => {
 		const age = calculateAge(birthDate)
 		return age !== null && age >= 18
 	}

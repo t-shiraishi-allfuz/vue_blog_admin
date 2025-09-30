@@ -1,9 +1,19 @@
 import BaseAPI from '@/api/base'
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+
+// 型定義
+interface AnnouncementData {
+	id: string
+	title: string
+	content: string
+	isRead: boolean
+	createdAt: Date
+	updatedAt: Date
+	[key: string]: any
+}
 
 export const useAnnouncementStore = defineStore('announcement', () => {
-	const announcements = ref([])
+	const announcements = ref<AnnouncementData[]>([])
 	
 	// 未読のお知らせ数を計算
 	const unreadAnnouncementCount = computed(() => {
@@ -11,7 +21,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	})
 
 	// お知らせを作成
-	const create = async (announcementData) => {
+	const create = async (announcementData: Partial<AnnouncementData>): Promise<boolean> => {
 		try {
 			const data = {
 				...announcementData,
@@ -32,7 +42,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	// お知らせ一覧を取得
-	const getList = async () => {
+	const getList = async (): Promise<void> => {
 		try {
 			const querySnapshot = await BaseAPI.getDataWithQuery({
 				db_name: "announcements",

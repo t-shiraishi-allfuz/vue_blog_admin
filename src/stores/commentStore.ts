@@ -1,19 +1,31 @@
 import BaseAPI from '@/api/base'
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 
+// 型定義
+interface CommentData {
+	id: string
+	uid: string
+	blog_id: string
+	content: string
+	reply_id?: string
+	createdAt: Date
+	updatedAt: Date
+	setting?: any
+	reply?: any
+}
+
 export const useCommentStore = defineStore('comment', () => {
-	const commentList = ref([])
-	const commentDetail = ref({})
+	const commentList = ref<CommentData[]>([])
+	const commentDetail = ref<CommentData>({} as CommentData)
 
 	const authStore = useAuthStore()
 	const blogSettingStore = useBlogSettingStore()
 	const notificationStore = useNotificationStore()
 
-	const setCommentData = async (doc) => {
+	const setCommentData = async (doc: any): Promise<CommentData> => {
 		const data = {
 			id: doc.id,
 			setting: null,
@@ -37,7 +49,7 @@ export const useCommentStore = defineStore('comment', () => {
 		return data
 	}
 
-	const create = async (payload, blog_title, blog_author_uid) => {
+	const create = async (payload: Partial<CommentData>, blog_title: string, blog_author_uid: string): Promise<void> => {
 		await BaseAPI.addData(
 			{db_name: "comment"},
 			payload

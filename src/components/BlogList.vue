@@ -62,16 +62,31 @@
 	</v-container>
 </template>
 
-<script setup>
-import { ref, onMounted, watch, computed } from 'vue'
-import { storeToRefs } from "pinia"
-import { useRouter } from 'vue-router'
+<script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
 import BirthDateDialog from '@/components/BirthDateDialog.vue'
+
+// 型定義
+interface BlogItem {
+	id: string
+	title: string
+	thumbUrl: string
+	isAdult: boolean
+	is_like: boolean
+	is_bookmark: boolean
+	like_count: number
+	uid: string
+}
+
+interface UserData {
+	uid: string
+	birthDate?: string
+	[key: string]: any
+}
 
 const router = useRouter()
 const blogStore = useBlogStore()
@@ -84,17 +99,17 @@ const {
 	selectType
 } = storeToRefs(blogStore)
 
-const showBirthDateDialog = ref(false)
-const userData = ref(null)
-const isUserAdult = ref(false)
+const showBirthDateDialog = ref<boolean>(false)
+const userData = ref<UserData | null>(null)
+const isUserAdult = ref<boolean>(false)
 
-const extendBlogList = computed(() => {
+const extendBlogList = computed((): BlogItem[] => {
 	if (!blogList.value) {
 		return []
 	}
 	
 	// 閲覧制限フィルタリング
-	return blogList.value.filter(blog => {
+	return blogList.value.filter((blog: BlogItem) => {
 		// 閲覧制限がないブログは常に表示
 		if (!blog.isAdult) {
 			return true
@@ -112,7 +127,7 @@ const extendBlogList = computed(() => {
 })
 
 // 一覧取得
-const fetchBlogList = async (type) => {
+const fetchBlogList = async (type: number): Promise<void> => {
 	switch (+type) {
 		case 1:
 			await blogStore.getListForFollow()
@@ -130,28 +145,28 @@ const fetchBlogList = async (type) => {
 }
 
 // アイコン設定
-const formatLike = (blog) => {
+const formatLike = (blog: BlogItem): string => {
 	return blog.is_like ? "mdi-heart" : "mdi-heart-outline"
 }
-const formatBookmark = (blog) => {
+const formatBookmark = (blog: BlogItem): string => {
 	return blog.is_bookmark ? "mdi-bookmark-plus" : "mdi-bookmark-plus-outline"
 }
 
 // アイコン設定（カラー）
-const colorIconPink = (blog) => {
+const colorIconPink = (blog: BlogItem): string => {
 	return blog.is_like ? "pink" : "black"
 }
-const colorIconPrimary = (blog) => {
+const colorIconPrimary = (blog: BlogItem): string => {
 	return blog.is_bookmark ? "blue" : "black"
 }
 
 // 詳細ページに移動
-const goToDetail = (blog) => {
+const goToDetail = (blog: BlogItem): void => {
 	router.push({path: "/blog_detail", query: {blog_id: blog.id}})
 }
 
 // いいね
-const addLike = async (blog) => {
+const addLike = async (blog: BlogItem): Promise<void> => {
 	if (blog.is_like) {
 		await likeStore.deleteItem(blog.id)
 		blog.is_like = false
@@ -165,7 +180,7 @@ const addLike = async (blog) => {
 }
 
 // お気に入り登録
-const addBookmark = async (blog) => {
+const addBookmark = async (blog: BlogItem): Promise<void> => {
 	if (blog.is_bookmark) {
 		await bookmarkStore.deleteItem(blog.id)
 		blog.is_bookmark = false
@@ -176,12 +191,12 @@ const addBookmark = async (blog) => {
 	await fetchBlogList(selectType.value)
 }
 
-watch(() => blogStore.selectType, async (newType) => {
+watch(() => blogStore.selectType, async (newType: number) => {
 	await fetchBlogList(newType)
 })
 
 // 生年月日登録後の処理
-const onBirthDateSaved = async () => {
+const onBirthDateSaved = async (): Promise<void> => {
 	// ユーザー情報を再取得
 	await loadUserData()
 	// ブログ一覧を再取得
@@ -189,12 +204,13 @@ const onBirthDateSaved = async () => {
 }
 
 // ユーザー情報を取得して年齢チェック
-const loadUserData = async () => {
-	if (!authStore.isLogin) return
+const loadUserData = async (): Promise<void> => {
+	if (!authStore.isLogin || !authStore.userInfo) return
 	
 	try {
-		const data = await usersStore.getUserByUid(authStore.userInfo.uid)
-		userData.value = data
+		const userInfo = authStore.userInfo as { uid: string }
+		const data = await usersStore.getUserByUid(userInfo.uid)
+		userData.value = data as UserData | null
 		
 		if (data && data.birthDate) {
 			isUserAdult.value = usersStore.isAdult(data.birthDate)
@@ -207,7 +223,7 @@ const loadUserData = async () => {
 }
 
 // 生年月日未登録チェック
-const checkBirthDateRegistration = async () => {
+const checkBirthDateRegistration = async (): Promise<void> => {
 	if (!authStore.isLogin) return
 	
 	await loadUserData()
@@ -218,7 +234,7 @@ const checkBirthDateRegistration = async () => {
 }
 
 // 初回ロード
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await fetchBlogList(selectType.value)
 	await checkBirthDateRegistration()
 })

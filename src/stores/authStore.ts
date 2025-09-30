@@ -1,6 +1,5 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { auth, googleProvider } from '@/setting/firebase'
+import { auth } from '@/setting/firebase'
 import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
@@ -14,19 +13,31 @@ import {
 	confirmPasswordReset,
 	GoogleAuthProvider
 } from 'firebase/auth'
+import type { User } from 'firebase/auth'
 import { useUsersStore } from '@/stores/usersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+
+// 型定義
+interface GoogleResponse {
+	credential: string
+	[key: string]: any
+}
+
+// interface ActionCodeSettings {
+// 	url: string
+// 	handleCodeInApp: boolean
+// }
 
 export const useAuthStore = defineStore('auth', () => {
 	const usersStore = useUsersStore()
 	const blogSettingStore = useBlogSettingStore()
 
-	const userInfo = ref(null)
-	const isLogin = ref(false)
-	const isNewUser = ref(false)
+	const userInfo = ref<User | null>(null)
+	const isLogin = ref<boolean>(false)
+	const isNewUser = ref<boolean>(false)
 
 		// ユーザー登録
-	const create = async (email, password) => {
+	const create = async (email: string, password: string): Promise<void> => {
 		try {
 			await setPersistence(auth, browserLocalPersistence)
 			const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -39,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
 			await usersStore.create(userInfo.value, email, password)
 			// デフォルトのブログ設定を作成
 			await blogSettingStore.create()
-		} catch (error) {
+		} catch (error: any) {
 			if (userInfo.value) {
 				await logout()
 			}
@@ -58,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
 	}
 
 	// ログイン
-	const login = async (email, password) => {
+	const login = async (email: string, password: string): Promise<void> => {
 		try {
 			await setPersistence(auth, browserLocalPersistence)
 			await signInWithEmailAndPassword(auth, email, password)
@@ -70,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
 	}
 
 	// Google認証でログイン（vue3-google-login用）
-	const loginWithGoogle = async (googleResponse) => {
+	const loginWithGoogle = async (googleResponse: GoogleResponse): Promise<void> => {
 		try {
 			// 認証の永続化を設定
 			await setPersistence(auth, browserLocalPersistence)
@@ -99,7 +110,7 @@ export const useAuthStore = defineStore('auth', () => {
 			}
 
 			setUserInfo()
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Google認証エラー詳細:', error)
 			console.error('エラーコード:', error.code)
 			console.error('エラーメッセージ:', error.message)
@@ -108,7 +119,7 @@ export const useAuthStore = defineStore('auth', () => {
 	}
 
 	// ログアウト
-	const logout = async () => {
+	const logout = async (): Promise<void> => {
 		try {
 			await signOut(auth)
 
@@ -121,7 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
-	const setUserInfo = () => {
+	const setUserInfo = (): void => {
 		let data = localStorage.getItem('user_info')
 		if (data != null) {
 			userInfo.value = JSON.parse(data)
@@ -132,12 +143,12 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
-	const getUserInfo = () => {
+	const getUserInfo = (): User | null => {
 		return userInfo.value
     }
 
 	// パスワードリセットメール送信
-	const resetPassword = async (email) => {
+	const resetPassword = async (email: string): Promise<void> => {
 		try {
 			const actionCodeSettings = {
 				url: process.env.VUE_APP_ROOT +'/reset_password_confirm',
@@ -150,7 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
 	}
 
 	// パスワードリセット
-	const resetPasswordConfirm = async (oobCode, password) => {
+	const resetPasswordConfirm = async (oobCode: string, password: string): Promise<void> => {
 		try {
 			// 再設定コード確認
 			const email = await verifyPasswordResetCode(auth, oobCode)
@@ -165,14 +176,14 @@ export const useAuthStore = defineStore('auth', () => {
 			await confirmPasswordReset(auth, oobCode, password)
 
 			// パスワードを更新
-			await usersStore.update(userInfo, email, password)
+			await usersStore.update(userInfo.value as any, email, password)
 		} catch (error) {
 			throw new Error('パスワードの再設定に失敗しました')
 		}
 	}
 
 	// 認証状態の監視
-	const initializeAuth = () => {
+	const initializeAuth = (): Promise<void> => {
 		return new Promise((resolve) => {
 			onAuthStateChanged(auth, (currentUser) => {
 				userInfo.value = currentUser

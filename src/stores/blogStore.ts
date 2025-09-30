@@ -1,5 +1,4 @@
 import BaseAPI from '@/api/base'
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useCommentStore } from '@/stores/commentStore'
@@ -8,6 +7,49 @@ import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useAccessLogStore } from '@/stores/accessLogStore'
+
+// 型定義
+interface BlogData {
+	id: string
+	uid: string
+	title: string
+	summary: string
+	content: string
+	category_id: string | null
+	isAdult: boolean
+	isPublished: boolean
+	thumbUrl: string | null
+	share_blog_id: string | null
+	viewCount: number
+	createdAt: Date | null
+	updatedAt: Date | null
+	comment_count: number
+	like_count: number
+	is_like: boolean
+	is_bookmark: boolean
+	setting: any
+	shareBlog: BlogData | null
+}
+
+interface TempBlog {
+	uid: string | null
+	title: string
+	summary: string
+	content: string
+	category_id: string | null
+	isAdult: boolean
+	isPublished: boolean
+	thumbUrl: string | null
+	share_blog_id: string | null
+	viewCount: number
+	createdAt: Date | null
+	updatedAt: Date | null
+}
+
+interface UserInfo {
+	uid: string
+	[key: string]: any
+}
 
 export const useBlogStore = defineStore('blog', () => {
 	const authStore = useAuthStore()
@@ -18,12 +60,12 @@ export const useBlogStore = defineStore('blog', () => {
 	const followUsersStore = useFollowUsersStore()
 	const accessLogStore = useAccessLogStore()
 
-	const blogList = ref([])
-	const blogDetail = ref({})
-	const selectType = ref(0)
-	const accessCounts = ref({})
+	const blogList = ref<BlogData[]>([])
+	const blogDetail = ref<BlogData>({} as BlogData)
+	const selectType = ref<number>(0)
+	const accessCounts = ref<Record<string, number>>({})
 
-	const tempBlog = ref({
+	const tempBlog = ref<TempBlog>({
 		uid: null,
 		title: "",
 		summary: "",
@@ -38,11 +80,11 @@ export const useBlogStore = defineStore('blog', () => {
 		updatedAt: null
 	})
 
-	const setSelectType = (type) => {
+	const setSelectType = (type: number): void => {
 		selectType.value = type
 	}
 
-	const setBlogData = async (doc) => {
+	const setBlogData = async (doc: any): Promise<BlogData> => {
 		const commentCount = await commentStore.getCommentCount(doc.id)
 		const likeCount = await likeStore.getLikeCount(doc.id)
 		const isLike = await likeStore.isLike(doc.id)
@@ -68,8 +110,8 @@ export const useBlogStore = defineStore('blog', () => {
 		return data
 	}
 
-	const create = async(blog) => {
-		const userInfo = authStore.userInfo
+	const create = async (blog: Partial<BlogData>): Promise<void> => {
+		const userInfo = authStore.userInfo as UserInfo
 		
 		// ユーザー情報がnullの場合はエラーを投げる
 		if (!userInfo || !userInfo.uid) {
@@ -87,7 +129,7 @@ export const useBlogStore = defineStore('blog', () => {
 		)
 	}
 
-	const update = async (blog) => {
+	const update = async (blog: BlogData): Promise<void> => {
 		await BaseAPI.setData(
 			{db_name: "blog", item_id: blog.id},
 			{
@@ -103,7 +145,7 @@ export const useBlogStore = defineStore('blog', () => {
 		)
 	}
 
-	const getDetail = async (blog_id) => {
+	const getDetail = async (blog_id: string): Promise<void> => {
 		const doc = await BaseAPI.getData(
 			{db_name: "blog", item_id: blog_id},
 		)
@@ -124,7 +166,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// ブログ詳細表示時にアクセス数をカウント
-	const getDetailWithAccessCount = async (blog_id) => {
+	const getDetailWithAccessCount = async (blog_id: string): Promise<void> => {
 		await getDetail(blog_id)
 		
 		// 公開されているブログの場合のみアクセス数をカウント
@@ -135,7 +177,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// ブログのアクセス数をインクリメント
-	const incrementAccessCount = async (blog_id) => {
+	const incrementAccessCount = async (blog_id: string): Promise<void> => {
 		try {
 			const newCount = blogDetail.value.viewCount
 
@@ -151,14 +193,14 @@ export const useBlogStore = defineStore('blog', () => {
 		}
 	}
 
-	const deleteItem = async (blog_id) => {
+	const deleteItem = async (blog_id: string): Promise<void> => {
 		await BaseAPI.deleteData(
 			{db_name: "blog", item_id: blog_id},
 		)
 	}
 
 	// 自分のブログ一覧取得
-	const getList = async () => {
+	const getList = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
 		const filters = [
 			["uid", "==", userInfo.uid]
@@ -185,7 +227,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// 全ユーザーのブログデータ取得
-	const getListForAll = async () => {
+	const getListForAll = async (): Promise<void> => {
 		const filters = [
 			["isPublished", "==", true]
 		]
@@ -212,7 +254,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// フォロー中ユーザーのブログデータ取得
-	const getListForFollow = async () => {
+	const getListForFollow = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
 		
 		try {
@@ -257,7 +299,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// お気に入りのブログデータ取得
-	const getListForBookmark = async () => {
+	const getListForBookmark = async (): Promise<void> => {
 		const blogIds = await bookmarkStore.getBlogIds()
 		const detailPromises = blogIds.map(async (blogId) => {
 			const doc = await BaseAPI.getData(
@@ -273,7 +315,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// おすすめのブログデータ取得
-	const getListForRecomend = async () => {
+	const getListForRecomend = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
 		
 		try {
@@ -327,7 +369,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// カテゴリーIDに一致するブログ数取得
-	const getListForCategoryCount = async (category_id) => {
+	const getListForCategoryCount = async (category_id: string): Promise<number> => {
 		const userInfo = authStore.userInfo
 		const filters = [
 			["uid", "==", userInfo.uid],
@@ -351,7 +393,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// ユーザーの全ブログのアクセス数合計を取得
-	const getTotalAccessCount = async () => {
+	const getTotalAccessCount = async (): Promise<number> => {
 		const userInfo = authStore.userInfo
 
 		try {
@@ -381,7 +423,7 @@ export const useBlogStore = defineStore('blog', () => {
 
 
 	// 特定ユーザーの記事数を取得（公開中の記事のみ）
-	const getCountForUser = async (userId) => {
+	const getCountForUser = async (userId: string): Promise<number> => {
 		try {
 			const param = {
 				db_name: 'blog',
@@ -401,7 +443,7 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 	// 特定ユーザーの記事一覧を取得（公開中の記事のみ）
-	const getListForUser = async (userId) => {
+	const getListForUser = async (userId: string): Promise<BlogData[]> => {
 		try {
 			const param = {
 				db_name: 'blog',

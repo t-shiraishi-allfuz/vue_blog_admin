@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 export const useBookmarkStore = defineStore('bookmark', () => {
 	const authStore = useAuthStore()
 
-	const create = async (blog_id) => {
+	const create = async (blog_id: string): Promise<void> => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合はエラーを投げる
@@ -25,7 +25,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	}
 
 	// ブックマークしているブログIDのリスト取得
-	const getBlogIds = async () => {
+	const getBlogIds = async (): Promise<string[]> => {
 		const userInfo = authStore.getUserInfo()
 		
 		// ユーザー情報がnullの場合は空配列を返す
@@ -54,10 +54,10 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	}
 
 	// 指定のブログをブックマークしてるかどうか（一括）
-	const isBookmarks = async (blogIds) => {
+	const isBookmarks = async (blogIds: string[]): Promise<Record<string, number>> => {
 		const promises = blogIds.map(id => isBookmark(id))
 		const results = await Promise.all(promises)
-		const bookmarks = {}
+		const bookmarks: Record<string, number> = {}
 		blogIds.forEach((id, index) => {
 			bookmarks[id] = results[index]
 		})
@@ -65,12 +65,12 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	}
 
 	// 指定のブログをブックマークしてるかどうか
-	const isBookmark = async (blog_id) => {
+	const isBookmark = async (blog_id: string): Promise<number> => {
 		const userInfo = authStore.getUserInfo()
 		
-		// ユーザー情報がnullの場合はfalseを返す
+		// ユーザー情報がnullの場合は0を返す
 		if (!userInfo || !userInfo.uid) {
-			return false
+			return 0
 		}
 		
 		const filters = [
@@ -89,7 +89,7 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 		return querySnapshot ? querySnapshot.size : 0
 	}
 
-	const deleteItem = async (blog_id) => {
+	const deleteItem = async (blog_id: string): Promise<void> => {
 		const userInfo = authStore.getUserInfo()
 		
 		// ユーザー情報がnullの場合はエラーを投げる

@@ -1,15 +1,27 @@
-import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import BaseAPI from '@/api/base'
 import { useAuthStore } from '@/stores/authStore'
+
+// 型定義
+interface NotificationData {
+	id: string
+	userId: string
+	type: string
+	title: string
+	message: string
+	isRead: boolean
+	createdAt: Date
+	updatedAt: Date
+	[key: string]: any
+}
 
 export const useNotificationStore = defineStore('notification', () => {
 	const authStore = useAuthStore()
 	
 	// 状態管理
-	const notifications = ref([])
-	const isDialogOpen = ref(false)
-	const activeTab = ref('notifications')
+	const notifications = ref<NotificationData[]>([])
+	const isDialogOpen = ref<boolean>(false)
+	const activeTab = ref<string>('notifications')
 	
 	// 未読の通知数を計算
 	const unreadNotificationCount = computed(() => {
@@ -17,7 +29,7 @@ export const useNotificationStore = defineStore('notification', () => {
 	})
 	
 	// 通知一覧を取得
-	const fetchNotifications = async () => {
+	const fetchNotifications = async (): Promise<void> => {
 		try {
 			if (!authStore.userInfo?.uid) return
 			
@@ -46,7 +58,7 @@ export const useNotificationStore = defineStore('notification', () => {
 	
 	
 	// 通知を作成（いいね、コメント、フォロー時）
-	const createNotification = async (type, data) => {
+	const createNotification = async (type: string, data: any): Promise<void> => {
 		try {
 			if (!authStore.userInfo?.uid) return
 			

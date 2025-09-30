@@ -1,16 +1,24 @@
 import BaseAPI from '@/api/base'
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useNotificationStore } from '@/stores/notificationStore'
+// 型定義
+interface LikeData {
+	id: string
+	uid: string
+	blog_id: string
+	createdAt: Date
+	updatedAt: Date
+	user?: any
+}
 
 export const useLikeStore = defineStore('like', () => {
 	const authStore = useAuthStore()
 	const blogSettingStore = useBlogSettingStore()
 	const notificationStore = useNotificationStore()
 
-	const create = async (blog_id, blog_title, blog_author_uid) => {
+	const create = async (blog_id: string, blog_title: string, blog_author_uid: string): Promise<void> => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合はエラーを投げる
@@ -42,7 +50,7 @@ export const useLikeStore = defineStore('like', () => {
 	}
 
 	// 指定のブログにいいねした
-	const getListForBlog = async (blog_id) => {
+	const getListForBlog = async (blog_id: string): Promise<LikeData[]> => {
 		const filters = [
 			["blog_id", "==", blog_id]
 		]
@@ -59,7 +67,7 @@ export const useLikeStore = defineStore('like', () => {
 		if (!querySnapshot) return []
 
 		const likeList = querySnapshot.docs.map((doc) => {
-			const data = { id: doc.id, ...doc.data() }
+			const data = { id: doc.id, ...doc.data() } as any
 			if (data.createdAt && data.createdAt.toDate) {
 				data.createdAt = data.createdAt.toDate()
 			}
@@ -72,12 +80,12 @@ export const useLikeStore = defineStore('like', () => {
 
 		return likeList.map(like => ({
 			...like,
-			user: settingList[like.uid] || null
+			user: (settingList as any)[like.uid] || null
 		}))
 	}
 
 	// 指定のユーザーがいいねした
-	const getListForUser = async () => {
+	const getListForUser = async (): Promise<LikeData[]> => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合は空配列を返す
@@ -100,7 +108,7 @@ export const useLikeStore = defineStore('like', () => {
 		if (!querySnapshot) return []
 
 		return querySnapshot.docs.map((doc) => {
-			const data = { id: doc.id, ...doc.data() }
+			const data = { id: doc.id, ...doc.data() } as any
 			if (data.createdAt && data.createdAt.toDate) {
 				data.createdAt = data.createdAt.toDate()
 			}
@@ -108,10 +116,10 @@ export const useLikeStore = defineStore('like', () => {
 		})
 	}
 
-	const getLikeCounts = async (blogIds) => {
+	const getLikeCounts = async (blogIds: string[]): Promise<Record<string, number>> => {
 		const promises = blogIds.map(id => getLikeCount(id))
 		const results = await Promise.all(promises)
-		const counts = {}
+		const counts: Record<string, number> = {}
 		blogIds.forEach((id, index) => {
 			counts[id] = results[index]
 		})
@@ -119,7 +127,7 @@ export const useLikeStore = defineStore('like', () => {
 	}
 
 	// 指定のブログにいいねした数
-	const getLikeCount = async (blog_id) => {
+	const getLikeCount = async (blog_id: string): Promise<number> => {
 		const filters = [
 			["blog_id", "==", blog_id],
 		]
@@ -135,10 +143,10 @@ export const useLikeStore = defineStore('like', () => {
 	}
 
 	// 指定のブログにいいねしてるかどうか（一括）
-	const isLikes = async (blogIds) => {
+	const isLikes = async (blogIds: string[]): Promise<Record<string, boolean>> => {
 		const promises = blogIds.map(id => isLike(id))
 		const results = await Promise.all(promises)
-		const likes = {}
+		const likes: Record<string, boolean> = {}
 		blogIds.forEach((id, index) => {
 			likes[id] = results[index]
 		})
@@ -146,7 +154,7 @@ export const useLikeStore = defineStore('like', () => {
 	}
 
 	// 指定のブログにいいねしてるかどうか
-	const isLike = async (blog_id) => {
+	const isLike = async (blog_id: string): Promise<boolean> => {
 		const userInfo = authStore.getUserInfo()
 		
 		// ユーザー情報がnullの場合はfalseを返す
@@ -170,7 +178,7 @@ export const useLikeStore = defineStore('like', () => {
 		return !!querySnapshot?.docs.length
 	}
 
-	const deleteItem = async (blog_id) => {
+	const deleteItem = async (blog_id: string): Promise<void> => {
 		const userInfo = authStore.getUserInfo()
 		
 		// ユーザー情報がnullの場合はエラーを投げる
