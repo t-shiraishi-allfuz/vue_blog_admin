@@ -13,6 +13,11 @@ const routes:RouteRecordRaw[] = [
 		path: '/user_profile',
 		component: () => import("@/views/UserProfile.vue"),
 	},
+	{
+		path: '/announcements/:id',
+		name: 'AnnouncementDetail',
+		component: () => import("@/views/AnnouncementDetail.vue"),
+	},
 ] as const
 
 export default routes

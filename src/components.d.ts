@@ -7,6 +7,7 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AnnouncementCard: typeof import('./components/AnnouncementCard.vue')['default']
     AnnouncementCreateDialog: typeof import('./components/AnnouncementCreateDialog.vue')['default']
     AnnouncementEditDialog: typeof import('./components/AnnouncementEditDialog.vue')['default']
     BlogCard: typeof import('./components/BlogCard.vue')['default']

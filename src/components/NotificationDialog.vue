@@ -78,7 +78,7 @@
 										v-for="announcement in announcements"
 										:key="announcement.id"
 										:class="{ 'bg-grey-lighten-5': !announcement.isRead }"
-										@click="markAnnouncementAsRead(announcement)"
+										@click="goToAnnouncementDetail(announcement)"
 										class="cursor-pointer"
 									>
 										<template #prepend>
@@ -162,8 +162,9 @@ const goToUserProfile = (userId) => {
 	}
 }
 
-// お知らせを既読にする
-const markAnnouncementAsRead = async (announcement) => {
+// お知らせ詳細ページに遷移
+const goToAnnouncementDetail = async (announcement) => {
+	// 未読の場合は既読にする
 	if (!announcement.isRead) {
 		try {
 			await announcementStore.markAnnouncementAsRead(announcement.id)
@@ -171,6 +172,10 @@ const markAnnouncementAsRead = async (announcement) => {
 			console.error('お知らせ既読エラー:', error)
 		}
 	}
+	
+	// お知らせ詳細ページに遷移
+	router.push({ name: 'AnnouncementDetail', params: { id: announcement.id } })
+	closeDialog()
 }
 
 const getNotificationIcon = (type) => {
