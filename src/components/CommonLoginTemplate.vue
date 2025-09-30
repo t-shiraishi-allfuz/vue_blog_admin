@@ -8,5 +8,6 @@
 	</v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
+// ログイン画面共通テンプレートコンポーネント
 </script>

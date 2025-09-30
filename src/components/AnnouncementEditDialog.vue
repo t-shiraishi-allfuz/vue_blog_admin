@@ -103,8 +103,7 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, reactive, watch, computed } from 'vue'
+<script setup lang="ts">
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
 const announcementStore = useAnnouncementStore()

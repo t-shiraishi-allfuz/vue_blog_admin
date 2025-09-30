@@ -97,33 +97,48 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { GoogleLogin } from 'vue3-google-login'
 import Swal from 'sweetalert2'
 
-const dialog = defineModel('dialog')
+// 型定義
+interface GoogleResponse {
+	credential: string
+	[key: string]: any
+}
+
+interface GoogleButtonConfig {
+	type: string
+	theme: string
+	size: string
+	text: string
+	shape: string
+	logo_alignment: string
+	width: string
+}
+
+const dialog = defineModel<boolean>('dialog')
 
 const router = useRouter()
 const authStore = useAuthStore()
 const blogSettingStore = useBlogSettingStore()
 
-const email = ref('')
-const password = ref('')
-const visibleIcon = ref("mdi-eye-off")
-const visibleType = ref('password')
-const isGoogleLoading = ref(false)
-const isLoading = ref(false)
-const errorMessage = ref('')
+const email = ref<string>('')
+const password = ref<string>('')
+const visibleIcon = ref<string>("mdi-eye-off")
+const visibleType = ref<string>('password')
+const isGoogleLoading = ref<boolean>(false)
+const isLoading = ref<boolean>(false)
+const errorMessage = ref<string>('')
 
-const googleClientId = computed(() => {
+const googleClientId = computed((): string => {
 	return import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 })
 
-const googleButtonConfig = {
+const googleButtonConfig: GoogleButtonConfig = {
 	type: 'standard',
 	theme: 'outline',
 	size: 'large',
@@ -134,21 +149,21 @@ const googleButtonConfig = {
 }
 
 const emailRules = [
-	(v) => !!v || 'メールアドレスは必須です',
-	(v) => /.+@.+\..+/.test(v) || '有効なメールアドレスを入力してください'
+	(v: string): boolean | string => !!v || 'メールアドレスは必須です',
+	(v: string): boolean | string => /.+@.+\..+/.test(v) || '有効なメールアドレスを入力してください'
 ]
 
 const passwordRules = [
-	(v) => !!v || 'パスワードは必須です',
-	(v) => (v && v.length >= 6) || 'パスワードは6文字以上で入力してください'
+	(v: string): boolean | string => !!v || 'パスワードは必須です',
+	(v: string): boolean | string => (v && v.length >= 6) || 'パスワードは6文字以上で入力してください'
 ]
 
-const changeVisible = () => {
+const changeVisible = (): void => {
 	visibleIcon.value = visibleIcon.value === "mdi-eye-off" ? "mdi-eye" : "mdi-eye-off"
 	visibleType.value = visibleType.value === 'password' ? 'text' : 'password'
 }
 
-const closeDialog = () => {
+const closeDialog = (): void => {
 	dialog.value = false
 
 	email.value = ''
@@ -156,17 +171,17 @@ const closeDialog = () => {
 	errorMessage.value = ''
 }
 
-const goToResetPassword = () => {
+const goToResetPassword = (): void => {
 	closeDialog()
 	router.push('/reset_password')
 }
 
-const goToUserCreate = () => {
+const goToUserCreate = (): void => {
 	closeDialog()
 	router.push('/user_create')
 }
 
-const showLoginSuccessDialog = async () => {
+const showLoginSuccessDialog = async (): Promise<void> => {
 	dialog.value = false
 
 	try {
@@ -187,21 +202,21 @@ const showLoginSuccessDialog = async () => {
 		if (result.isConfirmed) {
 			closeDialog()
 		}
-	} catch (error) {
+	} catch (error: any) {
 		console.error('ダイアログエラー:', error)
 		closeDialog()
 	}
 }
 
 // ログイン処理
-const loginUser = async () => {
+const loginUser = async (): Promise<void> => {
 	try {
 		errorMessage.value = ''
 		isLoading.value = true
 		
 		await authStore.login(email.value, password.value)
 		await showLoginSuccessDialog()
-	} catch (error) {
+	} catch (error: any) {
 		console.error('ログインエラー:', error)
 		errorMessage.value = error.message || 'ログインに失敗しました'
 	} finally {
@@ -210,7 +225,7 @@ const loginUser = async () => {
 }
 
 // Google認証でログイン
-const handleGoogleLogin = async (response) => {
+const handleGoogleLogin = async (response: GoogleResponse): Promise<void> => {
 	try {
 		errorMessage.value = ''
 		isGoogleLoading.value = true
@@ -223,7 +238,7 @@ const handleGoogleLogin = async (response) => {
 		} else {
 			errorMessage.value = 'ログインに失敗しました'
 		}
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Google認証エラー:', error)
 		errorMessage.value = error.message || 'Google認証に失敗しました'
 	} finally {
@@ -231,7 +246,7 @@ const handleGoogleLogin = async (response) => {
 	}
 }
 
-const handleGoogleError = (error) => {
+const handleGoogleError = (error: any): void => {
 	console.error('Google認証エラー:', error)
 	errorMessage.value = 'Google認証でエラーが発生しました'
 }

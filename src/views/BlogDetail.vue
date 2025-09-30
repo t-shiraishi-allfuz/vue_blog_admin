@@ -219,9 +219,7 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
@@ -233,10 +231,52 @@ import { format } from 'date-fns'
 import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
 
+// 型定義
+interface BlogDetail {
+	id: string
+	title: string
+	summary: string
+	content: string
+	thumbUrl: string
+	createdAt: Date
+	uid: string
+	like_count: number
+	comment_count: number
+	viewCount: number
+	is_like: boolean
+	is_bookmark: boolean
+	shareBlog?: any
+	setting: {
+		name: string
+		profileUrl: string
+		is_follower: boolean
+		is_following: boolean
+		[key: string]: any
+	}
+	[key: string]: any
+}
+
+interface CommentData {
+	id: string
+	body: string
+	createdAt: Date
+	reply_id?: string
+	reply?: {
+		body: string
+		[key: string]: any
+	}
+	setting: {
+		name: string
+		profileUrl: string
+		[key: string]: any
+	}
+	[key: string]: any
+}
+
 const route = useRoute()
 const router = useRouter()
 
-const blog_id = route.query.blog_id
+const blog_id = route.query.blog_id as string
 
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
@@ -257,40 +297,40 @@ const {
 	commentList
 } = storeToRefs(commentStore)
 
-const isLoading = ref(false)
-const shareDialog = ref(false)
+const isLoading = ref<boolean>(false)
+const shareDialog = ref<boolean>(false)
 
-const reply_id = ref(null)
-const commentDialog = ref(false)
-const comment = ref({
+const reply_id = ref<string | null>(null)
+const commentDialog = ref<boolean>(false)
+const comment = ref<Partial<CommentData>>({
 	uid: '',
 	body: '',
 	blog_id: '',
 	reply_id: '',
-	createdAt: '',
-	updatedAt: '',
+	createdAt: new Date(),
+	updatedAt: new Date(),
 })
 
 // 日時フォーマット関数
-const formatDate = (date) => {
+const formatDate = (date: Date): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
 // アイコン設定
-const formatLike = computed(() => {
+const formatLike = computed((): string => {
 	return blogDetail.value.is_like ? "mdi-heart" : "mdi-heart-outline"
 })
 
-const formatComment = computed(() => {
+const formatComment = computed((): string => {
 	return blogDetail.value.comment_count > 0 ? "mdi-comment" : "mdi-comment-outline"
 })
 
-const formatBookmark = computed(() => {
+const formatBookmark = computed((): string => {
 	return blogDetail.value.is_bookmark ? "mdi-bookmark-plus" : "mdi-bookmark-plus-outline"
 })
 
 // アイコン設定（カラー）
-const colorIconPink = computed(() => (type) => {
+const colorIconPink = computed(() => (type: string): string => {
 	if (type === "like") {
 		return blogDetail.value.is_like ? "pink" : "black"
 	} else if (type === "comment") {
@@ -300,12 +340,12 @@ const colorIconPink = computed(() => (type) => {
 	}
 })
 
-const colorIconPrimary = computed(() => {
+const colorIconPrimary = computed((): string => {
 	return blogDetail.value.is_bookmark ? "blue" : "black"
 })
 
 // いいね
-const addLike = async () => {
+const addLike = async (): Promise<void> => {
 	if (blogDetail.value.is_like) {
 		await likeStore.deleteItem(blogDetail.value.id)
 		blogDetail.value.is_like = false
@@ -322,12 +362,12 @@ const addLike = async () => {
 }
 
 // シェア
-const addShare = () => {
+const addShare = (): void => {
 	shareDialog.value = true
 }
 
 // リンクをコピー
-const copyUrl = async () => {
+const copyUrl = async (): Promise<void> => {
 	shareDialog.value = false
 
 	try {
@@ -362,12 +402,12 @@ const addComment = () => {
 	commentDialog.value = true
 }
 
-const replyComment = (comment) => {
+const replyComment = (comment: CommentData): void => {
 	reply_id.value = comment.id
 	commentDialog.value = true
 }
 
-const deleteComment = async (comment) => {
+const deleteComment = async (comment: CommentData): Promise<void> => {
 	await commentStore.deleteItem(comment.id)
 	await fetchCommentList()
 	blogDetail.value.comment_count--

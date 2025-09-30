@@ -46,9 +46,7 @@
 	<BlogCategoryList />
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 const BlogCategoryList = defineAsyncComponent(() => import('@/views/admin/BlogCategoryList.vue'))
 

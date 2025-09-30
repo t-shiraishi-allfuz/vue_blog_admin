@@ -39,45 +39,52 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
 
-const props = defineProps({
-	modelValue: {
-		type: Boolean,
-		default: false
-	}
+// Props定義
+interface Props {
+	modelValue: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+	modelValue: false
 })
 
-const emit = defineEmits(['update:modelValue', 'saved'])
+// Emits定義
+interface Emits {
+	'update:modelValue': [value: boolean]
+	saved: []
+}
+
+const emit = defineEmits<Emits>()
 
 const usersStore = useUsersStore()
 const authStore = useAuthStore()
 
 const dialog = computed({
-	get: () => props.modelValue,
-	set: (value) => emit('update:modelValue', value)
+	get: (): boolean => props.modelValue,
+	set: (value: boolean): void => emit('update:modelValue', value)
 })
 
-const birthDate = ref('')
-const valid = ref(false)
-const loading = ref(false)
+const birthDate = ref<string>('')
+const valid = ref<boolean>(false)
+const loading = ref<boolean>(false)
 
 // 日付の制限（1900年〜現在）
-const maxDate = computed(() => {
+const maxDate = computed((): string => {
 	const today = new Date()
 	return today.toISOString().split('T')[0]
 })
 
-const minDate = computed(() => {
+const minDate = computed((): string => {
 	return '1900-01-01'
 })
 
 const birthDateRules = [
-	v => !!v || '生年月日は必須です',
-	v => {
+	(v: string): boolean | string => !!v || '生年月日は必須です',
+	(v: string): boolean | string => {
 		if (!v) return true
 		const selectedDate = new Date(v)
 		const today = new Date()
@@ -85,15 +92,16 @@ const birthDateRules = [
 	}
 ]
 
-const saveBirthDate = async () => {
+const saveBirthDate = async (): Promise<void> => {
 	if (!valid.value) return
 	
 	loading.value = true
 	try {
-		await usersStore.updateBirthDate(authStore.userInfo.uid, birthDate.value)
+		const userInfo = authStore.userInfo as any
+		await usersStore.updateBirthDate(userInfo.uid, birthDate.value)
 		emit('saved')
 		dialog.value = false
-	} catch (error) {
+	} catch (error: any) {
 		console.error('生年月日登録エラー:', error)
 		// エラーハンドリングは必要に応じて追加
 	} finally {

@@ -14,8 +14,7 @@
 	</v-window>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue'
+<script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUsersStore } from '@/stores/usersStore'

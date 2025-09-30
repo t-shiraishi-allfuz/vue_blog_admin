@@ -76,9 +76,7 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import Swal from 'sweetalert2'

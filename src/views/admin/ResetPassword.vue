@@ -20,8 +20,7 @@
 	</CommonLoginTemplate>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
 import Swal from 'sweetalert2'
 

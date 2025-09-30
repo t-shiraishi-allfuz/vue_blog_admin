@@ -96,9 +96,7 @@
 	</v-container>
 </template>
 
-<script setup>
-import { ref, computed, watch } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import Swal from 'sweetalert2'

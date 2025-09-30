@@ -10,17 +10,22 @@
 	<v-divider />
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
 import { useAuthStore } from '@/stores/authStore'
+
+// 型定義
+interface MenuItem {
+	title: string
+	value: number
+}
 
 const blogStore = useBlogStore()
 const authStore = useAuthStore()
 
 // ログイン状態に応じてメニューアイテムを動的に生成
-const menuItems = computed(() => {
-	const allMenuItems = [
+const menuItems = computed((): MenuItem[] => {
+	const allMenuItems: MenuItem[] = [
 		{ title: 'すべて', value: 0 },
 		{ title: 'フォロー中', value: 1 },
 		{ title: 'お気に入り', value: 2 },
@@ -36,7 +41,7 @@ const menuItems = computed(() => {
 	return allMenuItems
 })
 
-const onSelectType = (type) => {
+const onSelectType = (type: number): void => {
 	blogStore.setSelectType(type)
 }
 </script>

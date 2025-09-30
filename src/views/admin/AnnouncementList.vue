@@ -109,9 +109,7 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import AnnouncementCreateDialog from '@/components/AnnouncementCreateDialog.vue'
 import AnnouncementEditDialog from '@/components/AnnouncementEditDialog.vue'

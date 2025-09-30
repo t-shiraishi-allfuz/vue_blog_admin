@@ -96,9 +96,7 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, computed, watch, onMounted} from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'

@@ -118,14 +118,40 @@
 	</v-container>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import Swal from 'sweetalert2'
+
+// 型定義
+interface UserProfile {
+	uid: string
+	title: string
+	description: string
+	profileUrl: string
+	[key: string]: any
+}
+
+interface UserStats {
+	blogCount: number
+	followerCount: number
+	followingCount: number
+}
+
+interface BlogData {
+	id: string
+	title: string
+	summary: string
+	thumbUrl: string | null
+	createdAt: Date
+	like_count: number
+	comment_count: number
+	viewCount?: number
+	[key: string]: any
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -136,27 +162,27 @@ const followUsersStore = useFollowUsersStore()
 const blogSettingStore = useBlogSettingStore()
 
 // 状態管理
-const userProfile = ref(null)
-const userStats = ref(null)
-const userBlogs = ref([])
-const isFollowing = ref(false)
-const followLoading = ref(false)
+const userProfile = ref<UserProfile | null>(null)
+const userStats = ref<UserStats | null>(null)
+const userBlogs = ref<BlogData[]>([])
+const isFollowing = ref<boolean>(false)
+const followLoading = ref<boolean>(false)
 
 // プロフィールのユーザーID
-const profileUserId = computed(() => route.query.uid)
+const profileUserId = computed((): string => route.query.uid as string)
 
 // 自分のプロフィールかどうか
-const isOwnProfile = computed(() => {
+const isOwnProfile = computed((): boolean => {
 	return authStore.userInfo?.uid === profileUserId.value
 })
 
 // ユーザープロフィールを取得
-const fetchUserProfile = async () => {
+const fetchUserProfile = async (): Promise<void> => {
 	try {
 		if (!profileUserId.value) return
 		
 		// ユーザー設定を取得
-		userProfile.value = await blogSettingStore.getForUid(profileUserId.value)
+		userProfile.value = await blogSettingStore.getForUid(profileUserId.value) as UserProfile
 		
 		// ユーザー統計を取得
 		await fetchUserStats()
@@ -168,7 +194,7 @@ const fetchUserProfile = async () => {
 		if (!isOwnProfile.value) {
 			await checkFollowStatus()
 		}
-	} catch (error) {
+	} catch (error: any) {
 		console.error('ユーザープロフィールの取得に失敗しました:', error)
 		Swal.fire({
 			title: 'エラー',
@@ -179,9 +205,9 @@ const fetchUserProfile = async () => {
 }
 
 // ユーザー統計を取得
-const fetchUserStats = async () => {
+const fetchUserStats = async (): Promise<void> => {
 	try {
-		let blogCount
+		let blogCount: number
 		
 		if (isOwnProfile.value) {
 			// 自分のプロフィールの場合は全ての記事をカウント（管理画面と一致させる）
@@ -243,13 +269,17 @@ const toggleFollow = async () => {
 		followLoading.value = true
 		
 		if (isFollowing.value) {
-			await followUsersStore.delete(profileUserId.value)
+			await followUsersStore.deleteItem(profileUserId.value)
 			isFollowing.value = false
-			userStats.value.followerCount = Math.max(0, userStats.value.followerCount - 1)
+			if (userStats.value) {
+				userStats.value.followerCount = Math.max(0, userStats.value.followerCount - 1)
+			}
 		} else {
 			await followUsersStore.create(profileUserId.value)
 			isFollowing.value = true
-			userStats.value.followerCount = (userStats.value.followerCount || 0) + 1
+			if (userStats.value) {
+				userStats.value.followerCount = (userStats.value.followerCount || 0) + 1
+			}
 		}
 	} catch (error) {
 		console.error('フォロー操作に失敗しました:', error)
@@ -264,7 +294,7 @@ const toggleFollow = async () => {
 }
 
 // 記事詳細に遷移
-const goToBlogDetail = (blogId) => {
+const goToBlogDetail = (blogId: string): void => {
 	router.push({ 
 		path: '/blog_detail', 
 		query: { 

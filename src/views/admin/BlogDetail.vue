@@ -10,9 +10,7 @@
 	</v-card-actions>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import BlogEditTemplate from '@/components/BlogEditTemplate.vue'

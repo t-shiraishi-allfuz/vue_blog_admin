@@ -88,28 +88,42 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { ref, reactive, watch } from 'vue'
+<script setup lang="ts">
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import { useAuthStore } from '@/stores/authStore'
+
+// 型定義
+interface AnnouncementData {
+	title: string
+	content: string
+	isPublished: boolean
+}
+
+// Props定義
+interface Props {
+	modelValue: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+	modelValue: false
+})
+
+// Emits定義
+interface Emits {
+	'update:modelValue': [value: boolean]
+	saved: []
+}
+
+const emit = defineEmits<Emits>()
 
 const announcementStore = useAnnouncementStore()
 const authStore = useAuthStore()
 
-const props = defineProps({
-	modelValue: {
-		type: Boolean,
-		default: false
-	}
-})
+const form = ref<any>(null)
+const valid = ref<boolean>(false)
+const loading = ref<boolean>(false)
 
-const emit = defineEmits(['update:modelValue', 'saved'])
-
-const form = ref(null)
-const valid = ref(false)
-const loading = ref(false)
-
-const announcement = reactive({
+const announcement = reactive<AnnouncementData & { priority: string }>({
 	title: '',
 	content: '',
 	priority: 'normal',
@@ -124,30 +138,31 @@ const priorityOptions = [
 ]
 
 const titleRules = [
-	v => !!v || 'タイトルは必須です',
-	v => (v && v.length <= 100) || 'タイトルは100文字以内で入力してください'
+	(v: string): boolean | string => !!v || 'タイトルは必須です',
+	(v: string): boolean | string => (v && v.length <= 100) || 'タイトルは100文字以内で入力してください'
 ]
 
 const contentRules = [
-	v => !!v || '内容は必須です',
-	v => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
+	(v: string): boolean | string => !!v || '内容は必須です',
+	(v: string): boolean | string => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
 ]
 
 const isOpen = computed({
-	get: () => props.modelValue,
-	set: (value) => emit('update:modelValue', value)
+	get: (): boolean => props.modelValue,
+	set: (value: boolean): void => emit('update:modelValue', value)
 })
 
-const saveAnnouncement = async () => {
+const saveAnnouncement = async (): Promise<void> => {
 	if (!form.value.validate()) return
 	
 	loading.value = true
 	
 	try {
+		const userInfo = authStore.userInfo as any
 		await announcementStore.create({
 			...announcement,
-			authorId: authStore.userInfo.uid,
-			authorEmail: authStore.userInfo.email
+			authorId: userInfo.uid,
+			authorEmail: userInfo.email
 		})
 		
 		// 成功メッセージを表示
@@ -162,7 +177,7 @@ const saveAnnouncement = async () => {
 		// 親コンポーネントに保存完了を通知
 		emit('saved')
 		
-	} catch (error) {
+	} catch (error: any) {
 		console.error('お知らせ作成エラー:', error)
 		alert('お知らせの作成に失敗しました: ' + error.message)
 	} finally {
@@ -170,12 +185,12 @@ const saveAnnouncement = async () => {
 	}
 }
 
-const cancel = () => {
+const cancel = (): void => {
 	resetForm()
 	emit('update:modelValue', false)
 }
 
-const resetForm = () => {
+const resetForm = (): void => {
 	announcement.title = ''
 	announcement.content = ''
 	announcement.priority = 'normal'
@@ -184,7 +199,7 @@ const resetForm = () => {
 }
 
 // ダイアログが開かれた時にフォームをリセット
-watch(() => props.modelValue, (newValue) => {
+watch(() => props.modelValue, (newValue: boolean): void => {
 	if (newValue) {
 		resetForm()
 	}

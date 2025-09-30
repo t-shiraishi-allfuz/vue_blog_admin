@@ -81,9 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
 const route = useRoute()

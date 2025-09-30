@@ -83,9 +83,7 @@
 	</v-container>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'

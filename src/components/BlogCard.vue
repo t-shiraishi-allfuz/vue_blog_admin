@@ -45,34 +45,47 @@
 	</v-card>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
 import { format } from 'date-fns'
 
-const props = defineProps({
-	blog: {
-		type: Object,
-		required: true
-	},
-	setting: {
-		type: Object,
-		required: true
-	}
-})
-const blog = ref(props.blog)
-const setting = ref(props.setting)
+// 型定義
+interface BlogData {
+	id: string
+	title: string
+	summary: string
+	thumbUrl: string
+	createdAt: Date
+	is_like: boolean
+	like_count: number
+	[key: string]: any
+}
+
+interface SettingData {
+	name: string
+	profileUrl: string
+	[key: string]: any
+}
+
+// Props定義
+interface Props {
+	blog: BlogData
+	setting: SettingData
+}
+
+const props = defineProps<Props>()
 
 // 日時フォーマット関数
-const formatDate = (date) => {
+const formatDate = (date: Date): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
 // アイコン設定
-const formatLike = (blog) => {
+const formatLike = (blog: BlogData): string => {
 	return blog.is_like ? "mdi-heart" : "mdi-heart-outline"
 }
+
 // アイコン設定（カラー）
-const colorIconPink = (flag) => {
+const colorIconPink = (flag: boolean): string => {
 	return flag ? "pink" : "black"
 }
 </script>

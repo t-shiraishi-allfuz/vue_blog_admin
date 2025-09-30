@@ -16,6 +16,10 @@
 	</v-app>
 </template>
 
+<script setup lang="ts">
+// 共通テンプレートコンポーネント
+</script>
+
 <style scoped>
 	.sidebar-wrapper {
 		position: fixed;

@@ -11,29 +11,35 @@
 	</v-list>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+
+// 型定義
+interface SettingData {
+	title: string
+	description: string
+	profileUrl: string
+	[key: string]: any
+}
+
+// Props定義
+interface Props {
+	setting: SettingData
+}
+
+const props = defineProps<Props>()
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const props = defineProps({
-	setting: {
-		type: Object,
-		required: true,
-	}
-})
-const setting = ref(props.setting)
-
-const goToUserProfile = () => {
+const goToUserProfile = (): void => {
 	if (authStore.userInfo?.uid) {
 		router.push({path: '/user_profile', query: { uid: authStore.userInfo.uid }})
 	}
 }
 
-const goToProfile = () => {
+const goToProfile = (): void => {
 	router.push({path: '/admin'})
 }
 

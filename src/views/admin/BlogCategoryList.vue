@@ -107,9 +107,7 @@
 	</v-container>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { storeToRefs } from "pinia"
+<script setup lang="ts">
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'

@@ -111,28 +111,55 @@
 	</v-dialog>
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
+
+// 型定義
+interface NotificationData {
+	id: string
+	type: string
+	title: string
+	message: string
+	isRead: boolean
+	createdAt: Date
+	relatedData?: any
+	[key: string]: any
+}
+
+interface AnnouncementData {
+	id: string
+	title: string
+	content: string
+	isRead: boolean
+	createdAt: Date
+	[key: string]: any
+}
+
+// Props定義
+interface Props {
+	modelValue: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+	modelValue: false
+})
+
+// Emits定義
+interface Emits {
+	'update:modelValue': [value: boolean]
+}
+
+const emit = defineEmits<Emits>()
 
 const notificationStore = useNotificationStore()
 const announcementStore = useAnnouncementStore()
 const router = useRouter()
 
-const props = defineProps({
-	modelValue: {
-		type: Boolean,
-		default: false
-	}
-})
-
-const emit = defineEmits(['update:modelValue'])
-
 const isOpen = computed({
-	get: () => props.modelValue,
-	set: (value) => {
+	get: (): boolean => props.modelValue,
+	set: (value: boolean): void => {
 		if (!value) {
 			notificationStore.closeDialog()
 		}
@@ -141,21 +168,21 @@ const isOpen = computed({
 })
 
 const activeTab = computed({
-	get: () => notificationStore.activeTab,
-	set: (value) => notificationStore.setActiveTab(value)
+	get: (): string => notificationStore.activeTab,
+	set: (value: string): void => notificationStore.setActiveTab(value)
 })
 
-const notifications = computed(() => notificationStore.notifications)
-const announcements = computed(() => announcementStore.announcements)
-const unreadNotificationCount = computed(() => notificationStore.unreadNotificationCount)
-const unreadAnnouncementCount = computed(() => announcementStore.unreadAnnouncementCount || 0)
+const notifications = computed((): NotificationData[] => notificationStore.notifications)
+const announcements = computed((): AnnouncementData[] => announcementStore.announcements)
+const unreadNotificationCount = computed((): number => notificationStore.unreadNotificationCount)
+const unreadAnnouncementCount = computed((): number => announcementStore.unreadAnnouncementCount || 0)
 
-const closeDialog = () => {
+const closeDialog = (): void => {
 	emit('update:modelValue', false)
 }
 
 // ユーザープロフィールに遷移
-const goToUserProfile = (userId) => {
+const goToUserProfile = (userId: string): void => {
 	if (userId) {
 		router.push({ path: '/user_profile', query: { uid: userId } })
 		closeDialog()
@@ -163,12 +190,12 @@ const goToUserProfile = (userId) => {
 }
 
 // お知らせ詳細ページに遷移
-const goToAnnouncementDetail = async (announcement) => {
+const goToAnnouncementDetail = async (announcement: AnnouncementData): Promise<void> => {
 	// 未読の場合は既読にする
 	if (!announcement.isRead) {
 		try {
 			await announcementStore.markAnnouncementAsRead(announcement.id)
-		} catch (error) {
+		} catch (error: any) {
 			console.error('お知らせ既読エラー:', error)
 		}
 	}
@@ -178,7 +205,7 @@ const goToAnnouncementDetail = async (announcement) => {
 	closeDialog()
 }
 
-const getNotificationIcon = (type) => {
+const getNotificationIcon = (type: string): string => {
 	switch (type) {
 		case 'like':
 			return 'mdi-heart'
@@ -191,7 +218,7 @@ const getNotificationIcon = (type) => {
 	}
 }
 
-const getNotificationIconColor = (type) => {
+const getNotificationIconColor = (type: string): string => {
 	switch (type) {
 		case 'like':
 			return 'red'
@@ -204,11 +231,11 @@ const getNotificationIconColor = (type) => {
 	}
 }
 
-const formatDate = (date) => {
+const formatDate = (date: Date): string => {
 	if (!date) return ''
 	
 	const now = new Date()
-	const notificationDate = date.toDate ? date.toDate() : new Date(date)
+	const notificationDate = (date as any).toDate ? (date as any).toDate() : new Date(date)
 	const diffInMinutes = Math.floor((now - notificationDate) / (1000 * 60))
 	
 	if (diffInMinutes < 1) {

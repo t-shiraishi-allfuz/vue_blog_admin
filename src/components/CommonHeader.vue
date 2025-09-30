@@ -55,10 +55,7 @@
 	<NotificationDialog v-model="isNotificationDialogOpen" />
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { storeToRefs } from "pinia"
-import { useRouter } from 'vue-router'
+<script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
@@ -91,15 +88,15 @@ const {
 } = storeToRefs(authStore)
 
 // 未読通知数とお知らせ数を取得
-const totalUnreadCount = computed(() => 
+const totalUnreadCount = computed((): number => 
 	notificationStore.unreadNotificationCount + (announcementStore.unreadAnnouncementCount || 0)
 )
 
-const search = ref('')
-const isLoginDialog = ref(false)
-const isNotificationDialogOpen = ref(false)
+const search = ref<string>('')
+const isLoginDialog = ref<boolean>(false)
+const isNotificationDialogOpen = ref<boolean>(false)
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	// 認証状態に応じてブログ設定を取得
 	if (isLogin.value) {
 		await blogSettingStore.getDetail()
@@ -109,7 +106,7 @@ onMounted(async () => {
 })
 
 // 認証状態の変化を監視
-watch(isLogin, async (newIsLogin) => {
+watch(isLogin, async (newIsLogin: boolean): Promise<void> => {
 	if (newIsLogin) {
 		// ログインした場合、ブログ設定を取得
 		await blogSettingStore.getDetail()
@@ -121,7 +118,7 @@ watch(isLogin, async (newIsLogin) => {
 	}
 })
 
-const logout = async () => {
+const logout = async (): Promise<void> => {
 	try {
 		const result = await Swal.fire({
 			title: '確認',
@@ -160,7 +157,7 @@ const logout = async () => {
 			followUsersStore.clearStore()
 			router.push({path: '/'})
 		}
-	} catch (error) {
+	} catch (error: any) {
 		console.error('ログアウトエラー:', error)
 		Swal.fire({
 			title: 'エラー',
@@ -170,17 +167,17 @@ const logout = async () => {
 	}
 }
 
-const goToHome = () => {
+const goToHome = (): void => {
 	blogStore.setSelectType(0)
 	router.push({path: '/'})
 }
 
-const openLoginDialog = () => {
+const openLoginDialog = (): void => {
 	isLoginDialog.value = true
 }
 
 // 通知ダイアログを開く
-const openNotificationDialog = async () => {
+const openNotificationDialog = async (): Promise<void> => {
 	isNotificationDialogOpen.value = true
 	
 	// 通知データとお知らせデータを取得して既読にする
