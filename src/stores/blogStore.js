@@ -274,30 +274,55 @@ export const useBlogStore = defineStore('blog', () => {
 
 	// おすすめのブログデータ取得
 	const getListForRecomend = async () => {
-		const filters = [
-			["isPublished", "==", true],
-			["viewCount", ">", 0]
-		]
-		const sorters = [
-			["viewCount", "desc"],
-			["createdAt", "desc"]
-		]
-
-		const querySnapshot = await BaseAPI.getDataWithQuery(
-			{
-				db_name: "blog",
-				searchConditions: {
-					filters: filters,
-					sorters: sorters,
-					limit: 10
-				}
+		const userInfo = authStore.userInfo
+		
+		try {
+			// 公開されているブログを取得（閲覧制限なし、自分のブログ以外）
+			const filters = [
+				["isPublished", "==", true],
+				["isAdult", "==", false] // 閲覧制限がないブログのみ
+			]
+			
+			// 自分のブログを除外するフィルター
+			if (userInfo && userInfo.uid) {
+				filters.push(["uid", "!=", userInfo.uid])
 			}
-		)
+			
+			const sorters = [
+				["createdAt", "desc"] // 作成日時の降順で取得
+			]
 
-		if (querySnapshot) {
-			const promises = querySnapshot.docs.map(doc => setBlogData(doc))
-			const result = await Promise.all(promises)
-			blogList.value = result
+			const querySnapshot = await BaseAPI.getDataWithQuery(
+				{
+					db_name: "blog",
+					searchConditions: {
+						filters: filters,
+						sorters: sorters,
+						limit: 50 // 多めに取得してクライアント側でソート
+					}
+				}
+			)
+
+			if (querySnapshot) {
+				const promises = querySnapshot.docs.map(doc => setBlogData(doc))
+				const result = await Promise.all(promises)
+				
+				// クライアント側でソート（いいね数降順、同数の場合はコメント数降順）
+				const sortedResult = result.sort((a, b) => {
+					// いいね数で比較
+					if (a.like_count !== b.like_count) {
+						return b.like_count - a.like_count
+					}
+					// いいね数が同じ場合はコメント数で比較
+					return b.comment_count - a.comment_count
+				})
+				
+				// 上位10件のみ返す
+				blogList.value = sortedResult.slice(0, 10)
+			}
+		} catch (error) {
+			console.error('おすすめブログ取得エラー:', error)
+			blogList.value = []
 		}
 	}
 

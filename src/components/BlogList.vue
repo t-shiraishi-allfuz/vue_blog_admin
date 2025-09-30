@@ -120,6 +120,9 @@ const fetchBlogList = async (type) => {
 		case 2:
 			await blogStore.getListForBookmark()
 			break
+		case 3:
+			await blogStore.getListForRecomend()
+			break
 		default:
 			await blogStore.getListForAll()
 			break
