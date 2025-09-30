@@ -156,7 +156,7 @@
 		</div>
 		<v-divider />
 		<v-card-actions>
-			<v-btn @click="goToHome">一覧に戻る</v-btn>
+			<v-btn @click="goBack">{{ backButtonText }}</v-btn>
 		</v-card-actions>
 	</v-sheet>
 	<v-sheet v-if="!isLoading" class="pa-6 mx-auto text-center">
@@ -430,8 +430,27 @@ onMounted(async () => {
 	isLoading.value = true
 })
 
-const goToHome = () => {
-	router.push({path: '/'})
+// 戻るボタンのテキストを計算
+const backButtonText = computed(() => {
+	const from = route.query.from
+	if (from === 'profile') {
+		return 'プロフィールに戻る'
+	}
+	return '一覧に戻る'
+})
+
+// 戻る処理
+const goBack = () => {
+	const from = route.query.from
+	if (from === 'profile') {
+		const profileUid = route.query.profile_uid
+		router.push({ 
+			path: '/user_profile', 
+			query: { uid: profileUid } 
+		})
+	} else {
+		router.push({ path: '/' })
+	}
 }
 </script>
 

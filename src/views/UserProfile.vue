@@ -12,9 +12,10 @@
 						></v-avatar>
 						
 						<h2 class="text-h4 mb-2">{{ userProfile?.title || 'ユーザー' }}</h2>
-						<p class="text-body-1 text-grey mb-4">{{ userProfile?.description || 'プロフィール情報がありません' }}</p>
+						<p class="text-body-1 text-grey mb-4">
+							{{ userProfile?.description || 'プロフィール情報がありません' }}
+						</p>
 						
-						<!-- 統計情報 -->
 						<v-row class="text-center">
 							<v-col cols="4">
 								<div class="text-h6">{{ userStats?.blogCount || 0 }}</div>
@@ -29,8 +30,6 @@
 								<div class="text-caption text-grey">フォロー中</div>
 							</v-col>
 						</v-row>
-						
-						<!-- フォローボタン -->
 						<div class="mt-6" v-if="!isOwnProfile">
 							<v-btn
 								:color="isFollowing ? 'grey' : 'success'"
@@ -48,7 +47,6 @@
 					</v-card-text>
 				</v-card>
 				
-				<!-- ユーザーの記事一覧 -->
 				<v-card>
 					<v-card-title>
 						<v-icon class="mr-2">mdi-post</v-icon>
@@ -69,26 +67,46 @@
 								>
 									<template #prepend>
 										<v-avatar
-											:image="blog.thumbnailUrl"
+											:image="blog.thumbUrl"
 											size="60"
 											class="mr-3"
-										></v-avatar>
+											rounded
+										/>
 									</template>
-									
-									<v-list-item-title class="font-weight-medium">
-										{{ blog.title }}
-									</v-list-item-title>
-									
+									<div class="d-flex justify-start">
+										<v-list-item-title class="font-weight-medium">
+											{{ blog.title }}
+										</v-list-item-title>
+									</div>
 									<v-list-item-subtitle class="mt-1">
-										{{ blog.description }}
+										<template v-if="isOwnProfile">
+											<v-chip
+												:color="blog.isPublished ? 'success' : 'warning'"
+												size="x-small"
+												variant="outlined"
+												class="ml-2"
+											>
+												{{ blog.isPublished ? '公開中' : '下書き' }}
+											</v-chip>
+										</template>
 									</v-list-item-subtitle>
-									
+										
 									<template #append>
-										<div class="text-caption text-grey">
-											<v-icon size="16" class="mr-1">mdi-heart</v-icon>
-											{{ blog.like_count || 0 }}
-											<v-icon size="16" class="ml-2 mr-1">mdi-comment</v-icon>
-											{{ blog.comment_count || 0 }}
+										<div class="d-flex align-center text-caption text-grey">
+											<div class="d-flex align-center mx-2 stats-item">
+												<v-icon size="16" class="mr-1">mdi-heart</v-icon>
+												<span class="stats-number">{{ blog.like_count || 0 }}</span>
+											</div>
+											<div class="d-flex align-center mx-2 stats-item">
+												<v-icon size="16" class="mr-1">mdi-comment</v-icon>
+												<span class="stats-number">{{ blog.comment_count || 0 }}</span>
+											</div>
+											<template v-if="isOwnProfile">
+												<div class="d-flex align-center mx-2 stats-item">
+													<v-icon size="16" class="mr-1">mdi-eye</v-icon>
+													<span class="stats-number">{{ blog.viewCount || 0 }}</span>
+												</div>
+											</template>
 										</div>
 									</template>
 								</v-list-item>
@@ -164,8 +182,16 @@ const fetchUserProfile = async () => {
 // ユーザー統計を取得
 const fetchUserStats = async () => {
 	try {
-		// 記事数
-		const blogCount = await blogStore.getCountForUser(profileUserId.value)
+		let blogCount
+		
+		if (isOwnProfile.value) {
+			// 自分のプロフィールの場合は全ての記事をカウント（管理画面と一致させる）
+			await blogStore.getList()
+			blogCount = blogStore.blogList.length
+		} else {
+			// 他のユーザーのプロフィールの場合は公開中の記事のみをカウント
+			blogCount = await blogStore.getCountForUser(profileUserId.value)
+		}
 		
 		// フォロワー数・フォロー数
 		const followStats = await followUsersStore.getFollowStats(profileUserId.value)
@@ -188,7 +214,14 @@ const fetchUserStats = async () => {
 // ユーザーの記事一覧を取得
 const fetchUserBlogs = async () => {
 	try {
-		userBlogs.value = await blogStore.getListForUser(profileUserId.value)
+		if (isOwnProfile.value) {
+			// 自分のプロフィールの場合は全ての記事を取得（管理画面と一致させる）
+			await blogStore.getList()
+			userBlogs.value = blogStore.blogList
+		} else {
+			// 他のユーザーのプロフィールの場合は公開中の記事のみを取得
+			userBlogs.value = await blogStore.getListForUser(profileUserId.value)
+		}
 	} catch (error) {
 		console.error('ユーザー記事の取得に失敗しました:', error)
 		userBlogs.value = []
@@ -233,7 +266,14 @@ const toggleFollow = async () => {
 
 // 記事詳細に遷移
 const goToBlogDetail = (blogId) => {
-	router.push({ path: '/blog_detail', query: { blog_id: blogId } })
+	router.push({ 
+		path: '/blog_detail', 
+		query: { 
+			blog_id: blogId,
+			from: 'profile',
+			profile_uid: profileUserId.value
+		} 
+	})
 }
 
 // コンポーネントマウント時にデータを取得
@@ -249,5 +289,20 @@ onMounted(async () => {
 
 .cursor-pointer:hover {
 	background-color: rgba(0, 0, 0, 0.04);
+}
+
+.blog-title-left {
+	text-align: left !important;
+	justify-content: flex-start !important;
+}
+
+.stats-item {
+	min-width: 50px;
+}
+
+.stats-number {
+	display: inline-block;
+	min-width: 20px;
+	text-align: right;
 }
 </style>

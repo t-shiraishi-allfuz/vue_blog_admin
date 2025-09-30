@@ -214,7 +214,7 @@ const submitPost = async () => {
 			text: 'タイトルまたは本文が入力されていません',
 			icon: 'error'
 		})
-		return;
+		return
 	}
 
 	try {

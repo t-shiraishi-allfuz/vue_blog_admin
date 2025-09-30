@@ -31,7 +31,13 @@
 					{{ formatDate(item.createdAt) }}
 				</template>
 				<template v-slot:[`item.isPublished`]="{ item }">
-					{{ item.isPublished ? '公開' : '下書き' }}
+					<v-chip
+						:color="item.isPublished ? 'success' : 'warning'"
+						size="small"
+						variant="outlined"
+					>
+						{{ item.isPublished ? '公開中' : '下書き' }}
+					</v-chip>
 				</template>
 				<template v-slot:[`item.viewCount`]="{ item }">
 					<v-chip

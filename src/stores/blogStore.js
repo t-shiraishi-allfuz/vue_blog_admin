@@ -355,14 +355,16 @@ export const useBlogStore = defineStore('blog', () => {
 	}
 
 
-	// 特定ユーザーの記事数を取得
+	// 特定ユーザーの記事数を取得（公開中の記事のみ）
 	const getCountForUser = async (userId) => {
 		try {
 			const param = {
 				db_name: 'blog',
 				searchConditions: {
-					filters: [['uid', '==', userId]],
-					limit: 1
+					filters: [
+						['uid', '==', userId],
+						['isPublished', '==', true]
+					]
 				}
 			}
 			const result = await BaseAPI.getDataWithQuery(param)
@@ -373,32 +375,29 @@ export const useBlogStore = defineStore('blog', () => {
 		}
 	}
 
-	// 特定ユーザーの記事一覧を取得
+	// 特定ユーザーの記事一覧を取得（公開中の記事のみ）
 	const getListForUser = async (userId) => {
 		try {
 			const param = {
 				db_name: 'blog',
 				searchConditions: {
-					filters: [['uid', '==', userId]],
+					filters: [
+						['uid', '==', userId],
+						['isPublished', '==', true]
+					],
 					sorters: [['createdAt', 'desc']],
 					limit: 20
 				}
 			}
 			const result = await BaseAPI.getDataWithQuery(param)
-			const blogs = []
 			
-			result.forEach(doc => {
-				const data = { id: doc.id, ...doc.data() }
-				if (data.createdAt && data.createdAt.toDate) {
-					data.createdAt = data.createdAt.toDate()
-				}
-				if (data.updatedAt && data.updatedAt.toDate) {
-					data.updatedAt = data.updatedAt.toDate()
-				}
-				blogs.push(data)
-			})
+			if (result) {
+				const promises = result.docs.map(doc => setBlogData(doc))
+				const blogs = await Promise.all(promises)
+				return blogs
+			}
 			
-			return blogs
+			return []
 		} catch (error) {
 			console.error('ユーザー記事一覧の取得に失敗しました:', error)
 			return []
