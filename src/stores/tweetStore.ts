@@ -178,8 +178,8 @@ export const useTweetStore = defineStore('tweet', () => {
 				{ db_name: "tweet", item_id: tweet_id },
 				{ viewCount: newCount }
 			)
-			// アクセスログを記録（オプション）
-			await accessLogStore.create(tweet_id)
+			// つぶやきのアクセスログを記録
+			await accessLogStore.createTweetAccessLog(tweet_id)
 		} catch (error) {
 			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}
