@@ -103,8 +103,8 @@ import Swal from 'sweetalert2'
 
 const props = defineProps({
 	selectedFolderId: {
-		type: String,
-		required: true
+		type: [String, null],
+		default: null
 	}
 })
 const selectedFolderId = ref(props.selectedFolderId)

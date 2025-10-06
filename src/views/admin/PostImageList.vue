@@ -40,7 +40,7 @@
 	</v-container>
 
 	<div v-if="!isLoading">
-		<v-tabs v-model="activeTab">
+		<v-tabs v-model="activeTab" color="success">
 			<v-tab v-for="(tab, index) in tabs" :key="index">{{ tab }}</v-tab>
 		</v-tabs>
 		<v-window v-model="activeTab">
@@ -53,7 +53,7 @@
 				<component
 					:is="component"
 					v-model:folderList="extendedFolderList"
-					:selectedFolderId="selectedFolderId"
+					:selectedFolderId="selectedFolderId || null"
 					@changeFolderList="changeFolderList"
 					@reFetchFolderList="fetchFolderList"
 				/>

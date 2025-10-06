@@ -1,107 +1,113 @@
 <template>
-	<v-container>
-		<v-card class="content-list">
-			<v-tabs v-model="activeTab" color="primary">
-				<v-tab value="blogs">
-					<v-icon start icon="mdi-post" />
-					ブログ記事
-				</v-tab>
-				<v-tab value="tweets">
-					<v-icon start icon="mdi-twitter" />
-					つぶやき
-				</v-tab>
-			</v-tabs>
+	<v-tabs v-model="activeTab" color="success">
+		<v-tab value="blogs">
+			<v-icon start icon="mdi-post" />
+			ブログ記事
+		</v-tab>
+		<v-tab value="tweets">
+			<v-icon start icon="mdi-twitter" />
+			つぶやき
+		</v-tab>
+	</v-tabs>
 
-			<v-card-text>
-				<v-window v-model="activeTab">
-					<v-window-item value="blogs">
-						<v-data-table
-							class="blog-list"
-							:headers="blogHeaders"
-							:items="filteredBlogList"
-							:items-per-page="30"
-							no-data-text="記事がありません"
-						>
-							<template v-slot:top>
-								<v-toolbar flat>
-									<v-toolbar-title>記事一覧</v-toolbar-title>
-									<v-divider class="mx-4" inset vertical />
-									<v-spacer></v-spacer>
-									<v-text-field
-										label="検索"
-										v-model="blogSearch"
-										append-inner-icon="mdi-magnify"
-										single-line
-										hide-details
-									/>
-								</v-toolbar>
-							</template>
-							<template v-slot:[`item.title`]="{ item }">
-								<a @click.prevent="goToBlogDetail(item)" class="blog-title" href="#">
-									{{ item.title }}
-								</a>
-							</template>
-							<template v-slot:[`item.createdAt`]="{ item }">
-								{{ formatDate(item.createdAt) }}
-							</template>
-							<template v-slot:[`item.isPublished`]="{ item }">
-								<v-chip
-									:color="item.isPublished ? 'success' : 'warning'"
-									size="small"
-									variant="outlined"
-								>
-									{{ item.isPublished ? '公開中' : '下書き' }}
-								</v-chip>
-							</template>
-							<template v-slot:[`item.viewCount`]="{ item }">
-								<v-chip
-									:color="getViewCountColor(item.viewCount)"
-									size="small"
-									variant="outlined"
-								>
-									<v-icon start icon="mdi-eye" />
-									{{ item.viewCount || 0 }}
-								</v-chip>
-							</template>
-							<template v-slot:[`item.comment_count`]="{ item }">
-								<div v-if="item.comment_count > 0">
-									<a href="#" @click.prevent="goToCommentList(item)">
-										{{ item.comment_count }}
-									</a>
-								</div>
-								<div v-else>
-									<span>{{ item.comment_count }}</span>
-								</div>
-							</template>
-							<template v-slot:[`item.like_count`]="{ item }">
-								<div v-if="item.like_count > 0">
-									<a href="#" @click.prevent="goToLikeList(item)">
-										{{ item.like_count }}
-									</a>
-								</div>
-								<div v-else>
-									<span>{{ item.like_count }}</span>
-								</div>
-							</template>
-							<template v-slot:[`item.actions`]="{ item }">
-								<v-icon
-									class="delete-icon"
-									icon="mdi-delete"
-									aria-label="削除"
-									role="button"
-									@click="openDeleteDialog(item)"
+	<v-window v-model="activeTab">
+		<v-window-item
+			value="blogs"
+			transition="none"
+			reverse-transition="none"
+		>
+			<v-container>
+				<v-card class="blog-list">
+					<v-data-table
+						class="blog-list"
+						:headers="blogHeaders"
+						:items="filteredBlogList"
+						:items-per-page="30"
+						no-data-text="記事がありません"
+					>
+						<template v-slot:top>
+							<v-toolbar flat>
+								<v-toolbar-title>記事一覧</v-toolbar-title>
+								<v-divider class="mx-4" inset vertical />
+								<v-spacer></v-spacer>
+								<v-text-field
+									label="検索"
+									v-model="blogSearch"
+									append-inner-icon="mdi-magnify"
+									single-line
+									hide-details
 								/>
-							</template>
-						</v-data-table>
-					</v-window-item>
+							</v-toolbar>
+						</template>
+						<template v-slot:[`item.title`]="{ item }">
+							<a @click.prevent="goToBlogDetail(item)" class="blog-title" href="#">
+								{{ item.title }}
+							</a>
+						</template>
+						<template v-slot:[`item.createdAt`]="{ item }">
+							{{ formatDate(item.createdAt) }}
+						</template>
+						<template v-slot:[`item.isPublished`]="{ item }">
+							<v-chip
+								:color="item.isPublished ? 'success' : 'warning'"
+								size="small"
+								variant="outlined"
+							>
+								{{ item.isPublished ? '公開中' : '下書き' }}
+							</v-chip>
+						</template>
+						<template v-slot:[`item.viewCount`]="{ item }">
+							<v-chip
+								:color="getViewCountColor(item.viewCount)"
+								size="small"
+								variant="outlined"
+							>
+								<v-icon start icon="mdi-eye" />
+								{{ item.viewCount || 0 }}
+							</v-chip>
+						</template>
+						<template v-slot:[`item.comment_count`]="{ item }">
+							<div v-if="item.comment_count > 0">
+								<a href="#" @click.prevent="goToCommentList(item)">
+									{{ item.comment_count }}
+								</a>
+							</div>
+							<div v-else>
+								<span>{{ item.comment_count }}</span>
+							</div>
+						</template>
+						<template v-slot:[`item.like_count`]="{ item }">
+							<div v-if="item.like_count > 0">
+								<a href="#" @click.prevent="goToLikeList(item)">
+									{{ item.like_count }}
+								</a>
+							</div>
+							<div v-else>
+								<span>{{ item.like_count }}</span>
+							</div>
+						</template>
+						<template v-slot:[`item.actions`]="{ item }">
+							<v-icon
+								class="delete-icon"
+								icon="mdi-delete"
+								aria-label="削除"
+								role="button"
+								@click="openDeleteDialog(item)"
+							/>
+						</template>
+					</v-data-table>
+				</v-card>
+			</v-container>
+		</v-window-item>
 
-					<v-window-item value="tweets">
-						<TweetList />
-					</v-window-item>
-				</v-window>
-			</v-card-text>
-		</v-card>
-	</v-container>
+		<v-window-item
+			value="tweets"
+			transition="none"
+			reverse-transition="none"
+		>
+			<TweetList />
+		</v-window-item>
+	</v-window>
 </template>
 
 <script setup lang="ts">
