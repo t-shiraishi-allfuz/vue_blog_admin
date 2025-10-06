@@ -67,9 +67,9 @@
 			<v-card-actions>
 				<v-spacer></v-spacer>
 				<v-btn
-					color="grey"
+					color="grey-lighten-4"
 					:disabled="loading"
-					variant="text"
+					variant="elevated"
 					@click="cancel"
 				>
 					キャンセル

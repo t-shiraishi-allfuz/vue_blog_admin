@@ -29,7 +29,7 @@
 						item-value="id"
 						v-model="blog.category_id" />
 					<v-btn
-						color="light-blue-lighten-4"
+						color="success"
 						label="サムネイル設定"
 						variant="flat"
 						v-model="blog.thumbUrl"
@@ -90,7 +90,13 @@
 				</div>
 			</v-card-text>
 			<v-card-actions>
-				<v-btn text @click="imageSelectDialog = false">閉じる</v-btn>
+				<v-btn
+					color="grey-lighten-4"
+					variant="elevated"
+					@click="imageSelectDialog = false"
+				>
+					閉じる
+				</v-btn>
 			</v-card-actions>
 		</v-card>
 	</v-dialog>

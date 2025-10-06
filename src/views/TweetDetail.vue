@@ -67,7 +67,7 @@
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
 					icon="mdi-eye"
-					color="grey"
+					color="grey-lighten-4"
 					variant="text"
 				/>
 				<div class="text-truncate">{{ tweetDetail.viewCount }}</div>

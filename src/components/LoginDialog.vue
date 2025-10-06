@@ -62,15 +62,15 @@
 				<v-card-actions class="pa-6 pt-0">
 					<v-spacer />
 					<v-btn
-						color="grey"
-						variant="text"
+						color="grey-lighten-4"
+						variant="elevated"
 						@click="closeDialog"
 					>
 						キャンセル
 					</v-btn>
 					<v-btn
 						color="success"
-						variant="flat"
+						variant="elevated"
 						type="submit"
 						:loading="isLoading"
 					>

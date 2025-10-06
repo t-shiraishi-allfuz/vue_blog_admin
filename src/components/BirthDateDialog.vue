@@ -29,7 +29,7 @@
 					color="success"
 					:disabled="!valid"
 					:loading="loading"
-					variant="flat"
+					variant="elevated"
 					@click="saveBirthDate"
 				>
 					登録

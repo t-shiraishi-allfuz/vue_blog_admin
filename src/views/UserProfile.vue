@@ -31,7 +31,7 @@
 						</v-row>
 						<div class="mt-6" v-if="!isOwnProfile">
 							<v-btn
-								:color="isFollowing ? 'grey' : 'success'"
+								:color="isFollowing ? 'grey-lighten-4' : 'success'"
 								:variant="isFollowing ? 'outlined' : 'flat'"
 								@click="toggleFollow"
 								:loading="followLoading"
