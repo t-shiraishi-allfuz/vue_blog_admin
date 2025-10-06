@@ -19,7 +19,6 @@
 							color="success"
 							variant="elevated"
 							@click="openCreateDialog"
-							prepend-icon="mdi-plus"
 						>
 							新規作成
 						</v-btn>
