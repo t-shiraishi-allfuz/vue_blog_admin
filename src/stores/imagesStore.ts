@@ -12,9 +12,9 @@ import { useAuthStore } from '@/stores/authStore'
 
 export const useImagesStore = defineStore('images', () => {
 	const authStore = useAuthStore()
-	const imageList = ref([])
+	const imageList = ref<any[]>([])
 
-	const create = async (file, folder_id) => {
+	const create = async (file: File, folder_id: string | null) => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合はエラーを投げる
@@ -38,9 +38,12 @@ export const useImagesStore = defineStore('images', () => {
 				uploadedAt: new Date()
 			}
 		)
+		
+		// URLを返す
+		return { url }
 	}
 
-	const update = async (file, folder_id) => {
+	const update = async (file: any, folder_id: string | null) => {
 		await BaseAPI.setData(
 			{db_name: "images", item_id: file.id},
 			{
@@ -50,7 +53,7 @@ export const useImagesStore = defineStore('images', () => {
 		)
 	}
 
-	const getList = async (folder_id) => {
+	const getList = async (folder_id: string | null): Promise<any[]> => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合は空配列を返す
@@ -81,10 +84,12 @@ export const useImagesStore = defineStore('images', () => {
 			const data = { id: doc.id, ...doc.data() }
 			return data
 		})
+		
+		return imageList.value
 	}
 
 	// フォルダに格納されている画像数取得
-	const getImageCount = async (folder_id) => {
+	const getImageCount = async (folder_id: string | null) => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合は0を返す
@@ -107,7 +112,7 @@ export const useImagesStore = defineStore('images', () => {
 		return querySnapshot ? querySnapshot.size : 0
 	}
 
-	const deleteItem = async (file) => {
+	const deleteItem = async (file: any) => {
 		const userInfo = authStore.userInfo
 		
 		// ユーザー情報がnullの場合はエラーを投げる

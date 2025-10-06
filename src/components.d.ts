@@ -25,5 +25,9 @@ declare module 'vue' {
     ReblogTemplate: typeof import('./components/ReblogTemplate.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TweetCard: typeof import('./components/TweetCard.vue')['default']
+    TweetCreateDialog: typeof import('./components/TweetCreateDialog.vue')['default']
+    TweetEditDialog: typeof import('./components/TweetEditDialog.vue')['default']
+    TweetList: typeof import('./components/TweetList.vue')['default']
   }
 }

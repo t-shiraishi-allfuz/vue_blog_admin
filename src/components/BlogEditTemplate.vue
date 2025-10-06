@@ -112,11 +112,13 @@ const props = defineProps({
 	},
 	shareBlog: {
 		type: Object,
-		required: true,
+		required: false,
+		default: null,
 	},
 	shareSetting: {
 		type: Object,
-		required: true,
+		required: false,
+		default: null,
 	},
 	isUpdate: {
 		type: Boolean,
@@ -265,9 +267,6 @@ const fetchImageList = async () => {
 	await imagesStore.getList(selectedFolderId.value)
 }
 
-watch(blog.value.category_id, (newValue) => {
-	blog.value.category_id = newValue
-})
 
 onMounted(async() => {
 	await blogCategoryStore.getList()

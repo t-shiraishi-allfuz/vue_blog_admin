@@ -6,76 +6,153 @@
 			@saved="onBirthDateSaved"
 		/>
 		
-		<v-row class="horizontal-scroll" no-gutters>
-			<v-slide-group v-if="extendBlogList.length > 0" show-arrows>
-				<v-slide-group-item
-					v-for="(item, index) in extendBlogList"
-					:key="index"
-				>
-					<v-card
-						class="blog-card d-inline-block"
-						@click="goToDetail(item)"
-						outlined
-						height="280"
-					>
-						<v-img :src="item.thumbUrl" aspect-ratio="16/9" cover></v-img>
-						<v-card-text class="d-flex flex-column" style="height: 60px;">
-							<strong class="text-h6">{{ item.title }}</strong>
-							<div class="chip-container" style="min-height: 10px;">
-								<v-chip 
-									v-if="item.isAdult" 
-									size="x-small" 
-									color="warning"
-								>
-									18歳以上向け
-								</v-chip>
-							</div>
-						</v-card-text>
-						<v-card-actions>
-							<div class="d-flex">
-								<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-									<v-btn
-										:icon="formatLike(item)"
-										:color="colorIconPink(item)"
-										variant="text"
-										@click.stop="addLike(item)"
-									/>
-									<div class="text-truncate">{{ item.like_count }}</div>
-								</div>
-								<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-									<v-btn
-										:icon="formatBookmark(item)"
-										:color="colorIconPrimary(item)"
-										variant="text"
-										@click.stop="addBookmark(item)"
-									/>
-								</div>
-							</div>
-						</v-card-actions>
-					</v-card>
-				</v-slide-group-item>
-			</v-slide-group>
-			<v-alert type="info" v-else>
-				ブログがありません
-			</v-alert>
-		</v-row>
+		<!-- タブ切り替え -->
+		<v-tabs v-model="activeTab" color="primary" class="mb-4">
+			<v-tab value="blogs">
+				<v-icon start icon="mdi-post" />
+				ブログ記事
+			</v-tab>
+			<v-tab value="tweets">
+				<v-icon start icon="mdi-twitter" />
+				つぶやき
+			</v-tab>
+		</v-tabs>
+
+		<v-window v-model="activeTab">
+			<!-- ブログ記事タブ -->
+			<v-window-item value="blogs">
+				<v-row class="horizontal-scroll" no-gutters>
+					<v-slide-group v-if="extendBlogList.length > 0" show-arrows>
+						<v-slide-group-item
+							v-for="(item, index) in extendBlogList"
+							:key="index"
+						>
+							<v-card
+								class="blog-card d-inline-block"
+								@click="goToBlogDetail(item)"
+								outlined
+								height="280"
+							>
+								<v-img :src="item.thumbUrl" aspect-ratio="16/9" cover />
+								<v-card-text class="d-flex flex-column" style="height: 60px;">
+									<strong class="text-h6">{{ item.title }}</strong>
+									<div class="chip-container" style="min-height: 10px;">
+										<v-chip 
+											v-if="item.isAdult" 
+											size="x-small" 
+											color="warning"
+										>
+											18歳以上向け
+										</v-chip>
+									</div>
+								</v-card-text>
+								<v-card-actions>
+									<div class="d-flex">
+										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+											<v-btn
+												:icon="formatLike(item)"
+												:color="colorIconPink(item)"
+												variant="text"
+												@click.stop="addLike(item)"
+											/>
+											<div class="text-truncate">{{ item.like_count }}</div>
+										</div>
+										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+											<v-btn
+												:icon="formatBookmark(item)"
+												:color="colorIconPrimary(item)"
+												variant="text"
+												@click.stop="addBookmark(item)"
+											/>
+										</div>
+									</div>
+								</v-card-actions>
+							</v-card>
+						</v-slide-group-item>
+					</v-slide-group>
+					<v-alert type="info" v-else>
+						ブログがありません
+					</v-alert>
+				</v-row>
+			</v-window-item>
+
+			<!-- つぶやきタブ -->
+			<v-window-item value="tweets">
+				<v-row class="horizontal-scroll" no-gutters>
+					<v-slide-group v-if="extendTweetList.length > 0" show-arrows>
+						<v-slide-group-item
+							v-for="(item, index) in extendTweetList"
+							:key="index"
+						>
+							<v-card
+								class="blog-card d-inline-block"
+								@click="goToTweetDetail(item)"
+								outlined
+								height="280"
+							>
+								<v-img :src="item.thumbUrl" aspect-ratio="16/9" cover />
+								<v-card-text class="d-flex flex-column" style="height: 60px;">
+									<strong class="text-h6">{{ truncateContent(item.content) }}</strong>
+								</v-card-text>
+								<v-card-actions>
+									<div class="d-flex">
+										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+											<v-btn
+												:icon="formatTweetLike(item)"
+												:color="colorTweetIconPink(item)"
+												variant="text"
+												@click.stop="addTweetLike(item)"
+											/>
+											<div class="text-truncate">{{ item.like_count }}</div>
+										</div>
+										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+											<v-btn
+												:icon="formatTweetBookmark(item)"
+												:color="colorTweetIconPrimary(item)"
+												variant="text"
+												@click.stop="addTweetBookmark(item)"
+											/>
+										</div>
+									</div>
+								</v-card-actions>
+							</v-card>
+						</v-slide-group-item>
+					</v-slide-group>
+					<v-alert type="info" v-else>
+						つぶやきがありません
+					</v-alert>
+				</v-row>
+			</v-window-item>
+		</v-window>
 	</v-container>
 </template>
 
 <script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
+import { useTweetStore } from '@/stores/tweetStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
 import BirthDateDialog from '@/components/BirthDateDialog.vue'
+import { format } from 'date-fns'
 
 // 型定義
 interface BlogItem {
 	id: string
 	title: string
-	thumbUrl: string
+	thumbUrl: string | null
 	isAdult: boolean
+	is_like: boolean
+	is_bookmark: boolean
+	like_count: number
+	uid: string
+}
+
+interface TweetItem {
+	id: string
+	content: string
+	createdAt: Date | null
 	is_like: boolean
 	is_bookmark: boolean
 	like_count: number
@@ -90,6 +167,7 @@ interface UserData {
 
 const router = useRouter()
 const blogStore = useBlogStore()
+const tweetStore = useTweetStore()
 const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
 const usersStore = useUsersStore()
@@ -98,7 +176,11 @@ const {
 	blogList,
 	selectType
 } = storeToRefs(blogStore)
+const {
+	tweetList
+} = storeToRefs(tweetStore)
 
+const activeTab = ref('blogs')
 const showBirthDateDialog = ref<boolean>(false)
 const userData = ref<UserData | null>(null)
 const isUserAdult = ref<boolean>(false)
@@ -126,6 +208,14 @@ const extendBlogList = computed((): BlogItem[] => {
 	})
 })
 
+const extendTweetList = computed((): TweetItem[] => {
+	if (!tweetList.value) {
+		return []
+	}
+	
+	return tweetList.value
+})
+
 // 一覧取得
 const fetchBlogList = async (type: number): Promise<void> => {
 	switch (+type) {
@@ -142,6 +232,11 @@ const fetchBlogList = async (type: number): Promise<void> => {
 			await blogStore.getListForAll()
 			break
 	}
+}
+
+// つぶやき一覧取得
+const fetchTweetList = async (): Promise<void> => {
+	await tweetStore.getListForAll()
 }
 
 // アイコン設定
@@ -161,8 +256,12 @@ const colorIconPrimary = (blog: BlogItem): string => {
 }
 
 // 詳細ページに移動
-const goToDetail = (blog: BlogItem): void => {
+const goToBlogDetail = (blog: BlogItem): void => {
 	router.push({path: "/blog_detail", query: {blog_id: blog.id}})
+}
+
+const goToTweetDetail = (tweet: TweetItem): void => {
+	router.push({path: "/tweet_detail", query: {tweet_id: tweet.id}})
 }
 
 // いいね
@@ -189,6 +288,61 @@ const addBookmark = async (blog: BlogItem): Promise<void> => {
 		blog.is_bookmark = true
 	}
 	await fetchBlogList(selectType.value)
+}
+
+// つぶやき用のアイコン設定
+const formatTweetLike = (tweet: TweetItem): string => {
+	return tweet.is_like ? "mdi-heart" : "mdi-heart-outline"
+}
+const formatTweetBookmark = (tweet: TweetItem): string => {
+	return tweet.is_bookmark ? "mdi-bookmark-plus" : "mdi-bookmark-plus-outline"
+}
+
+// つぶやき用のアイコン設定（カラー）
+const colorTweetIconPink = (tweet: TweetItem): string => {
+	return tweet.is_like ? "pink" : "black"
+}
+const colorTweetIconPrimary = (tweet: TweetItem): string => {
+	return tweet.is_bookmark ? "blue" : "black"
+}
+
+// つぶやきのいいね
+const addTweetLike = async (tweet: TweetItem): Promise<void> => {
+	if (tweet.is_like) {
+		await likeStore.deleteItem(tweet.id)
+		tweet.is_like = false
+		tweet.like_count--
+	} else {
+		await likeStore.create(tweet.id, tweet.content, tweet.uid)
+		tweet.is_like = true
+		tweet.like_count++
+	}
+	await fetchTweetList()
+}
+
+// つぶやきのお気に入り登録
+const addTweetBookmark = async (tweet: TweetItem): Promise<void> => {
+	if (tweet.is_bookmark) {
+		await bookmarkStore.deleteItem(tweet.id)
+		tweet.is_bookmark = false
+	} else {
+		await bookmarkStore.create(tweet.id)
+		tweet.is_bookmark = true
+	}
+	await fetchTweetList()
+}
+
+// つぶやき内容を切り詰める関数
+const truncateContent = (content: string): string => {
+	if (!content) return ''
+	if (content.length <= 10) return content
+	return content.substring(0, 10) + '...'
+}
+
+// 日時フォーマット関数
+const formatDate = (date: Date | null): string => {
+	if (!date) return ''
+	return format(new Date(date), 'yyyy/MM/dd HH:mm')
 }
 
 watch(() => blogStore.selectType, async (newType: number) => {
@@ -236,6 +390,7 @@ const checkBirthDateRegistration = async (): Promise<void> => {
 // 初回ロード
 onMounted(async (): Promise<void> => {
 	await fetchBlogList(selectType.value)
+	await fetchTweetList()
 	await checkBirthDateRegistration()
 })
 </script>
@@ -253,6 +408,12 @@ onMounted(async (): Promise<void> => {
 	margin: 10px;
 	display: flex;
 	flex-direction: column;
+
+	img {
+		width: 100%;
+		height: auto;
+		vertical-align: top;
+	}
 
 	.v-responsive {
 		min-width: 100%;

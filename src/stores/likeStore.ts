@@ -49,6 +49,26 @@ export const useLikeStore = defineStore('like', () => {
 		}
 	}
 
+	// つぶやき用いいね作成
+	const addLike = async (tweet_id: string): Promise<void> => {
+		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+
+		await BaseAPI.addData(
+			{db_name: "like"},
+			{
+				uid: userInfo.uid,
+				tweet_id: tweet_id,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			}
+		)
+	}
+
 	// 指定のブログにいいねした
 	const getListForBlog = async (blog_id: string): Promise<LikeData[]> => {
 		const filters = [
@@ -209,14 +229,48 @@ export const useLikeStore = defineStore('like', () => {
 		}
 	}
 
+	// つぶやき用いいね削除
+	const deleteLike = async (tweet_id: string): Promise<void> => {
+		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
+		const filters = [
+			["tweet_id", "==", tweet_id],
+			["uid", "==", userInfo.uid]
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "like",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+
+		if (querySnapshot) {
+			const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+				BaseAPI.deleteData(
+					{db_name: "like", item_id: docSnapshot.id},
+				)
+			)
+			await Promise.all(deletePromises)
+		}
+	}
+
 	return {
 		create,
+		addLike,
 		getListForBlog,
 		getListForUser,
 		getLikeCounts,
 		getLikeCount,
 		isLikes,
 		isLike,
-		deleteItem
+		deleteItem,
+		deleteLike
 	}
 })

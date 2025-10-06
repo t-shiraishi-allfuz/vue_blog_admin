@@ -6,13 +6,13 @@
 			:title="setting.title"
 			:subtitle="setting.description" />
 		<v-divider></v-divider>
+		<v-list-item prepend-icon="mdi-twitter" title="つぶやき投稿" value="tweet" @click="openTweetDialog" />
 		<v-list-item prepend-icon="mdi-account" title="プロフィール" value="profile" @click="goToUserProfile" />
 		<v-list-item prepend-icon="mdi-cog" title="設定" value="setting" @click="goToProfile" />
 	</v-list>
 </template>
 
 <script setup lang="ts">
-
 import { useAuthStore } from '@/stores/authStore'
 
 // 型定義
@@ -28,10 +28,21 @@ interface Props {
 	setting: SettingData
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
+
+// Emits定義
+interface Emits {
+	openTweetDialog: []
+}
+
+const emit = defineEmits<Emits>()
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const openTweetDialog = (): void => {
+	emit('openTweetDialog')
+}
 
 const goToUserProfile = (): void => {
 	if (authStore.userInfo?.uid) {
@@ -42,5 +53,4 @@ const goToUserProfile = (): void => {
 const goToProfile = (): void => {
 	router.push({path: '/admin'})
 }
-
 </script>

@@ -1,84 +1,105 @@
 <template>
 	<v-container>
-		<v-card class="blog-list">
-			<v-data-table
-				class="blog-list"
-				:headers="headers"
-				:items="filteredBlogList"
-				:items-per-page="30"
-				no-data-text="記事がありません"
-			>
-				<template v-slot:top>
-					<v-toolbar flat>
-						<v-toolbar-title>記事一覧</v-toolbar-title>
-						<v-divider class="mx-4" inset vertical />
-						<v-spacer></v-spacer>
-						<v-text-field
-							label="検索"
-							v-model="search"
-							append-inner-icon="mdi-magnify"
-							single-line
-							hide-details
-						/>
-					</v-toolbar>
-				</template>
-				<template v-slot:[`item.title`]="{ item }">
-					<a @click.prevent="goToDetail(item)" class="blog-title" href="#">
-						{{ item.title }}
-					</a>
-				</template>
-				<template v-slot:[`item.createdAt`]="{ item }">
-					{{ formatDate(item.createdAt) }}
-				</template>
-				<template v-slot:[`item.isPublished`]="{ item }">
-					<v-chip
-						:color="item.isPublished ? 'success' : 'warning'"
-						size="small"
-						variant="outlined"
-					>
-						{{ item.isPublished ? '公開中' : '下書き' }}
-					</v-chip>
-				</template>
-				<template v-slot:[`item.viewCount`]="{ item }">
-					<v-chip
-						:color="getViewCountColor(item.viewCount)"
-						size="small"
-						variant="outlined"
-					>
-						<v-icon start icon="mdi-eye" />
-						{{ item.viewCount || 0 }}
-					</v-chip>
-				</template>
-				<template v-slot:[`item.comment_count`]="{ item }">
-					<div v-if="item.comment_count > 0">
-						<a href="#" @click.prevent="goToCommentList(item)">
-							{{ item.comment_count }}
-						</a>
-					</div>
-					<div v-else>
-						<span>{{ item.comment_count }}</span>
-					</div>
-				</template>
-				<template v-slot:[`item.like_count`]="{ item }">
-					<div v-if="item.like_count > 0">
-						<a href="#" @click.prevent="goToLikeList(item)">
-							{{ item.like_count }}
-						</a>
-					</div>
-					<div v-else>
-						<span>{{ item.like_count }}</span>
-					</div>
-				</template>
-				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon
-						class="delete-icon"
-						icon="mdi-delete"
-						aria-label="削除"
-						role="button"
-						@click="openDeleteDialog(item)"
-					/>
-				</template>
-			</v-data-table>
+		<v-card class="content-list">
+			<v-tabs v-model="activeTab" color="primary">
+				<v-tab value="blogs">
+					<v-icon start icon="mdi-post" />
+					ブログ記事
+				</v-tab>
+				<v-tab value="tweets">
+					<v-icon start icon="mdi-twitter" />
+					つぶやき
+				</v-tab>
+			</v-tabs>
+
+			<v-card-text>
+				<v-window v-model="activeTab">
+					<v-window-item value="blogs">
+						<v-data-table
+							class="blog-list"
+							:headers="blogHeaders"
+							:items="filteredBlogList"
+							:items-per-page="30"
+							no-data-text="記事がありません"
+						>
+							<template v-slot:top>
+								<v-toolbar flat>
+									<v-toolbar-title>記事一覧</v-toolbar-title>
+									<v-divider class="mx-4" inset vertical />
+									<v-spacer></v-spacer>
+									<v-text-field
+										label="検索"
+										v-model="blogSearch"
+										append-inner-icon="mdi-magnify"
+										single-line
+										hide-details
+									/>
+								</v-toolbar>
+							</template>
+							<template v-slot:[`item.title`]="{ item }">
+								<a @click.prevent="goToBlogDetail(item)" class="blog-title" href="#">
+									{{ item.title }}
+								</a>
+							</template>
+							<template v-slot:[`item.createdAt`]="{ item }">
+								{{ formatDate(item.createdAt) }}
+							</template>
+							<template v-slot:[`item.isPublished`]="{ item }">
+								<v-chip
+									:color="item.isPublished ? 'success' : 'warning'"
+									size="small"
+									variant="outlined"
+								>
+									{{ item.isPublished ? '公開中' : '下書き' }}
+								</v-chip>
+							</template>
+							<template v-slot:[`item.viewCount`]="{ item }">
+								<v-chip
+									:color="getViewCountColor(item.viewCount)"
+									size="small"
+									variant="outlined"
+								>
+									<v-icon start icon="mdi-eye" />
+									{{ item.viewCount || 0 }}
+								</v-chip>
+							</template>
+							<template v-slot:[`item.comment_count`]="{ item }">
+								<div v-if="item.comment_count > 0">
+									<a href="#" @click.prevent="goToCommentList(item)">
+										{{ item.comment_count }}
+									</a>
+								</div>
+								<div v-else>
+									<span>{{ item.comment_count }}</span>
+								</div>
+							</template>
+							<template v-slot:[`item.like_count`]="{ item }">
+								<div v-if="item.like_count > 0">
+									<a href="#" @click.prevent="goToLikeList(item)">
+										{{ item.like_count }}
+									</a>
+								</div>
+								<div v-else>
+									<span>{{ item.like_count }}</span>
+								</div>
+							</template>
+							<template v-slot:[`item.actions`]="{ item }">
+								<v-icon
+									class="delete-icon"
+									icon="mdi-delete"
+									aria-label="削除"
+									role="button"
+									@click="openDeleteDialog(item)"
+								/>
+							</template>
+						</v-data-table>
+					</v-window-item>
+
+					<v-window-item value="tweets">
+						<TweetList />
+					</v-window-item>
+				</v-window>
+			</v-card-text>
 		</v-card>
 	</v-container>
 </template>
@@ -87,6 +108,7 @@
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
+import TweetList from '@/components/TweetList.vue'
 
 const router = useRouter()
 const blogStore = useBlogStore()
@@ -94,10 +116,11 @@ const {
 	blogList
 } = storeToRefs(blogStore)
 
-const search = ref('')
+const activeTab = ref('blogs')
+const blogSearch = ref('')
 const blogToDelete = ref(null)
 
-const headers = [
+const blogHeaders = [
 	{title: "記事タイトル", value: "title" },
 	{title: "投稿日時", value: "createdAt", sortable: true },
 	{title: "ステータス", value: "isPublished", sortable: true },
@@ -113,7 +136,7 @@ const fetchBlogList = async () => {
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = async (blog) => {
+const openDeleteDialog = async (blog: any) => {
 	blogToDelete.value = blog
 	
 	const result = await Swal.fire({
@@ -132,8 +155,8 @@ const openDeleteDialog = async (blog) => {
 		},
 		didOpen: () => {
 			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
 			if (confirmBtn) {
 				confirmBtn.style.minWidth = '150px'
 				confirmBtn.style.width = '150px'
@@ -145,7 +168,7 @@ const openDeleteDialog = async (blog) => {
 		}
 	})
 
-	if (result.isConfirmed) {
+	if (result.isConfirmed && blogToDelete.value) {
 		await blogStore.deleteItem(blogToDelete.value.id)
 		await fetchBlogList()
 		
@@ -162,20 +185,20 @@ const openDeleteDialog = async (blog) => {
 
 // 検索条件に基づく投稿フィルタリング
 const filteredBlogList = computed(() => {
-	if (!search.value) return blogList.value
+	if (!blogSearch.value) return blogList.value
 
 	return blogList.value.filter(blog =>
-		blog.title.toLowerCase().includes(search.value.toLowerCase())
+		blog.title.toLowerCase().includes(blogSearch.value.toLowerCase())
 	)
 })
 
 // 日時フォーマット関数
-const formatDate = (date) => {
+const formatDate = (date: any) => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss');
 }
 
 // アクセス数に応じた色を返す関数
-const getViewCountColor = (viewCount) => {
+const getViewCountColor = (viewCount: any) => {
 	if (!viewCount || viewCount === 0) return 'grey'
 	if (viewCount < 10) return 'blue'
 	if (viewCount < 50) return 'green'
@@ -184,17 +207,17 @@ const getViewCountColor = (viewCount) => {
 }
 
 // 詳細ページに移動
-const goToDetail = (blog) => {
+const goToBlogDetail = (blog: any) => {
 	router.push({path: "/admin/blog_detail", query: {blog_id: blog.id}});
 }
 
 // コメント一覧に移動
-const goToCommentList = (blog) => {
+const goToCommentList = (blog: any) => {
 	router.push({path: "/admin/comment_list", query: {blog_id: blog.id}});
 }
 
 // いいね一覧に移動
-const goToLikeList = (blog) => {
+const goToLikeList = (blog: any) => {
 	router.push({path: "/admin/like_list", query: {blog_id: blog.id}});
 }
 
@@ -206,6 +229,10 @@ onMounted(async () => {
 <style scoped>
 	.delete-icon {
 		color: red;
+	}
+
+	.content-list {
+		margin-top: 20px;
 	}
 
 	/* SweetAlert2ボタンの固定幅スタイル */

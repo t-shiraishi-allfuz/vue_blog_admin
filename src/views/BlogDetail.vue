@@ -6,7 +6,11 @@
 		max-width="800"
 	>
 		<div class="header-image mb-4">
-			<img :src="blogDetail.thumbUrl" />
+			<img
+				:src="blogDetail.thumbUrl"
+				aspect-ratio="16/9"
+				cover
+			/>
 		</div>
 		<h4 class="text-h5 font-weight-bold mb-4">{{ blogDetail.title }}</h4>
 		<div class="mb-4 text-body-3">{{ blogDetail.summary }}</div>
@@ -15,12 +19,12 @@
 				<v-avatar
 					class="mt-2"
 					size="48"
-					:image="blogDetail.setting.profileUrl"
+					:image="blogDetail.setting?.profileUrl || '/default-avatar.png'"
 					end
 				/>
 				<v-col cols="3">
 					<div class="ml-1 mb-1">
-						{{ blogDetail.setting.name }}
+						{{ blogDetail.setting?.name || 'ユーザー名不明' }}
 					</div>
 					<div class="ml-1 mb-1">
 						<v-icon icon="mdi-clock" start />
@@ -29,10 +33,10 @@
 				</v-col>
 				<div v-if="userInfo.uid !== blogDetail.uid">
 					<v-col>
-						<div v-if="blogDetail.setting.is_follower === true">
+						<div v-if="blogDetail.setting?.is_follower === true">
 							<v-btn @click="deleteFollowUser">フォロー中</v-btn>
 						</div>
-						<div v-else-if="blogDetail.setting.is_following === true">
+						<div v-else-if="blogDetail.setting?.is_following === true">
 							<v-btn @click="followUser">フォローバック</v-btn>
 						</div>
 						<div v-else>
@@ -105,12 +109,12 @@
 							<v-avatar
 								class="mt-2"
 								size="48"
-								:image="comment.setting.profileUrl"
+								:image="comment.setting?.profileUrl || '/default-avatar.png'"
 								end
 							/>
 							<v-col>
 								<div class="ml-1 mb-1">
-									{{ comment.setting.name }}
+									{{ comment.setting?.name || 'ユーザー名不明' }}
 								</div>
 								<div class="ml-1 mb-1">
 									<v-icon icon="mdi-clock" start />
@@ -494,10 +498,15 @@ const goBack = () => {
 </script>
 
 <style scoped>
-	figure img {
-		max-width: 100%;
+.header-image {
+	width: 100%;
+	height: 400px;
+	overflow: hidden;
+
+	img {
+		width: 100%;
 		height: auto;
 		vertical-align: top;
-		object-fit: cover;
 	}
+}
 </style>

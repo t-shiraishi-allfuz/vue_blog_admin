@@ -36,7 +36,7 @@
 					<template v-slot:activator="{ props }">
 						<v-avatar v-bind="props" :image="blogSetting.profileUrl" size="48" end />
 					</template>
-					<CommonUsermenu :setting="blogSetting" />
+					<CommonUsermenu :setting="blogSetting" @openTweetDialog="openTweetDialog" />
 				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
@@ -53,6 +53,7 @@
 	
 	<LoginDialog v-model:dialog="isLoginDialog" />
 	<NotificationDialog v-model="isNotificationDialogOpen" />
+	<TweetCreateDialog v-model="isTweetDialogOpen" @saved="onTweetSaved" />
 </template>
 
 <script setup lang="ts">
@@ -67,6 +68,7 @@ import { useAnnouncementStore } from '@/stores/announcementStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import NotificationDialog from '@/components/NotificationDialog.vue'
+import TweetCreateDialog from '@/components/TweetCreateDialog.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -95,6 +97,7 @@ const totalUnreadCount = computed((): number =>
 const search = ref<string>('')
 const isLoginDialog = ref<boolean>(false)
 const isNotificationDialogOpen = ref<boolean>(false)
+const isTweetDialogOpen = ref<boolean>(false)
 
 onMounted(async (): Promise<void> => {
 	// 認証状態に応じてブログ設定を取得
@@ -185,6 +188,16 @@ const openNotificationDialog = async (): Promise<void> => {
 	await announcementStore.getList()
 	await notificationStore.markAllNotificationsAsRead()
 	await announcementStore.markAllAnnouncementsAsRead()
+}
+
+// つぶやきダイアログを開く
+const openTweetDialog = (): void => {
+	isTweetDialogOpen.value = true
+}
+
+// つぶやき保存後の処理
+const onTweetSaved = (): void => {
+	// TODO 保存後の処理
 }
 </script>
 

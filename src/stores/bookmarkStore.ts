@@ -24,6 +24,26 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 		)
 	}
 
+	// つぶやき用ブックマーク作成
+	const addBookmark = async (tweet_id: string): Promise<void> => {
+		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
+		await BaseAPI.addData(
+			{db_name: "bookmark"},
+			{
+				uid: userInfo.uid,
+				tweet_id: tweet_id,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			}
+		)
+	}
+
 	// ブックマークしているブログIDのリスト取得
 	const getBlogIds = async (): Promise<string[]> => {
 		const userInfo = authStore.getUserInfo()
@@ -50,7 +70,36 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 		return querySnapshot.docs.map((doc) => {
 			const data = doc.data()
 			return data.blog_id
-		})
+		}).filter(id => id) // nullやundefinedを除外
+	}
+
+	// ブックマークしているつぶやきIDのリスト取得
+	const getTweetIds = async (): Promise<string[]> => {
+		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合は空配列を返す
+		if (!userInfo || !userInfo.uid) {
+			return []
+		}
+		
+		const filters = [
+			["uid", "==", userInfo.uid],
+		]
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "bookmark",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+
+		if (!querySnapshot) return []
+
+		return querySnapshot.docs.map((doc) => {
+			const data = doc.data()
+			return data.tweet_id
+		}).filter(id => id) // nullやundefinedを除外
 	}
 
 	// 指定のブログをブックマークしてるかどうか（一括）
@@ -121,11 +170,47 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 		}
 	}
 
+	// つぶやき用ブックマーク削除
+	const deleteBookmark = async (tweet_id: string): Promise<void> => {
+		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
+		const filters = [
+			["tweet_id", "==", tweet_id],
+			["uid", "==", userInfo.uid]
+		]
+
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "bookmark",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+
+		if (querySnapshot) {
+			const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+				BaseAPI.deleteData(
+					{db_name: "bookmark", item_id: docSnapshot.id},
+				)
+			)
+			await Promise.all(deletePromises)
+		}
+	}
+
 	return {
 		create,
+		addBookmark,
 		getBlogIds,
+		getTweetIds,
 		isBookmarks,
 		isBookmark,
-		deleteItem
+		deleteItem,
+		deleteBookmark
 	}
 })
