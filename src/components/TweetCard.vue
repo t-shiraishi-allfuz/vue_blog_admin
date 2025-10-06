@@ -193,5 +193,6 @@ const goToTweetDetail = (): void => {
 .tweet-content {
 	line-height: 1.5;
 	word-break: break-word;
+	white-space: pre-wrap;
 }
 </style>

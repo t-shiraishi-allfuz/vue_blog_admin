@@ -53,7 +53,7 @@
 				</div>
 			</v-row>
 		</div>
-		<div class="mb-4 text-body-1" v-html="tweetDetail.content"></div>
+		<div class="mb-4 text-body-1 tweet-content">{{ tweetDetail.content }}</div>
 		<div class="d-flex">
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
@@ -207,5 +207,11 @@ onMounted(async (): Promise<void> => {
 		height: auto;
 		vertical-align: top;
 	}
+}
+
+.tweet-content {
+	line-height: 1.5;
+	word-break: break-word;
+	white-space: pre-wrap;
 }
 </style>
