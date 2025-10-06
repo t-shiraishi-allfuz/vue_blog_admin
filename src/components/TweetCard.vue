@@ -41,23 +41,6 @@
 				/>
 				<div class="text-truncate">{{ tweet.like_count }}</div>
 			</div>
-			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-				<v-btn
-					icon="mdi-comment-outline"
-					color="black"
-					variant="text"
-					@click.stop="goToTweetDetail"
-				/>
-				<div class="text-truncate">{{ tweet.comment_count }}</div>
-			</div>
-			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-				<v-btn
-					:icon="formatBookmark(tweet)"
-					:color="colorIconBlue(tweet.is_bookmark)"
-					variant="text"
-					@click.stop="addBookmark(tweet)"
-				/>
-			</div>
 			<v-spacer></v-spacer>
 			<div class="d-flex align-center text-caption text-medium-emphasis">
 				<v-icon icon="mdi-eye" start />
@@ -70,7 +53,6 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
 import { useLikeStore } from '@/stores/likeStore'
-import { useBookmarkStore } from '@/stores/bookmarkStore'
 
 // 型定義
 interface TweetData {
@@ -80,8 +62,6 @@ interface TweetData {
 	createdAt: Date
 	is_like: boolean
 	like_count: number
-	is_bookmark: boolean
-	comment_count: number
 	viewCount: number
 	[key: string]: any
 }
@@ -102,7 +82,6 @@ const props = defineProps<Props>()
 
 const router = useRouter()
 const likeStore = useLikeStore()
-const bookmarkStore = useBookmarkStore()
 
 // 日時フォーマット関数
 const formatDate = (date: Date): string => {
@@ -119,15 +98,6 @@ const colorIconPink = (flag: boolean): string => {
 	return flag ? "pink" : "black"
 }
 
-// ブックマークアイコン設定
-const formatBookmark = (tweet: TweetData): string => {
-	return tweet.is_bookmark ? "mdi-bookmark" : "mdi-bookmark-outline"
-}
-
-// ブックマークアイコンカラー設定
-const colorIconBlue = (flag: boolean): string => {
-	return flag ? "blue" : "black"
-}
 
 // いいね追加/削除
 const addLike = async (tweet: TweetData): Promise<void> => {
@@ -147,21 +117,6 @@ const addLike = async (tweet: TweetData): Promise<void> => {
 	}
 }
 
-// ブックマーク追加/削除
-const addBookmark = async (tweet: TweetData): Promise<void> => {
-	try {
-		if (tweet.is_bookmark) {
-			await bookmarkStore.deleteBookmark(tweet.id)
-			tweet.is_bookmark = false
-		} else {
-			await bookmarkStore.addBookmark(tweet.id)
-			tweet.is_bookmark = true
-		}
-	} catch (error) {
-		console.error('ブックマーク処理エラー:', error)
-		alert('ブックマークの処理に失敗しました')
-	}
-}
 
 // つぶやき詳細ページへ遷移
 const goToTweetDetail = (): void => {

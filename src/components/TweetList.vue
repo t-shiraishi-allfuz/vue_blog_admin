@@ -28,7 +28,10 @@
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.content`]="{ item }">
-					<div class="tweet-content">
+					<div 
+						class="tweet-content clickable-content"
+						@click="openEditDialog(item)"
+					>
 						{{ truncateContent(item.content) }}
 					</div>
 				</template>
@@ -53,16 +56,6 @@
 						<v-icon start icon="mdi-eye" />
 						{{ item.viewCount || 0 }}
 					</v-chip>
-				</template>
-				<template v-slot:[`item.comment_count`]="{ item }">
-					<div v-if="item.comment_count > 0">
-						<a href="#" @click.prevent="goToCommentList(item)">
-							{{ item.comment_count }}
-						</a>
-					</div>
-					<div v-else>
-						<span>{{ item.comment_count }}</span>
-					</div>
 				</template>
 				<template v-slot:[`item.like_count`]="{ item }">
 					<div v-if="item.like_count > 0">
@@ -119,7 +112,6 @@ const headers = [
 	{title: "投稿日時", value: "createdAt", sortable: true },
 	{title: "ステータス", value: "isPublished", sortable: true },
 	{title: "アクセス数", value: "viewCount", sortable: true },
-	{title: "コメント", value: "comment_count", sortable: true },
 	{title: "いいね", value: "like_count", sortable: true },
 	{title: "操作", value: "actions", sortable: false },
 ]
@@ -238,8 +230,8 @@ const getViewCountColor = (viewCount: any) => {
 // つぶやき内容を切り詰める関数
 const truncateContent = (content: any) => {
 	if (!content) return ''
-	if (content.length <= 50) return content
-	return content.substring(0, 50) + '...'
+	if (content.length <= 10) return content
+	return content.substring(0, 10) + '...'
 }
 
 // 詳細ページに移動（現在は使用していないが、将来的に使用する可能性があるためコメントアウト）
@@ -247,10 +239,6 @@ const truncateContent = (content: any) => {
 // 	router.push({path: "/tweet_detail", query: {tweet_id: tweet.id}});
 // }
 
-// コメント一覧に移動
-const goToCommentList = (tweet: any) => {
-	router.push({path: "/admin/comment_list", query: {tweet_id: tweet.id}});
-}
 
 // いいね一覧に移動
 const goToLikeList = (tweet: any) => {
@@ -281,6 +269,17 @@ onMounted(async () => {
 	.tweet-content {
 		max-width: 300px;
 		word-wrap: break-word;
+	}
+
+	.clickable-content {
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+		padding: 4px 8px;
+		border-radius: 4px;
+	}
+
+	.clickable-content:hover {
+		background-color: rgba(0, 0, 0, 0.04);
 	}
 
 	/* SweetAlert2ボタンの固定幅スタイル */

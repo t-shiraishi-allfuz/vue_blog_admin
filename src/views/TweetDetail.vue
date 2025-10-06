@@ -38,7 +38,7 @@
 						{{ formatDate(tweetDetail.createdAt) }}
 					</div>
 				</v-col>
-				<div v-if="userInfo.uid !== tweetDetail.uid">
+				<div v-if="userInfo?.uid !== tweetDetail.uid">
 					<v-col>
 						<div v-if="tweetDetail.setting.is_follower === true">
 							<v-btn @click="deleteFollowUser">フォロー中</v-btn>
@@ -85,6 +85,7 @@ import { format } from 'date-fns'
 import { useAuthStore } from '@/stores/authStore'
 import { useTweetStore } from '@/stores/tweetStore'
 import { useLikeStore } from '@/stores/likeStore'
+import { useFollowUsersStore } from '@/stores/followUsersStore'
 
 // 型定義
 interface TweetData {
@@ -94,8 +95,8 @@ interface TweetData {
 	thumbUrl: string
 	isPublished: boolean
 	viewCount: number
-	createdAt: Date
-	updatedAt: Date
+	createdAt: Date | null
+	updatedAt: Date | null
 	like_count: number
 	is_like: boolean
 	setting: any
@@ -107,6 +108,8 @@ const router = useRouter()
 const authStore = useAuthStore()
 const tweetStore = useTweetStore()
 const likeStore = useLikeStore()
+const followUsersStore = useFollowUsersStore()
+
 
 const {
 	userInfo
@@ -126,7 +129,7 @@ const formatDate = (date: Date | null | undefined): string => {
 
 // いいねアイコン設定
 const formatLike = (tweet: TweetData | null | undefined): string => {
-	return tweet.is_like ? "mdi-heart" : "mdi-heart-outline"
+	return tweet?.is_like ? "mdi-heart" : "mdi-heart-outline"
 }
 
 // いいねアイコンカラー設定

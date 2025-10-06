@@ -44,7 +44,6 @@ export const useTweetStore = defineStore('tweet', () => {
 	const tweetList = ref<TweetData[]>([])
 	const tweetDetail = ref<TweetData>({} as TweetData)
 	const selectType = ref<number>(0)
-	const accessCounts = ref<Record<string, number>>({})
 
 	const tempTweet = ref<TempTweet>({
 		uid: null,
@@ -67,7 +66,7 @@ export const useTweetStore = defineStore('tweet', () => {
 
 		const docData = doc.data()
 		// 不要なプロパティを除外
-		const { shareBlog, share_blog_id, title, summary, category_id, isAdult, ...cleanDocData } = docData
+		const { shareBlog, share_blog_id, title, summary, category_id, isAdult, comment_count, is_bookmark, ...cleanDocData } = docData
 		
 		const data: TweetData = {
 			id: doc.id,
@@ -104,11 +103,11 @@ export const useTweetStore = defineStore('tweet', () => {
 			}
 		}
 
-		if (data.createdAt?.toDate) {
-			data.createdAt = data.createdAt.toDate()
+		if (data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt) {
+			data.createdAt = (data.createdAt as any).toDate()
 		}
-		if (data.updatedAt?.toDate) {
-			data.updatedAt = data.updatedAt.toDate()
+		if (data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt) {
+			data.updatedAt = (data.updatedAt as any).toDate()
 		}
 		
 		// shareBlogプロパティを完全に除外して返す
@@ -182,7 +181,7 @@ export const useTweetStore = defineStore('tweet', () => {
 			// アクセスログを記録（オプション）
 			await accessLogStore.create(tweet_id)
 		} catch (error) {
-			throw new Error(`エラーが発生しました: ${error.message}`)
+			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}
 	}
 
@@ -195,6 +194,9 @@ export const useTweetStore = defineStore('tweet', () => {
 	// 自分のつぶやき一覧取得
 	const getList = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo?.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 		const filters = [
 			["uid", "==", userInfo.uid]
 		]
@@ -295,11 +297,8 @@ export const useTweetStore = defineStore('tweet', () => {
 		}
 	}
 
-	// 管理画面用：全ユーザーの公開済みつぶやき一覧取得
+	// 管理画面用：全ユーザーのつぶやき一覧取得（下書き・公開済み両方）
 	const getPublishedListForAdmin = async (): Promise<void> => {
-		const filters = [
-			["isPublished", "==", true]
-		]
 		const sorters = [
 			["createdAt", "desc"]
 		]
@@ -308,7 +307,7 @@ export const useTweetStore = defineStore('tweet', () => {
 			{
 				db_name: "tweet",
 				searchConditions: {
-					filters: filters,
+					filters: [], // フィルターを削除して全てのつぶやきを取得
 					sorters: sorters,
 				}
 			}
