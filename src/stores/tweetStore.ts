@@ -200,16 +200,12 @@ export const useTweetStore = defineStore('tweet', () => {
 		const filters = [
 			["uid", "==", userInfo.uid]
 		]
-		const sorters = [
-			["createdAt", "desc"]
-		]
 
 		const querySnapshot = await BaseAPI.getDataWithQuery(
 			{
 				db_name: "tweet",
 				searchConditions: {
 					filters: filters,
-					sorters: sorters,
 				}
 			}
 		)
@@ -217,7 +213,12 @@ export const useTweetStore = defineStore('tweet', () => {
 		if (querySnapshot) {
 			const promises = querySnapshot.docs.map(doc => setTweetData(doc))
 			const result = await Promise.all(promises)
-			tweetList.value = result
+			// クライアント側でソート
+			tweetList.value = result.sort((a, b) => {
+				const dateA = new Date(a.createdAt || 0).getTime()
+				const dateB = new Date(b.createdAt || 0).getTime()
+				return dateB - dateA // 降順
+			})
 		}
 	}
 
@@ -226,16 +227,12 @@ export const useTweetStore = defineStore('tweet', () => {
 		const filters = [
 			["isPublished", "==", true]
 		]
-		const sorters = [
-			["createdAt", "desc"]
-		]
 
 		const querySnapshot = await BaseAPI.getDataWithQuery(
 			{
 				db_name: "tweet",
 				searchConditions: {
 					filters: filters,
-					sorters: sorters,
 					limit: 20
 				}
 			}
@@ -244,7 +241,12 @@ export const useTweetStore = defineStore('tweet', () => {
 		if (querySnapshot) {
 			const promises = querySnapshot.docs.map(doc => setTweetData(doc))
 			const result = await Promise.all(promises)
-			tweetList.value = result
+			// クライアント側でソート
+			tweetList.value = result.sort((a, b) => {
+				const dateA = new Date(a.createdAt || 0).getTime()
+				const dateB = new Date(b.createdAt || 0).getTime()
+				return dateB - dateA // 降順
+			})
 		}
 	}
 
@@ -278,7 +280,6 @@ export const useTweetStore = defineStore('tweet', () => {
 						['uid', '==', userId],
 						['isPublished', '==', true]
 					],
-					sorters: [['createdAt', 'desc']],
 					limit: 20
 				}
 			}
@@ -287,28 +288,25 @@ export const useTweetStore = defineStore('tweet', () => {
 			if (result) {
 				const promises = result.docs.map(doc => setTweetData(doc))
 				const tweets = await Promise.all(promises)
-				return tweets
+				// クライアント側でソート
+				tweetList.value = tweets.sort((a, b) => {
+					const dateA = new Date(a.createdAt || 0).getTime()
+					const dateB = new Date(b.createdAt || 0).getTime()
+					return dateB - dateA // 降順
+				})
 			}
-			
-			return []
 		} catch (error) {
 			console.error('ユーザーつぶやき一覧の取得に失敗しました:', error)
-			return []
 		}
 	}
 
 	// 管理画面用：全ユーザーのつぶやき一覧取得（下書き・公開済み両方）
 	const getPublishedListForAdmin = async (): Promise<void> => {
-		const sorters = [
-			["createdAt", "desc"]
-		]
-
 		const querySnapshot = await BaseAPI.getDataWithQuery(
 			{
 				db_name: "tweet",
 				searchConditions: {
 					filters: [], // フィルターを削除して全てのつぶやきを取得
-					sorters: sorters,
 				}
 			}
 		)
@@ -316,7 +314,12 @@ export const useTweetStore = defineStore('tweet', () => {
 		if (querySnapshot) {
 			const promises = querySnapshot.docs.map(doc => setTweetData(doc))
 			const result = await Promise.all(promises)
-			tweetList.value = result
+			// クライアント側でソート
+			tweetList.value = result.sort((a, b) => {
+				const dateA = new Date(a.createdAt || 0).getTime()
+				const dateB = new Date(b.createdAt || 0).getTime()
+				return dateB - dateA // 降順
+			})
 		}
 	}
 

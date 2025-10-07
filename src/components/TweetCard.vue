@@ -17,6 +17,17 @@
 					<div class="tweet-content-overlay">{{ tweet.content }}</div>
 				</div>
 			</div>
+			<v-card-actions class="tweet-actions">
+				<div class="d-flex align-center">
+					<v-btn
+						:icon="formatLike(tweet)"
+						:color="colorIconPink(tweet)"
+						variant="text"
+						@click="addMomentLike(tweet)"
+					/>
+					<span class="text-caption ml-1">{{ tweet.like_count || 0 }}</span>
+				</div>
+			</v-card-actions>
 		</v-card>
 	</v-overlay>
 </template>
@@ -47,6 +58,28 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// アイコン設定
+const formatLike = (item: any): string => {
+	return item.is_like ? "mdi-heart" : "mdi-heart-outline"
+}
+// アイコン設定（カラー）
+const colorIconPink = (item: any): string => {
+	return item.is_like ? "pink" : "black"
+}
+
+// いいね
+const addLike = async (tweet: any): Promise<void> => {
+	if (item.is_like) {
+		await likeStore.deleteItem(tweet.id)
+		tweet.is_like = false
+		tweet.like_count--
+	} else {
+		await likeStore.create(tweet.id, tweet.title, tweet.uid)
+		tweet.is_like = true
+		tweet.like_count++
+	}
+}
 </script>
 
 <style scoped>
@@ -83,6 +116,12 @@ const props = defineProps<Props>()
 	font-weight: 500;
 	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 	max-width: 100%;
+}
+
+.tweet-actions {
+	padding: 12px 16px;
+	background-color: #f8f9fa;
+	border-top: 1px solid #e0e0e0;
 }
 
 /* スクロールバーのスタイリング */

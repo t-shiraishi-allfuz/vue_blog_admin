@@ -201,7 +201,6 @@ const saveTweet = async (): Promise<void> => {
 	}
 	
 	loading.value = true
-	console.log(tweet.content)
 	
 	try {
 		if (isEditMode.value) {

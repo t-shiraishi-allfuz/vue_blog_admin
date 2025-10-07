@@ -5,8 +5,12 @@
 			ブログ記事
 		</v-tab>
 		<v-tab value="tweets">
-			<v-icon start icon="mdi-twitter" />
+			<v-icon start icon="mdi-note" />
 			つぶやき
+		</v-tab>
+		<v-tab value="moments">
+			<v-icon start icon="mdi-note-multiple" />
+			モーメント
 		</v-tab>
 	</v-tabs>
 
@@ -107,6 +111,14 @@
 		>
 			<TweetList />
 		</v-window-item>
+
+		<v-window-item
+			value="moments"
+			transition="none"
+			reverse-transition="none"
+		>
+			<MomentList />
+		</v-window-item>
 	</v-window>
 </template>
 
@@ -115,6 +127,7 @@ import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
 import TweetList from '@/components/TweetList.vue'
+import MomentList from '@/views/admin/MomentList.vue'
 
 const router = useRouter()
 const blogStore = useBlogStore()
@@ -124,7 +137,7 @@ const {
 
 const activeTab = ref('blogs')
 const blogSearch = ref('')
-const blogToDelete = ref(null)
+const blogToDelete = ref<any>(null)
 
 const blogHeaders = [
 	{title: "記事タイトル", value: "title" },

@@ -26,6 +26,21 @@ const routes: RouteRecordRaw[] = [
 		component: () => import("@/views/admin/AnnouncementList.vue"),
 		meta: { requiresAuth: true, requiresOwner: true }
 	},
+	{
+		path: '/admin/moment_list',
+		component: () => import("@/views/admin/MomentList.vue"),
+		meta: { requiresAuth: true }
+	},
+	{
+		path: '/admin/moment_create',
+		component: () => import("@/views/admin/MomentCreate.vue"),
+		meta: { requiresAuth: true }
+	},
+	{
+		path: '/admin/moment_edit',
+		component: () => import("@/views/admin/MomentEdit.vue"),
+		meta: { requiresAuth: true }
+	},
 ] as const
 
 export default routes
