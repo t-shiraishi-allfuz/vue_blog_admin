@@ -88,7 +88,7 @@
 						</template>
 						<template v-slot:[`item.actions`]="{ item }">
 							<v-icon
-								class="delete-icon"
+								color="red"
 								icon="mdi-delete"
 								aria-label="削除"
 								role="button"
@@ -233,10 +233,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-	.delete-icon {
-		color: red;
-	}
-
 	.content-list {
 		margin-top: 20px;
 	}

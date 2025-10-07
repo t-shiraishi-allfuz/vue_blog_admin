@@ -76,21 +76,21 @@
 				<template v-slot:[`item.actions`]="{ item }">
 					<div class="action-buttons">
 						<v-icon
-							class="preview-icon"
+							color="info"
 							icon="mdi-eye"
 							aria-label="プレビュー"
 							role="button"
 							@click="openPreviewDialog(item)"
 						/>
 						<v-icon
-							class="edit-icon"
+							color="blue"
 							icon="mdi-pencil"
 							aria-label="編集"
 							role="button"
 							@click="openEditDialog(item)"
 						/>
 						<v-icon
-							class="delete-icon"
+							color="red"
 							icon="mdi-delete"
 							aria-label="削除"
 							role="button"
@@ -278,21 +278,6 @@ onMounted(async () => {
 	.action-buttons {
 		display: flex;
 		gap: 8px;
-	}
-
-	.preview-icon {
-		color: green;
-		cursor: pointer;
-	}
-
-	.edit-icon {
-		color: blue;
-		cursor: pointer;
-	}
-
-	.delete-icon {
-		color: red;
-		cursor: pointer;
 	}
 
 	.tweet-content {

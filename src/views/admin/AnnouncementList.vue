@@ -50,16 +50,15 @@
 				
 				<template v-slot:item.actions="{ item }">
 					<v-btn
+						color="blue"
 						icon="mdi-pencil"
-						size="small"
 						variant="text"
 						@click="openEditDialog(item)"
 					/>
 					<v-btn
+						color="red"
 						icon="mdi-delete"
-						size="small"
 						variant="text"
-						color="error"
 						@click="deleteAnnouncement(item)"
 					/>
 				</template>
