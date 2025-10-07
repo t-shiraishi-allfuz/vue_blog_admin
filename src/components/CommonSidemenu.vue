@@ -48,7 +48,7 @@ const onSelectType = (type: number): void => {
 
 <style scoped>
 .selected-item {
-	background-color: rgba(0, 0, 255, 0.1); /* 青のハイライト */
-	border-left: 4px solid blue;
+	background-color: rgba(39, 193, 163, 0.1); /* 青のハイライト */
+	border-left: 4px solid #27C1A3;
 }
 </style>

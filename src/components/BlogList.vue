@@ -7,7 +7,7 @@
 		/>
 		
 		<!-- タブ切り替え -->
-		<v-tabs v-model="activeTab" color="primary" class="mb-4">
+		<v-tabs v-model="activeTab" color="success" class="mb-4">
 			<v-tab value="blogs">
 				<v-icon start icon="mdi-post" />
 				ブログ記事
