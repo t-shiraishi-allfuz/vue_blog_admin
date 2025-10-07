@@ -29,5 +29,6 @@ declare module 'vue' {
     TweetCreateDialog: typeof import('./components/TweetCreateDialog.vue')['default']
     TweetEditDialog: typeof import('./components/TweetEditDialog.vue')['default']
     TweetList: typeof import('./components/TweetList.vue')['default']
+    TweetPreviewDialog: typeof import('./components/TweetPreviewDialog.vue')['default']
   }
 }

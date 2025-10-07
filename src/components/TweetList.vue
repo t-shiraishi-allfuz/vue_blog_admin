@@ -5,6 +5,12 @@
 			:tweet="tweetToEdit"
 			@saved="updateTweet"
 		/>
+		<TweetCard
+			v-if="tweetToPreview"
+			v-model="isPreviewDialogOpen"
+			:tweet="tweetToPreview"
+			:setting="tweetToPreview.setting as any"
+		/>
 		<v-card class="tweet-list">
 			<v-data-table
 				class="tweet-list"
@@ -70,6 +76,13 @@
 				<template v-slot:[`item.actions`]="{ item }">
 					<div class="action-buttons">
 						<v-icon
+							class="preview-icon"
+							icon="mdi-eye"
+							aria-label="プレビュー"
+							role="button"
+							@click="openPreviewDialog(item)"
+						/>
+						<v-icon
 							class="edit-icon"
 							icon="mdi-pencil"
 							aria-label="編集"
@@ -92,20 +105,30 @@
 
 <script setup lang="ts">
 import { useTweetStore } from '@/stores/tweetStore'
+import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
 import TweetCreateDialog from '@/components/TweetCreateDialog.vue'
+import TweetCard from '@/components/TweetCard.vue'
 
 const router = useRouter()
 const tweetStore = useTweetStore()
+const blogSettingStore = useBlogSettingStore()
+
 const {
 	tweetList
 } = storeToRefs(tweetStore)
+
+const {
+	blogSetting
+} = storeToRefs(blogSettingStore)
 
 const search = ref('')
 const tweetToDelete = ref<any>(null)
 const isTweetDialogOpen = ref<boolean>(false)
 const tweetToEdit = ref<any>(null)
+const tweetToPreview = ref<any>(null)
+const isPreviewDialogOpen = ref<boolean>(false)
 
 const headers = [
 	{title: "つぶやき内容", value: "content" },
@@ -119,6 +142,12 @@ const headers = [
 // 一覧取得
 const fetchTweetList = async () => {
 	await tweetStore.getPublishedListForAdmin()
+}
+
+// プレビューダイアログを開く
+const openPreviewDialog = (tweet: any) => {
+	tweetToPreview.value = tweet
+	isPreviewDialogOpen.value = true
 }
 
 // 編集ダイアログを開く
@@ -234,12 +263,6 @@ const truncateContent = (content: any) => {
 	return content.substring(0, 10) + '...'
 }
 
-// 詳細ページに移動（現在は使用していないが、将来的に使用する可能性があるためコメントアウト）
-// const goToDetail = (tweet: any) => {
-// 	router.push({path: "/tweet_detail", query: {tweet_id: tweet.id}});
-// }
-
-
 // いいね一覧に移動
 const goToLikeList = (tweet: any) => {
 	router.push({path: "/admin/like_list", query: {tweet_id: tweet.id}});
@@ -247,6 +270,7 @@ const goToLikeList = (tweet: any) => {
 
 onMounted(async () => {
 	await fetchTweetList()
+	await blogSettingStore.getBlogSetting()
 })
 </script>
 
@@ -254,6 +278,11 @@ onMounted(async () => {
 	.action-buttons {
 		display: flex;
 		gap: 8px;
+	}
+
+	.preview-icon {
+		color: green;
+		cursor: pointer;
 	}
 
 	.edit-icon {

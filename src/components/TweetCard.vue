@@ -1,53 +1,59 @@
 <template>
-	<v-card
-		class="tweet-card"
-		outlined
-		@click="goToTweetDetail"
+	<v-overlay
+		class="d-flex justify-center mt-4"
+		width="460"
 	>
-		<div class="header-image">
-			<v-img
-				:src="tweet.thumbUrl"
-				aspect-ratio="16/9"
-				cover
-			/>
-		</div>
-		<v-card-text>
-			<div class="mb-3 text-body-1 tweet-content">{{ tweet.content }}</div>
-			<v-row class="d-flex">
-				<v-avatar
-					class="mt-2"
-					size="48"
-					:image="setting.profileUrl"
-					end
+		<v-card
+			class="tweet-card"
+			width="460"
+		>
+			<div class="header-image-container">
+				<v-img
+					:src="tweet.thumbUrl"
+					aspect-ratio="16/9"
+					cover
 				/>
-				<v-col>
-					<div class="ml-1 mb-1">
-						{{ setting.name }}
-					</div>
-					<div class="ml-1 mb-1">
-						<v-icon icon="mdi-clock" start />
-						{{ formatDate(tweet.createdAt) }}
-					</div>
-				</v-col>
-			</v-row>
-		</v-card-text>
-		<v-card-actions class="px-4 pb-4">
-			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-				<v-btn
-					:icon="formatLike(tweet)"
-					:color="colorIconPink(tweet.is_like)"
-					variant="text"
-					@click.stop="addLike(tweet)"
-				/>
-				<div class="text-truncate">{{ tweet.like_count }}</div>
+				<div class="overlay-text">
+					<div class="tweet-content-overlay">{{ tweet.content }}</div>
+				</div>
 			</div>
-			<v-spacer></v-spacer>
-			<div class="d-flex align-center text-caption text-medium-emphasis">
-				<v-icon icon="mdi-eye" start />
-				{{ tweet.viewCount }}
-			</div>
-		</v-card-actions>
-	</v-card>
+			<v-card-text>
+				<v-row class="d-flex">
+					<v-avatar
+						class="mt-2"
+						size="48"
+						:image="setting.profileUrl"
+						end
+					/>
+					<v-col>
+						<div class="ml-1 mb-1">
+							{{ setting.name }}
+						</div>
+						<div class="ml-1 mb-1">
+							<v-icon icon="mdi-clock" start />
+							{{ formatDate(tweet.createdAt) }}
+						</div>
+					</v-col>
+				</v-row>
+			</v-card-text>
+			<v-card-actions class="px-4 pb-4">
+				<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+					<v-btn
+						:icon="formatLike(tweet)"
+						:color="colorIconPink(tweet.is_like)"
+						variant="text"
+						@click.stop="addLike(tweet)"
+					/>
+					<div class="text-truncate">{{ tweet.like_count }}</div>
+				</div>
+				<v-spacer></v-spacer>
+				<div class="d-flex align-center text-caption text-medium-emphasis">
+					<v-icon icon="mdi-eye" start />
+					{{ tweet.viewCount }}
+				</div>
+			</v-card-actions>
+		</v-card>
+	</v-overlay>
 </template>
 
 <script setup lang="ts">
@@ -125,29 +131,57 @@ const goToTweetDetail = (): void => {
 </script>
 
 <style scoped>
-.tweet-card {
-	min-width: 200px;
-	max-width: 400px;
-	cursor: pointer;
-	transition: transform 0.2s ease-in-out;
+.header-image-container {
+	position: relative;
+	width: 100%;
+	height: 460px;
 }
 
-.tweet-card:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.overlay-text {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.4);
+	color: white;
+	padding: 16px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-start;
+	overflow-y: auto;
+	max-height: 100%;
+	backdrop-filter: blur(2px);
+	transition: background-color 0.3s ease;
 }
 
-.header-image {
-	.v-responsive {
-		min-width: 100%;
-		min-height: 200px;
-		max-height: 200px;
-	}
-}
-
-.tweet-content {
+.tweet-content-overlay {
+	text-align: left;
 	line-height: 1.5;
 	word-break: break-word;
 	white-space: pre-wrap;
+	font-size: 14px;
+	font-weight: 500;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+	max-width: 100%;
+}
+
+/* スクロールバーのスタイリング */
+.overlay-text::-webkit-scrollbar {
+	width: 4px;
+}
+
+.overlay-text::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 2px;
+}
+
+.overlay-text::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 2px;
+}
+
+.overlay-text::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.5);
 }
 </style>
