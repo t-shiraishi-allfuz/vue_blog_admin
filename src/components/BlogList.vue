@@ -86,7 +86,7 @@
 						>
 							<v-card
 								class="blog-card d-inline-block"
-								@click="goToTweetDetail(item)"
+								@click="openPreviewDialog(item)"
 								outlined
 								height="280"
 							>
@@ -122,6 +122,12 @@
 						つぶやきがありません
 					</v-alert>
 				</v-row>
+				<TweetCard
+					v-if="tweetToPreview"
+					v-model="isPreviewDialogOpen"
+					:tweet="tweetToPreview"
+					:setting="tweetToPreview.setting as any"
+				/>
 			</v-window-item>
 		</v-window>
 	</v-container>
@@ -135,6 +141,7 @@ import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
 import BirthDateDialog from '@/components/BirthDateDialog.vue'
+import TweetCard from '@/components/TweetCard.vue'
 import { format } from 'date-fns'
 
 // 型定義
@@ -184,6 +191,8 @@ const activeTab = ref('blogs')
 const showBirthDateDialog = ref<boolean>(false)
 const userData = ref<UserData | null>(null)
 const isUserAdult = ref<boolean>(false)
+const tweetToPreview = ref<any>(null)
+const isPreviewDialogOpen = ref<boolean>(false)
 
 const extendBlogList = computed((): BlogItem[] => {
 	if (!blogList.value) {
@@ -260,8 +269,10 @@ const goToBlogDetail = (blog: BlogItem): void => {
 	router.push({path: "/blog_detail", query: {blog_id: blog.id}})
 }
 
-const goToTweetDetail = (tweet: TweetItem): void => {
-	router.push({path: "/tweet_detail", query: {tweet_id: tweet.id}})
+// プレビューダイアログを開く
+const openPreviewDialog = (tweet: any) => {
+	tweetToPreview.value = tweet
+	isPreviewDialogOpen.value = true
 }
 
 // いいね
