@@ -29,6 +29,7 @@ interface BlogData {
 	is_bookmark: boolean
 	setting: any
 	shareBlog: BlogData | null
+	password: string | null
 }
 
 interface TempBlog {
@@ -44,6 +45,7 @@ interface TempBlog {
 	viewCount: number
 	createdAt: Date | null
 	updatedAt: Date | null
+	password: string | null
 }
 
 interface UserInfo {
@@ -77,7 +79,8 @@ export const useBlogStore = defineStore('blog', () => {
 		share_blog_id: null,
 		viewCount: 0,
 		createdAt: null,
-		updatedAt: null
+		updatedAt: null,
+		password: null
 	})
 
 	const setSelectType = (type: number): void => {
@@ -140,6 +143,7 @@ export const useBlogStore = defineStore('blog', () => {
 				category_id: blog.category_id,
 				isPublished: blog.isPublished,
 				viewCount: blog.viewCount,
+				password: blog.password,
 				updatedAt: new Date(),
 			}
 		)
@@ -189,7 +193,7 @@ export const useBlogStore = defineStore('blog', () => {
 			// アクセスログを記録（オプション）
 			await accessLogStore.create(blog_id)
 		} catch (error) {
-			throw new Error(`エラーが発生しました: ${error.message}`)
+			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}
 	}
 
@@ -256,6 +260,9 @@ export const useBlogStore = defineStore('blog', () => {
 	// フォロー中ユーザーのブログデータ取得
 	const getListForFollow = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 		
 		try {
 			// ログイン中のユーザーがフォローしているユーザーリストを取得
@@ -294,7 +301,7 @@ export const useBlogStore = defineStore('blog', () => {
 				blogList.value = result
 			}
 		} catch (error) {
-			throw new Error(`エラーが発生しました: ${error.message}`)
+			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}
 	}
 
@@ -371,6 +378,9 @@ export const useBlogStore = defineStore('blog', () => {
 	// カテゴリーIDに一致するブログ数取得
 	const getListForCategoryCount = async (category_id: string): Promise<number> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 		const filters = [
 			["uid", "==", userInfo.uid],
 			["category_id", "==", category_id]
@@ -395,6 +405,9 @@ export const useBlogStore = defineStore('blog', () => {
 	// ユーザーの全ブログのアクセス数合計を取得
 	const getTotalAccessCount = async (): Promise<number> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 
 		try {
 			const filters = [
@@ -417,7 +430,7 @@ export const useBlogStore = defineStore('blog', () => {
 			}
 			return totalCount
 		} catch (error) {
-			throw new Error(`エラーが発生しました: ${error.message}`)
+			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}
 	}
 
@@ -435,7 +448,7 @@ export const useBlogStore = defineStore('blog', () => {
 				}
 			}
 			const result = await BaseAPI.getDataWithQuery(param)
-			return result.size
+			return result ? result.size : 0
 		} catch (error) {
 			console.error('ユーザー記事数の取得に失敗しました:', error)
 			return 0
@@ -471,6 +484,28 @@ export const useBlogStore = defineStore('blog', () => {
 		}
 	}
 
+	// パスワード認証
+	const verifyPassword = async (blogId: string, password: string): Promise<boolean> => {
+		try {
+			const doc = await BaseAPI.getData(
+				{db_name: "blog", item_id: blogId},
+			)
+			
+			if (doc) {
+				const blogData = doc.data()
+				// パスワードが設定されていない場合は認証成功
+				if (!blogData.password) return true
+				// パスワードが一致する場合は認証成功
+				return blogData.password === password
+			}
+			
+			return false
+		} catch (error) {
+			console.error('パスワード認証エラー:', error)
+			return false
+		}
+	}
+
 	return {
 		selectType,
 		blogList,
@@ -492,6 +527,7 @@ export const useBlogStore = defineStore('blog', () => {
 		getListForCategoryCount,
 		getTotalAccessCount,
 		getCountForUser,
-		getListForUser
+		getListForUser,
+		verifyPassword
 	}
 })

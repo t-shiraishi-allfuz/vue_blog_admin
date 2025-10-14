@@ -23,6 +23,7 @@ interface MomentData {
 	like_count: number
 	is_like: boolean
 	is_bookmark: boolean
+	password: string | null
 }
 
 interface TempMoment {
@@ -36,6 +37,7 @@ interface TempMoment {
 	viewCount: number
 	createdAt: Date | null
 	updatedAt: Date | null
+	password: string | null
 }
 
 interface UserInfo {
@@ -62,7 +64,8 @@ export const useMomentStore = defineStore('moment', () => {
 		isPublished: false,
 		viewCount: 0,
 		createdAt: null,
-		updatedAt: null
+		updatedAt: null,
+		password: null
 	})
 
 	const setMomentData = async (doc: any): Promise<MomentData> => {
@@ -89,7 +92,8 @@ export const useMomentStore = defineStore('moment', () => {
 			setting: null,
 			like_count: likeCount,
 			is_like: isLike,
-			is_bookmark: !!isBookmark
+			is_bookmark: !!isBookmark,
+			password: docData.password || null
 		}
 
 		// つぶやきデータを取得
@@ -177,6 +181,7 @@ export const useMomentStore = defineStore('moment', () => {
 				isAdult: moment.isAdult,
 				isPublished: moment.isPublished,
 				viewCount: moment.viewCount || 0,
+				password: moment.password,
 				updatedAt: new Date(),
 			}
 		)
@@ -410,7 +415,30 @@ export const useMomentStore = defineStore('moment', () => {
 			setting: null,
 			like_count: 0,
 			is_like: false,
-			is_bookmark: false
+			is_bookmark: false,
+			password: null
+		}
+	}
+
+	// パスワード認証
+	const verifyPassword = async (momentId: string, password: string): Promise<boolean> => {
+		try {
+			const doc = await BaseAPI.getData(
+				{db_name: "moment", item_id: momentId},
+			)
+			
+			if (doc) {
+				const momentData = doc.data()
+				// パスワードが設定されていない場合は認証成功
+				if (!momentData.password) return true
+				// パスワードが一致する場合は認証成功
+				return momentData.password === password
+			}
+			
+			return false
+		} catch (error) {
+			console.error('パスワード認証エラー:', error)
+			return false
 		}
 	}
 
@@ -432,6 +460,7 @@ export const useMomentStore = defineStore('moment', () => {
 		getPublishedListForAdmin,
 		toggleLike,
 		toggleBookmark,
-		initializeMomentDetail
+		initializeMomentDetail,
+		verifyPassword
 	}
 })

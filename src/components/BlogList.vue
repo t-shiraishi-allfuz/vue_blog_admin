@@ -199,6 +199,44 @@
 				/>
 			</v-window-item>
 		</v-window>
+		<v-dialog v-model="passwordDialog" persistent max-width="400">
+			<v-card>
+				<v-card-title class="text-h5">
+					<v-icon class="mr-2">mdi-lock</v-icon>
+					パスワード認証
+				</v-card-title>
+				<v-card-text>
+					<p class="text-body-1 mb-4">このモーメントはパスワードで保護されています。</p>
+					<v-text-field
+						v-model="passwordInput"
+						label="パスワード"
+						type="password"
+						variant="outlined"
+						:error-messages="passwordError"
+						@keyup.enter="verifyPassword"
+						autofocus
+					/>
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn
+						color="grey-lighten-4"
+						variant="flat"
+						@click="cancelPasswordAuth"
+					>
+						閉じる
+					</v-btn>
+					<v-btn
+						color="success"
+						variant="flat"
+						@click="verifyPassword"
+						:loading="passwordVerifying"
+					>
+						認証
+					</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 	</v-container>
 </template>
 
@@ -291,6 +329,13 @@ const isPreviewTweetDialogOpen = ref<boolean>(false)
 const momentToPreview = ref<any>(null)
 const isPreviewMomentDialogOpen = ref<boolean>(false)
 
+// パスワード認証関連
+const passwordDialog = ref<boolean>(false)
+const passwordInput = ref<string>('')
+const passwordError = ref<string>('')
+const passwordVerifying = ref<boolean>(false)
+const selectedMoment = ref<any>(null)
+
 const extendBlogList = computed((): BlogItem[] => {
 	if (!blogList.value) {
 		return []
@@ -322,7 +367,6 @@ const extendTweetList = computed((): any[] => {
 })
 
 const extendMomentList = computed((): MomentItem[] => {
-	console.log(momentList.value)
 	if (!momentList.value) {
 		return []
 	}
@@ -402,7 +446,51 @@ const openPreviewTweetDialog = (tweet: any) => {
 
 const openPreviewMomentDialog = (moment: any) => {
 	momentToPreview.value = moment
-	isPreviewMomentDialogOpen.value = true
+
+	if (moment.password) {
+		passwordDialog.value = true
+		passwordInput.value = ''
+		passwordError.value = ''
+	} else {
+		isPreviewMomentDialogOpen.value = true
+	}
+}
+
+// パスワード認証
+const verifyPassword = async () => {
+	if (!passwordInput.value.trim()) {
+		passwordError.value = 'パスワードを入力してください'
+		return
+	}
+
+	passwordVerifying.value = true
+	passwordError.value = ''
+
+	try {
+		const isValid = await momentStore.verifyPassword(momentToPreview.value.id, passwordInput.value)
+		if (isValid) {
+			// 認証成功時したら開く
+			passwordDialog.value = false
+			passwordInput.value = ''
+			isPreviewMomentDialogOpen.value = true
+		} else {
+			passwordError.value = 'パスワードが正しくありません'
+		}
+	} catch (error) {
+		console.error('パスワード認証エラー:', error)
+		passwordError.value = '認証に失敗しました'
+		momentToPreview.value = null
+	} finally {
+		passwordVerifying.value = false
+	}
+}
+
+// パスワード認証キャンセル
+const cancelPasswordAuth = () => {
+	passwordDialog.value = false
+	passwordInput.value = ''
+	passwordError.value = ''
+	momentToPreview.value = null
 }
 
 // いいね

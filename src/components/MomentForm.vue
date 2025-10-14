@@ -140,6 +140,15 @@
 							/>
 						</v-col>
 						<v-col cols="12" mb="4">
+							<v-text-field
+								type="password"
+								label="パスワード（任意）"
+								v-model="momentDetail.password"
+								hint="パスワードを設定すると、このモーメントを閲覧する際にパスワードが必要になります"
+								persistent-hint
+								clearable
+								class="mb-4"
+							/>
 							<v-switch
 								v-model="momentDetail.isAdult"
 								label="閲覧制限の設定"

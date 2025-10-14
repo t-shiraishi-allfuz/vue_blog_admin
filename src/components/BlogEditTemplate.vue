@@ -40,6 +40,15 @@
 					<div v-if="blog.thumbUrl" class="preview-thumb">
 						<v-img :src="blog.thumbUrl" />
 					</div>
+					<v-text-field
+						class="py-4"
+						type="password"
+						label="パスワード（任意）"
+						v-model="blog.password"
+						hint="パスワードを設定すると、このブログを閲覧する際にパスワードが必要になります"
+						persistent-hint
+						clearable
+					/>
 					<v-switch
 						label="閲覧制限の設定"
 						v-model="blog.isAdult"

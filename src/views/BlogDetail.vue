@@ -1,4 +1,43 @@
 <template>
+	<v-dialog v-model="passwordDialog" persistent max-width="400">
+		<v-card>
+			<v-card-title class="text-h5">
+				<v-icon class="mr-2">mdi-lock</v-icon>
+				パスワード認証
+			</v-card-title>
+			<v-card-text>
+				<p class="text-body-1 mb-4">このブログはパスワードで保護されています。</p>
+				<v-text-field
+					v-model="passwordInput"
+					label="パスワード"
+					type="password"
+					variant="outlined"
+					:error-messages="passwordError"
+					@keyup.enter="verifyPassword"
+					autofocus
+				/>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer />
+				<v-btn
+					color="grey-lighten-4"
+					variant="flat"
+					@click="cancelPasswordAuth"
+				>
+					閉じる
+				</v-btn>
+				<v-btn
+					color="success"
+					variant="flat"
+					@click="verifyPassword"
+					:loading="passwordVerifying"
+				>
+					認証
+				</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
+
 	<v-sheet
 		v-if="isLoading"
 		class="pa-6 mx-auto"
@@ -234,31 +273,6 @@ import { format } from 'date-fns'
 import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
 
-// 型定義
-interface BlogDetail {
-	id: string
-	title: string
-	summary: string
-	content: string
-	thumbUrl: string
-	createdAt: Date
-	uid: string
-	like_count: number
-	comment_count: number
-	viewCount: number
-	is_like: boolean
-	is_bookmark: boolean
-	shareBlog?: any
-	setting: {
-		name: string
-		profileUrl: string
-		is_follower: boolean
-		is_following: boolean
-		[key: string]: any
-	}
-	[key: string]: any
-}
-
 interface CommentData {
 	id: string
 	body: string
@@ -314,8 +328,16 @@ const comment = ref<Partial<CommentData>>({
 	updatedAt: new Date(),
 })
 
+// パスワード認証関連
+const passwordDialog = ref<boolean>(false)
+const passwordInput = ref<string>('')
+const passwordError = ref<string>('')
+const passwordVerifying = ref<boolean>(false)
+const isPasswordVerified = ref<boolean>(false)
+
 // 日時フォーマット関数
-const formatDate = (date: Date): string => {
+const formatDate = (date: Date | null): string => {
+	if (!date) return '日付不明'
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
@@ -417,7 +439,7 @@ const deleteComment = async (comment: CommentData): Promise<void> => {
 }
 
 const executeComment = async () => {
-	if (!comment.value.body) return
+	if (!comment.value.body || !userInfo.value) return
 
 	comment.value.uid = userInfo.value.uid
 	comment.value.blog_id = blogDetail.value.id
@@ -457,20 +479,61 @@ const addBookmark = async () => {
 
 // フォロー
 const followUser = async () => {
+	if (!userInfo.value) return
 	await followUsersStore.create(blogDetail.value.uid)
 }
 
 // フォロー外す
 const deleteFollowUser = async () => {
+	if (!userInfo.value) return
 	await followUsersStore.deleteItem(blogDetail.value.uid)
+}
+
+// パスワード認証
+const verifyPassword = async () => {
+	if (!passwordInput.value.trim()) {
+		passwordError.value = 'パスワードを入力してください'
+		return
+	}
+
+	passwordVerifying.value = true
+	passwordError.value = ''
+
+	try {
+		const isValid = await blogStore.verifyPassword(blog_id, passwordInput.value)
+		if (isValid) {
+			isPasswordVerified.value = true
+			passwordDialog.value = false
+			passwordInput.value = ''
+
+			await fetchCommentList()
+			isLoading.value = true
+		} else {
+			passwordError.value = 'パスワードが正しくありません'
+		}
+	} catch (error) {
+		console.error('パスワード認証エラー:', error)
+		passwordError.value = '認証に失敗しました'
+	} finally {
+		passwordVerifying.value = false
+	}
+}
+
+// パスワード認証が必要かチェック
+const checkPasswordRequired = () => {
+	if (blogDetail.value.password && !isPasswordVerified.value) {
+		passwordDialog.value = true
+		return false
+	}
+	return true
 }
 
 // ブログデータ取得
 onMounted(async () => {
 	await blogStore.getDetailWithAccessCount(blog_id)
-	await fetchCommentList()
 
-	isLoading.value = true
+	// パスワード認証が必要かチェック
+	checkPasswordRequired()
 })
 
 // 戻るボタンのテキストを計算
