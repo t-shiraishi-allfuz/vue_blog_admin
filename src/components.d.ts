@@ -23,6 +23,7 @@ declare module 'vue' {
     LoginDialog: typeof import('./components/LoginDialog.vue')['default']
     MomentCard: typeof import('./components/MomentCard.vue')['default']
     MomentCreateDialog: typeof import('./components/MomentCreateDialog.vue')['default']
+    MomentForm: typeof import('./components/MomentForm.vue')['default']
     MomentViewer: typeof import('./components/MomentViewer.vue')['default']
     NotificationDialog: typeof import('./components/NotificationDialog.vue')['default']
     ReblogTemplate: typeof import('./components/ReblogTemplate.vue')['default']

@@ -156,7 +156,7 @@ const goToCreatePage = () => {
 
 // 編集ページに遷移
 const goToEditPage = (moment: any) => {
-	router.push({path: '/admin/moment_edit', query: {id: moment.id}})
+	router.push({path: '/admin/moment_edit', query: {id: moment.id, from: 'admin'}})
 }
 
 // プレビューダイアログを開く

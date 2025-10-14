@@ -392,6 +392,28 @@ export const useMomentStore = defineStore('moment', () => {
 		}
 	}
 
+	// モーメント詳細を初期化（新規作成用）
+	const initializeMomentDetail = (): void => {
+		momentDetail.value = {
+			id: '',
+			uid: authStore.userInfo?.uid || '',
+			title: '',
+			description: '',
+			thumbUrl: '',
+			tweetIds: [],
+			tweets: [],
+			isAdult: false,
+			isPublished: false,
+			viewCount: 0,
+			createdAt: null,
+			updatedAt: null,
+			setting: null,
+			like_count: 0,
+			is_like: false,
+			is_bookmark: false
+		}
+	}
+
 	return {
 		momentList,
 		momentDetail,
@@ -409,6 +431,7 @@ export const useMomentStore = defineStore('moment', () => {
 		getListForUser,
 		getPublishedListForAdmin,
 		toggleLike,
-		toggleBookmark
+		toggleBookmark,
+		initializeMomentDetail
 	}
 })

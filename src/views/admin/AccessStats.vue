@@ -40,7 +40,7 @@
 		<v-row class="mt-6">
 			<v-col cols="12">
 				<h2 class="text-h5 mb-4">
-					<v-icon start icon="mdi-twitter" />
+					<v-icon start icon="mdi-note" />
 					つぶやき統計
 				</h2>
 			</v-col>
