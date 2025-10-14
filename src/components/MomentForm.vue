@@ -51,16 +51,12 @@
 										hide-details
 									/>
 								</v-card-text>
-								<v-row v-if="filteredTweets.length > 0">
+								<v-row v-if="filteredTweets.length > 0" justify="start">
 									<v-col
 										v-for="tweet in filteredTweets"
 										:key="tweet.id"
-										class="pa-4 ma-4"
-										cols="12"
-										sm
-										md
-										lg
-										xl
+										class="pa-2 ma-4"
+										cols="auto"
 									>
 										<v-card
 											class="tweet-selection-card"
@@ -450,6 +446,7 @@ onUnmounted(() => {
 <style scoped>
 .tweet-selection-card {
 	position: relative;
+	width: 150px;
 	cursor: pointer;
 	transition: all 0.2s ease;
 	border: 2px solid transparent;
