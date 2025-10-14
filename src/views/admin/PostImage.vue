@@ -30,29 +30,46 @@
 					/>
 				</v-toolbar>
 				<div class="fileBox">
-					<ul class="image-list" v-if="imageList.length > 0">
-						<li class="thumbnail" v-for="(image, index) in imageList" :key="index">
-							<div class="image-gallery">
-								<div class="image-top">
-									<input type="checkbox" v-model="selectedForDelete" :value="image" />
-									<label class="file-name">{{ image.name }}</label>
+					<v-row
+						v-if="imageList.length > 0"
+						class="image-list"
+						align="start"
+						align-content="start"
+						justify="start"
+						no-gutters
+					>
+						<v-col
+							v-for="(image, index) in imageList"
+							:key="index"
+							class="thumbnail"
+							align-self="start"
+							cols="auto"
+						>
+							<v-card
+								class="selection-card"
+								:class="{ 'selected': selectedCardIds.includes(image) }"
+								width="100"
+								height="150"
+								@click="openImageViewer(image.url)"
+							>
+								<div class="checkbox-overlay">
+									<v-checkbox
+										color="success"
+										base-color="white"
+										:model-value="selectedCardIds.includes(image)"
+										@click.stop="toggleCardSelection(image)"
+										hide-details
+									/>
 								</div>
-								<span class="image-item">
-									<img :src="image.url" :alt="'Image ' + (index + 1)" @click="openImageViewer(image.url)" />
-								</span>
-								<div class="delete-image">
-									<span>
-										<v-icon class="delete-icon" icon="mdi-image-move" @click="openMoveDialog(image)" />
-									</span>
-									<span class="text-delete">移動</span>
-									<span>
-										<v-icon class="delete-icon" icon="mdi-delete" @click="openDeleteDialog(image)" />
-									</span>
-									<span class="text-delete">削除</span>
-								</div>
-							</div>
-						</li>
-					</ul>
+								<v-img
+									:src="image.url"
+									aspect-ratio="16/9"
+									cover
+									height="150"
+								/>
+							</v-card>
+						</v-col>
+					</v-row>
 					<div v-else class="pa-4">アップロードされた画像はありません。</div>
 				</div>
 			</v-card-text>
@@ -123,6 +140,8 @@ const {
 const imageViewerDialog = ref(false)
 const currentImage = ref(null)
 
+const selectedCardIds = ref<string[]>([])
+
 const selectedMoveFolderId = ref(null)
 const moveDialog = ref(false)
 const imageToMove = ref(null)
@@ -136,6 +155,15 @@ const isAllSelectedComputed = computed({
 		selectedForDelete.value = value ? [...imageList.value] : []
 	},
 })
+
+const toggleCardSelection = (image: any) => {
+	const index = selectedCardIds.value.indexOf(image)
+	if (index > -1) {
+		selectedCardIds.value.splice(index, 1)
+	} else {
+		selectedCardIds.value.push(image)
+	}
+}
 
 const openImageViewer = (imageUrl) => {
 	currentImage.value = imageUrl
@@ -271,95 +299,40 @@ watch(() => props.selectedFolderId, (newValue) => {
 </script>
 
 <style scoped lang="scss">
-	.fileBox {
-		padding-top: 16px;
-		clear: both;
-	}
-	ul.image-list{
-		width: 100%;
-		overflow: hidden;
-		border: 1px solid #ddd;
-		background: #f9f9f9;
-		margin: 0;
-		padding: 8px;
-		text-align: center;
+.fileBox {
+	padding-top: 16px;
+	clear: both;
+}
 
-		li.thumbnail {
-			height: 180px;
-			width: 155px;
-			float: left;
-			border-right: 1px solid #ddd;
-			border-bottom: 1px solid #ddd;
-			margin: 5px auto;
-			padding: 10px 0;
-			position: relative;
-			overflow: hidden;
+.image-list {
+	justify-content: flex-start !important;
+}
 
-			div {
-				position: absolute;
-				bottom: 10px;
-				left: 0;
-				text-align: center;
-				width: 155px;
+.thumbnail {
+	flex: 0 0 auto;
+	margin-right: 8px;
+	margin-bottom: 8px;
+}
 
-				.image-top {
-					position: relative;
-					margin: 5px 0;
-					line-height: 1.2;
-					display: inline-flex;
+.selection-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
 
-					input {
-						position: relative;
-						left: 8px;
-					}
-				}
-				.file-name{
-					width: 120px;
-					height: 16px;
-					margin: 0 auto;
-					text-align: left;
-					overflow: hidden;
-				}
-				.delete-image {
-					position: relative;
-					margin-top: 16px;
+.selection-card.selected {
+	border-color: #27C1A3;
+	background-color: rgba(39,193,163, 0.8);
+}
+.checkbox-overlay {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	z-index: 10;
+}
 
-					.delete-icon {
-						color: red;
-					}
-					.text-delete {
-						position: relative;
-						top: 2px;
-					}
-				}
-			}
-		}
-	}
-	.image-item img {
-		width: 100px;
-		height: 100px;
-		object-fit: cover;
-		cursor: pointer;
-		border: 2px solid #ccc;
-		border-radius: 8px;
-		transition: transform 0.3s ease;
-	}
-	.image-item img:hover {
-		transform: scale(1.1);
-	}
-
-	/* SweetAlert2ボタンの固定幅スタイル */
-	:deep(.swal2-confirm-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-
-	:deep(.swal2-cancel-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
+.checkbox-overlay .v-checkbox {
+	margin: 0;
+}
 </style>
 
 <style>
