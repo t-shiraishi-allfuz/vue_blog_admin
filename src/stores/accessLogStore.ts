@@ -161,9 +161,131 @@ export const useAccessLogStore = defineStore('accessLog', () => {
 		}
 	}
 
+	// モーメントの統計情報を取得
+	const getMomentStats = async () => {
+		try {
+			// 全モーメントを取得
+			const querySnapshot = await BaseAPI.getDataWithQuery({
+				db_name: "moment",
+				searchConditions: {
+					filters: [["isPublished", "==", true]],
+					sorters: [["createdAt", "desc"]]
+				}
+			})
+
+			if (!querySnapshot) {
+				return {
+					totalMomentCount: 0,
+					totalMomentAccessCount: 0,
+					averageMomentAccessCount: 0,
+					popularMoments: [],
+					recentMoments: [],
+					accessDistribution: {
+						zero: 0,
+						low: 0,
+						medium: 0,
+						high: 0,
+						veryHigh: 0
+					}
+				}
+			}
+
+			const moments = querySnapshot.docs.map(doc => {
+				const data = doc.data()
+				let createdAt = data.createdAt
+				
+				// FirestoreのTimestampをDateオブジェクトに変換
+				if (createdAt && typeof createdAt === 'object' && 'toDate' in createdAt) {
+					createdAt = (createdAt as any).toDate()
+				} else if (createdAt && !(createdAt instanceof Date)) {
+					// 文字列や数値の場合はDateオブジェクトに変換
+					createdAt = new Date(createdAt)
+				}
+				
+				return {
+					id: doc.id,
+					title: data.title as string,
+					viewCount: (data.viewCount as number) || 0,
+					createdAt: createdAt as Date,
+					isPublished: data.isPublished as boolean
+				}
+			})
+
+			// 総モーメント数
+			const totalMomentCount = moments.length
+
+			// 総アクセス数
+			const totalMomentAccessCount = moments.reduce((sum, moment) => sum + moment.viewCount, 0)
+
+			// 平均アクセス数
+			const averageMomentAccessCount = totalMomentCount > 0 ? totalMomentAccessCount / totalMomentCount : 0
+
+			// 人気モーメントランキング（アクセス数順）
+			const popularMoments = [...moments]
+				.sort((a, b) => b.viewCount - a.viewCount)
+				.slice(0, 10)
+
+			// 最近のモーメント（作成日時順）
+			const recentMoments = [...moments]
+				.sort((a, b) => {
+					try {
+						const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt ? new Date(a.createdAt) : new Date(0))
+						const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt ? new Date(b.createdAt) : new Date(0))
+						
+						// 無効な日付の場合は0を返す
+						if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+							return 0
+						}
+						
+						return dateB.getTime() - dateA.getTime()
+					} catch (error) {
+						console.error('日付ソートエラー:', error)
+						return 0
+					}
+				})
+				.slice(0, 20)
+
+			// アクセス数分布
+			const accessDistribution = {
+				zero: 0,
+				low: 0,
+				medium: 0,
+				high: 0,
+				veryHigh: 0
+			}
+
+			moments.forEach(moment => {
+				const count = moment.viewCount
+				if (count === 0) {
+					accessDistribution.zero++
+				} else if (count <= 10) {
+					accessDistribution.low++
+				} else if (count <= 50) {
+					accessDistribution.medium++
+				} else if (count <= 100) {
+					accessDistribution.high++
+				} else {
+					accessDistribution.veryHigh++
+				}
+			})
+
+			return {
+				totalMomentCount,
+				totalMomentAccessCount,
+				averageMomentAccessCount,
+				popularMoments,
+				recentMoments,
+				accessDistribution
+			}
+		} catch (error) {
+			throw new Error(`モーメント統計の取得に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
+		}
+	}
+
 	return {
 		create,
 		createTweetAccessLog,
-		getTweetStats
+		getTweetStats,
+		getMomentStats
 	}
 })

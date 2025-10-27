@@ -72,6 +72,42 @@
 			</v-col>
 		</v-row>
 
+		<!-- モーメント統計 -->
+		<v-row class="mt-6">
+			<v-col cols="12">
+				<h2 class="text-h5 mb-4">
+					<v-icon start icon="mdi-image-multiple" />
+					モーメント統計
+				</h2>
+			</v-col>
+		</v-row>
+		<v-row>
+			<v-col cols="12" md="4">
+				<v-card class="pa-4" color="primary" variant="tonal">
+					<v-card-title class="text-h6">総モーメントアクセス数</v-card-title>
+					<v-card-text class="text-h4 font-weight-bold">
+						{{ momentStats.totalMomentAccessCount.toLocaleString() }}
+					</v-card-text>
+				</v-card>
+			</v-col>
+			<v-col cols="12" md="4">
+				<v-card class="pa-4" color="success" variant="tonal">
+					<v-card-title class="text-h6">総モーメント数</v-card-title>
+					<v-card-text class="text-h4 font-weight-bold">
+						{{ momentStats.totalMomentCount }}
+					</v-card-text>
+				</v-card>
+			</v-col>
+			<v-col cols="12" md="4">
+				<v-card class="pa-4" color="info" variant="tonal">
+					<v-card-title class="text-h6">平均モーメントアクセス数</v-card-title>
+					<v-card-text class="text-h4 font-weight-bold">
+						{{ momentStats.averageMomentAccessCount.toFixed(1) }}
+					</v-card-text>
+				</v-card>
+			</v-col>
+		</v-row>
+
 		<v-row class="mt-4">
 			<v-col cols="12" md="6">
 				<v-card>
@@ -213,6 +249,77 @@
 			</v-col>
 		</v-row>
 
+		<!-- モーメントランキングと分布 -->
+		<v-row class="mt-4">
+			<v-col cols="12" md="6">
+				<v-card>
+					<v-card-title>
+						<v-icon start icon="mdi-trending-up" />
+						人気モーメントランキング
+					</v-card-title>
+					<v-card-text>
+						<v-list>
+							<v-list-item
+								v-for="(moment, index) in momentStats.popularMoments"
+								:key="moment.id"
+								class="px-0"
+							>
+								<template v-slot:prepend>
+									<v-chip
+										:color="getRankColor(index + 1)"
+										size="small"
+										class="mr-2"
+									>
+										{{ index + 1 }}
+									</v-chip>
+								</template>
+								<v-list-item-title class="text-truncate" style="max-width: 200px;">
+									{{ moment.title }}
+								</v-list-item-title>
+								<v-list-item-subtitle>
+									<v-icon start icon="mdi-eye" size="small" />
+									{{ moment.viewCount || 0 }} 回
+								</v-list-item-subtitle>
+							</v-list-item>
+						</v-list>
+					</v-card-text>
+				</v-card>
+			</v-col>
+
+			<v-col cols="12" md="6">
+				<v-card>
+					<v-card-title>
+						<v-icon start icon="mdi-chart-bar" />
+						モーメントアクセス数分布
+					</v-card-title>
+					<v-card-text>
+						<v-list>
+							<v-list-item>
+								<v-list-item-title>0回</v-list-item-title>
+								<v-list-item-subtitle>{{ momentStats.accessDistribution.zero }} モーメント</v-list-item-subtitle>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>1-10回</v-list-item-title>
+								<v-list-item-subtitle>{{ momentStats.accessDistribution.low }} モーメント</v-list-item-subtitle>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>11-50回</v-list-item-title>
+								<v-list-item-subtitle>{{ momentStats.accessDistribution.medium }} モーメント</v-list-item-subtitle>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>51-100回</v-list-item-title>
+								<v-list-item-subtitle>{{ momentStats.accessDistribution.high }} モーメント</v-list-item-subtitle>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>100回以上</v-list-item-title>
+								<v-list-item-subtitle>{{ momentStats.accessDistribution.veryHigh }} モーメント</v-list-item-subtitle>
+							</v-list-item>
+						</v-list>
+					</v-card-text>
+				</v-card>
+			</v-col>
+		</v-row>
+
 		<v-row class="mt-4">
 			<v-col cols="12">
 				<v-card>
@@ -295,6 +402,48 @@
 				</v-card>
 			</v-col>
 		</v-row>
+
+		<!-- モーメントの最近のアクセス状況 -->
+		<v-row class="mt-4">
+			<v-col cols="12">
+				<v-card>
+					<v-card-title>
+						<v-icon start icon="mdi-clock" />
+						最近のモーメントアクセス状況
+					</v-card-title>
+					<v-card-text>
+						<v-data-table
+							:headers="momentRecentHeaders"
+							:items="momentStats.recentMoments"
+							:items-per-page="10"
+							no-data-text="データがありません"
+						>
+							<template v-slot:[`item.title`]="{ item }">
+								<div class="text-truncate" style="max-width: 200px;">
+									{{ item.title }}
+								</div>
+							</template>
+							<template v-slot:[`item.viewCount`]="{ item }">
+								<v-chip
+									:color="getViewCountColor(item.viewCount)"
+									size="small"
+									variant="outlined"
+								>
+									<v-icon start icon="mdi-eye" />
+									{{ item.viewCount || 0 }}
+								</v-chip>
+							</template>
+							<template v-slot:[`item.createdAt`]="{ item }">
+								{{ formatDate(item.createdAt) }}
+							</template>
+							<template v-slot:[`item.isPublished`]="{ item }">
+								{{ item.isPublished ? '公開' : '下書き' }}
+							</template>
+						</v-data-table>
+					</v-card-text>
+				</v-card>
+			</v-col>
+		</v-row>
 	</v-container>
 </template>
 
@@ -337,12 +486,55 @@ interface TweetStats {
 	}
 }
 
+// モーメント統計データの型定義
+interface MomentStats {
+	totalMomentCount: number
+	totalMomentAccessCount: number
+	averageMomentAccessCount: number
+	popularMoments: Array<{
+		id: string
+		title: string
+		viewCount: number
+		createdAt: Date
+		isPublished: boolean
+	}>
+	recentMoments: Array<{
+		id: string
+		title: string
+		viewCount: number
+		createdAt: Date
+		isPublished: boolean
+	}>
+	accessDistribution: {
+		zero: number
+		low: number
+		medium: number
+		high: number
+		veryHigh: number
+	}
+}
+
 const tweetStats = ref<TweetStats>({
 	totalTweetCount: 0,
 	totalTweetAccessCount: 0,
 	averageTweetAccessCount: 0,
 	popularTweets: [],
 	recentTweets: [],
+	accessDistribution: {
+		zero: 0,
+		low: 0,
+		medium: 0,
+		high: 0,
+		veryHigh: 0
+	}
+})
+
+const momentStats = ref<MomentStats>({
+	totalMomentCount: 0,
+	totalMomentAccessCount: 0,
+	averageMomentAccessCount: 0,
+	popularMoments: [],
+	recentMoments: [],
 	accessDistribution: {
 		zero: 0,
 		low: 0,
@@ -361,6 +553,13 @@ const recentHeaders = [
 
 const tweetRecentHeaders = [
 	{ title: "つぶやき内容", value: "content" },
+	{ title: "アクセス数", value: "viewCount" },
+	{ title: "投稿日時", value: "createdAt" },
+	{ title: "ステータス", value: "isPublished" }
+]
+
+const momentRecentHeaders = [
+	{ title: "モーメントタイトル", value: "title" },
 	{ title: "アクセス数", value: "viewCount" },
 	{ title: "投稿日時", value: "createdAt" },
 	{ title: "ステータス", value: "isPublished" }
@@ -486,6 +685,13 @@ const fetchData = async () => {
 		tweetStats.value = stats as TweetStats
 	} catch (error) {
 		console.error('つぶやき統計の取得に失敗しました:', error)
+	}
+	// モーメント統計を取得
+	try {
+		const stats = await accessLogStore.getMomentStats()
+		momentStats.value = stats as MomentStats
+	} catch (error) {
+		console.error('モーメント統計の取得に失敗しました:', error)
 	}
 }
 
