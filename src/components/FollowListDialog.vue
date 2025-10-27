@@ -55,7 +55,7 @@
 									color="success"
 									size="small"
 									variant="flat"
-									@click.stop="openDmDialog(user.uid)"
+									@click.stop="goToDmPage(user.uid)"
 								>
 									<v-icon size="16" class="mr-1">mdi-message-text</v-icon>
 									DM
@@ -90,13 +90,6 @@
 				</v-list>
 			</v-card-text>
 		</v-card>
-		
-		<!-- DMダイアログ -->
-		<DmDialog
-			v-model="dmDialog"
-			:target-user-id="dmTargetUserId"
-			@message-sent="onMessageSent"
-		/>
 	</v-dialog>
 </template>
 
@@ -104,7 +97,6 @@
 import { useAuthStore } from '@/stores/authStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import DmDialog from '@/components/DmDialog.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -147,8 +139,6 @@ const dialog = computed({
 
 const userList = ref<UserData[]>([])
 const loading = ref<boolean>(false)
-const dmDialog = ref<boolean>(false)
-const dmTargetUserId = ref<string>('')
 
 // ダイアログを閉じる
 const closeDialog = (): void => {
@@ -298,15 +288,12 @@ const goToUserProfile = (uid: string): void => {
 	}
 }
 
-// DMダイアログを開く
-const openDmDialog = (uid: string): void => {
-	dmTargetUserId.value = uid
-	dmDialog.value = true
-}
-
-// メッセージ送信完了時の処理
-const onMessageSent = (): void => {
-	// 必要に応じて追加の処理を実装
+// DMページに遷移
+const goToDmPage = (uid: string): void => {
+	router.push({
+		path: '/dm',
+		query: { targetUserId: uid }
+	})
 }
 
 // ダイアログが開かれた時にデータを取得

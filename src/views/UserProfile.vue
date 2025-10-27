@@ -60,7 +60,7 @@
 									<v-btn
 										color="success"
 										variant="flat"
-										@click="openDmDialog"
+										@click="goToDmPage"
 										block
 									>
 										<v-icon class="mr-2">mdi-message-text</v-icon>
@@ -154,12 +154,6 @@
 			:target-user-id="profileUserId"
 		/>
 		
-		<!-- DMダイアログ -->
-		<DmDialog
-			v-model="dmDialog"
-			:target-user-id="profileUserId"
-			@message-sent="onMessageSent"
-		/>
 	</v-container>
 </template>
 
@@ -169,7 +163,6 @@ import { useBlogStore } from '@/stores/blogStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import FollowListDialog from '@/components/FollowListDialog.vue'
-import DmDialog from '@/components/DmDialog.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -216,7 +209,6 @@ const isFollowing = ref<boolean>(false)
 const followLoading = ref<boolean>(false)
 const followersDialog = ref<boolean>(false)
 const followingDialog = ref<boolean>(false)
-const dmDialog = ref<boolean>(false)
 
 // プロフィールのユーザーID
 const profileUserId = computed((): string => route.query.uid as string)
@@ -365,14 +357,14 @@ const openFollowingDialog = (): void => {
 	followingDialog.value = true
 }
 
-// DMダイアログを開く
-const openDmDialog = (): void => {
-	dmDialog.value = true
-}
-
-// メッセージ送信完了時の処理
-const onMessageSent = (): void => {
-	// 必要に応じて追加の処理を実装
+// DMページに遷移
+const goToDmPage = (): void => {
+	router.push({ 
+		path: '/dm',
+		query: { 
+			targetUserId: profileUserId.value
+		} 
+	})
 }
 
 // コンポーネントマウント時にデータを取得

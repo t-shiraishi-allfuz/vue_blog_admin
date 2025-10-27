@@ -20,7 +20,7 @@
 					
 					<v-card-text class="pa-0" style="height: 500px; overflow-y: auto;">
 						<div v-if="loading && conversations.length === 0" class="d-flex justify-center align-center pa-8">
-							<v-progress-circular indeterminate color="primary" />
+							<v-progress-circular indeterminate color="success" />
 						</div>
 						
 						<div v-else-if="conversations.length === 0" class="text-center pa-8">
@@ -415,6 +415,9 @@ interface OtherUser {
 const dmStore = useDmStore()
 const authStore = useAuthStore()
 
+// ルート
+const route = useRoute()
+
 // 状態管理
 const selectedConversationId = ref<string | null>(null)
 const newMessage = ref<string>('')
@@ -777,7 +780,43 @@ const formatDateTime = (date: any): string => {
 // コンポーネントマウント時に会話一覧を取得
 onMounted(async (): Promise<void> => {
 	await refreshConversations()
+	
+	// クエリパラメータで対象ユーザーが指定されている場合、その会話を自動選択
+	const targetUserId = route.query.targetUserId as string
+	if (targetUserId && targetUserId !== authStore.userInfo?.uid) {
+		await selectConversationByUserId(targetUserId)
+	}
 })
+
+// ユーザーIDから会話を選択
+const selectConversationByUserId = async (userId: string): Promise<void> => {
+	try {
+		// 会話IDを生成
+		const conversationId = dmStore.generateConversationId(authStore.userInfo!.uid, userId)
+		
+		// 会話が存在するかチェック
+		const existingConversation = conversations.value.find(
+			c => c.conversation.id === conversationId
+		)
+		
+		if (existingConversation) {
+			// 既存の会話を選択
+			await selectConversation(conversationId)
+		} else {
+			// 新しい会話を開始
+			await dmStore.startConversation(userId)
+			await refreshConversations()
+			await selectConversation(conversationId)
+		}
+	} catch (error) {
+		console.error('会話の選択に失敗しました:', error)
+		Swal.fire({
+			title: 'エラー',
+			text: '会話の開始に失敗しました',
+			icon: 'error'
+		})
+	}
+}
 </script>
 
 <style scoped>
