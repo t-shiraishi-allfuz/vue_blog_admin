@@ -44,10 +44,10 @@
 								<v-col cols="6">
 									<v-btn
 										:color="isFollowing ? 'grey-lighten-4' : 'success'"
-										:variant="isFollowing ? 'outlined' : 'flat'"
 										@click="toggleFollow"
 										:loading="followLoading"
 										:disabled="followLoading"
+										variant="flat"
 										block
 									>
 										<v-icon class="mr-2">
@@ -58,8 +58,8 @@
 								</v-col>
 								<v-col cols="6">
 									<v-btn
-										color="primary"
-										variant="outlined"
+										color="success"
+										variant="flat"
 										@click="openDmDialog"
 										block
 									>

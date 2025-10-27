@@ -50,11 +50,11 @@
 						</v-list-item-subtitle>
 						
 						<template #append>
-							<div v-if="!isOwnProfile && user.uid !== authStore.userInfo?.uid" class="d-flex align-center">
+							<div v-if="user.uid !== authStore.userInfo?.uid" class="d-flex align-center">
 								<v-btn
 									color="success"
 									size="small"
-									variant="outlined"
+									variant="flat"
 									@click.stop="openDmDialog(user.uid)"
 								>
 									<v-icon size="16" class="mr-1">mdi-message-text</v-icon>
@@ -64,7 +64,7 @@
 									v-if="!user.isFollowing"
 									color="success"
 									size="small"
-									variant="outlined"
+									variant="flat"
 									@click.stop="followUser(user.uid)"
 									:loading="user.followLoading"
 									:disabled="user.followLoading"
@@ -76,7 +76,7 @@
 									v-else
 									color="grey-lighten-4"
 									size="small"
-									variant="outlined"
+									variant="flat"
 									@click.stop="unfollowUser(user.uid)"
 									:loading="user.followLoading"
 									:disabled="user.followLoading"
@@ -150,11 +150,6 @@ const loading = ref<boolean>(false)
 const dmDialog = ref<boolean>(false)
 const dmTargetUserId = ref<string>('')
 
-// 自分のプロフィールかどうか
-const isOwnProfile = computed((): boolean => {
-	return authStore.userInfo?.uid === props.targetUserId
-})
-
 // ダイアログを閉じる
 const closeDialog = (): void => {
 	dialog.value = false
@@ -192,8 +187,8 @@ const fetchUserList = async (): Promise<void> => {
 						followLoading: false
 					}
 					
-					// フォロー状態を確認（自分のプロフィールでない場合）
-					if (!isOwnProfile.value && uid !== authStore.userInfo?.uid) {
+					// フォロー状態を確認（自分以外のユーザーの場合）
+					if (uid !== authStore.userInfo?.uid) {
 						userData.isFollowing = await followUsersStore.isFollower(uid)
 					}
 					

@@ -7,6 +7,15 @@ import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 
 // 型定義
+interface ReplyData {
+	id: string
+	content: string
+	imageUrl?: string
+	gifUrl?: string
+	emoji?: string
+	senderId: string
+}
+
 interface MessageData {
 	id: string
 	senderId: string
@@ -14,6 +23,10 @@ interface MessageData {
 	content: string
 	createdAt: Date
 	isRead: boolean
+	imageUrl?: string
+	gifUrl?: string
+	emoji?: string
+	replyTo?: ReplyData
 }
 
 interface ConversationData {
@@ -39,6 +52,13 @@ export const useDmStore = defineStore('dm', () => {
 	const currentConversation = ref<ConversationData | null>(null)
 	const messages = ref<MessageData[]>([])
 	const loading = ref<boolean>(false)
+	
+	// 未読DM数の計算
+	const unreadDmCount = computed(() => {
+		return conversations.value.reduce((total, conversation) => {
+			return total + (conversation.conversation.unreadCount || 0)
+		}, 0)
+	})
 
 	const authStore = useAuthStore()
 	const blogSettingStore = useBlogSettingStore()
@@ -110,6 +130,84 @@ export const useDmStore = defineStore('dm', () => {
 
 		} catch (error: any) {
 			throw new Error(`メッセージの送信に失敗しました: ${error.message}`)
+		}
+	}
+
+	// リッチメッセージを送信（画像・GIF・絵文字対応）
+	const sendRichMessage = async (receiverId: string, messageData: any): Promise<void> => {
+		const userInfo = authStore.userInfo
+		
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+
+		if (userInfo.uid === receiverId) {
+			throw new Error('自分自身にメッセージを送ることはできません')
+		}
+
+		try {
+			const conversationId = generateConversationId(userInfo.uid, receiverId)
+			const batch = writeBatch(db)
+
+			// リッチメッセージデータを準備
+			const richMessageData = {
+				senderId: userInfo.uid,
+				receiverId,
+				content: messageData.content || '',
+				createdAt: serverTimestamp(),
+				isRead: false,
+				...(messageData.imageUrl && { imageUrl: messageData.imageUrl }),
+				...(messageData.gifUrl && { gifUrl: messageData.gifUrl }),
+				...(messageData.emoji && { emoji: messageData.emoji }),
+				...(messageData.replyTo && { replyTo: messageData.replyTo })
+			}
+			
+			// BaseAPIの新しいメソッドを使用
+			await BaseAPI.addDataToSubCollection(
+				{ path: ['conversations', conversationId, 'messages'] },
+				richMessageData
+			)
+
+			// 会話ドキュメントを更新
+			const conversationRef = BaseAPI.getDoc(`conversations/${conversationId}`)
+			batch.set(conversationRef, {
+				participants: [userInfo.uid, receiverId],
+				lastMessage: richMessageData,
+				lastMessageAt: serverTimestamp(),
+				unreadCount: 0 // 送信者は未読数0
+			}, { merge: true })
+
+			// 受信者の未読数を更新
+			const receiverConversationRef = BaseAPI.getDoc(`users/${receiverId}/conversations/${conversationId}`)
+			batch.set(receiverConversationRef, {
+				unreadCount: 1,
+				lastMessageAt: serverTimestamp()
+			}, { merge: true })
+
+			await batch.commit()
+
+			// DM通知を作成
+			const userSetting = await blogSettingStore.getForUid(userInfo.uid)
+			let notificationContent = ''
+			if (messageData.imageUrl) {
+				notificationContent = '画像を送信しました'
+			} else if (messageData.gifUrl) {
+				notificationContent = 'GIFを送信しました'
+			} else if (messageData.emoji) {
+				notificationContent = `絵文字を送信しました: ${messageData.emoji}`
+			} else {
+				notificationContent = messageData.content.substring(0, 50) + (messageData.content.length > 50 ? '...' : '')
+			}
+
+			await notificationStore.createNotification('dm', {
+				userId: receiverId,
+				userName: userSetting?.title || 'ユーザー',
+				actorUserId: userInfo.uid,
+				content: notificationContent
+			})
+
+		} catch (error: any) {
+			throw new Error(`リッチメッセージの送信に失敗しました: ${error.message}`)
 		}
 	}
 
@@ -334,11 +432,14 @@ export const useDmStore = defineStore('dm', () => {
 		currentConversation,
 		messages,
 		loading,
+		unreadDmCount,
 		sendMessage,
+		sendRichMessage,
 		getConversations,
 		getMessages,
 		markMessagesAsRead,
 		startConversation,
-		clearStore
+		clearStore,
+		generateConversationId
 	}
 })

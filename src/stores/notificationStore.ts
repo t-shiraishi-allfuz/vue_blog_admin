@@ -64,7 +64,7 @@ export const useNotificationStore = defineStore('notification', () => {
 			
 			const notificationData = {
 				userId: data.userId || authStore.userInfo.uid,
-				type: type, // 'like', 'comment', 'follow'
+				type: type, // 'like', 'comment', 'follow', 'dm'
 				title: getNotificationTitle(type, data),
 				message: getNotificationMessage(type, data),
 				isRead: false,
@@ -145,6 +145,8 @@ export const useNotificationStore = defineStore('notification', () => {
 				return 'コメントされました'
 			case 'follow':
 				return 'フォローされました'
+			case 'dm':
+				return '新しいメッセージ'
 			default:
 				return '新しい通知'
 		}
@@ -159,6 +161,8 @@ export const useNotificationStore = defineStore('notification', () => {
 				return `${data.userName || 'ユーザー'}があなたの記事「${data.blogTitle || '記事'}」にコメントしました`
 			case 'follow':
 				return `${data.userName || 'ユーザー'}があなたをフォローしました`
+			case 'dm':
+				return `${data.userName || 'ユーザー'}からメッセージが届きました: ${data.content || ''}`
 			default:
 				return '新しい通知があります'
 		}

@@ -64,6 +64,7 @@ import { useImagesStore } from '@/stores/imagesStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
+import { useDmStore } from '@/stores/dmStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import NotificationDialog from '@/components/NotificationDialog.vue'
@@ -79,6 +80,7 @@ const imagesStore = useImagesStore()
 const followUsersStore = useFollowUsersStore()
 const notificationStore = useNotificationStore()
 const announcementStore = useAnnouncementStore()
+const dmStore = useDmStore()
 const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
@@ -87,9 +89,9 @@ const {
 	isLogin
 } = storeToRefs(authStore)
 
-// 未読通知数とお知らせ数を取得
+// 未読通知数とお知らせ数とDM未読数を取得
 const totalUnreadCount = computed((): number => 
-	notificationStore.unreadNotificationCount + (announcementStore.unreadAnnouncementCount || 0)
+	notificationStore.unreadNotificationCount + (announcementStore.unreadAnnouncementCount || 0) + dmStore.unreadDmCount
 )
 
 const search = ref<string>('')
@@ -103,6 +105,7 @@ onMounted(async (): Promise<void> => {
 		await blogSettingStore.getDetail()
 		await notificationStore.initialize()
 		await announcementStore.getList()
+		await dmStore.getConversations()
 	}
 })
 
@@ -113,9 +116,11 @@ watch(isLogin, async (newIsLogin: boolean): Promise<void> => {
 		await blogSettingStore.getDetail()
 		await notificationStore.initialize()
 		await announcementStore.getList()
+		await dmStore.getConversations()
 	} else {
 		// ログアウトした場合、ブログ設定をクリア
 		blogSettingStore.clearStore()
+		dmStore.clearStore()
 	}
 })
 
@@ -156,6 +161,7 @@ const logout = async (): Promise<void> => {
 			blogSettingStore.clearStore()
 			imagesStore.clearStore()
 			followUsersStore.clearStore()
+			dmStore.clearStore()
 			router.push({path: '/'})
 		}
 	} catch (error: any) {
