@@ -71,7 +71,7 @@ export const useUsersStore = defineStore('users', () => {
 	const getUserByUid = async (uid: string): Promise<UserData | null> => {
 		try {
 			const querySnapshot = await BaseAPI.getData({db_name: "users", item_id: uid})
-			return querySnapshot?.data() || null
+			return querySnapshot?.data() as UserData || null
 		} catch (error) {
 			return null
 		}

@@ -289,14 +289,18 @@ export const useTweetStore = defineStore('tweet', () => {
 				const promises = result.docs.map(doc => setTweetData(doc))
 				const tweets = await Promise.all(promises)
 				// クライアント側でソート
-				tweetList.value = tweets.sort((a, b) => {
+				const sortedTweets = tweets.sort((a, b) => {
 					const dateA = new Date(a.createdAt || 0).getTime()
 					const dateB = new Date(b.createdAt || 0).getTime()
 					return dateB - dateA // 降順
 				})
+				return sortedTweets
 			}
+			
+			return []
 		} catch (error) {
 			console.error('ユーザーつぶやき一覧の取得に失敗しました:', error)
+			return []
 		}
 	}
 

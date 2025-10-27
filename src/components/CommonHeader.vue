@@ -36,7 +36,7 @@
 					<template v-slot:activator="{ props }">
 						<v-avatar v-bind="props" :image="(blogSetting as any)?.profileUrl" size="48" end />
 					</template>
-					<CommonUsermenu :setting="blogSetting" @openTweetDialog="openTweetDialog" />
+					<CommonUsermenu :setting="blogSetting as any" @openTweetDialog="openTweetDialog" />
 				</v-menu>
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>

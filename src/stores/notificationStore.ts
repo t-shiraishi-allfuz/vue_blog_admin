@@ -49,7 +49,7 @@ export const useNotificationStore = defineStore('notification', () => {
 				notifications.value.push({
 					id: doc.id,
 					...doc.data()
-				})
+				} as NotificationData)
 			})
 		} catch (error) {
 			console.error('通知の取得に失敗しました:', error)
@@ -87,7 +87,7 @@ export const useNotificationStore = defineStore('notification', () => {
 	
 	
 	// 通知を既読にする
-	const markNotificationAsRead = async (notificationId) => {
+	const markNotificationAsRead = async (notificationId: string): Promise<void> => {
 		try {
 			const param = {
 				db_name: 'notifications',
@@ -108,7 +108,7 @@ export const useNotificationStore = defineStore('notification', () => {
 	
 	
 	// 全ての通知を既読にする
-	const markAllNotificationsAsRead = async () => {
+	const markAllNotificationsAsRead = async (): Promise<void> => {
 		try {
 			const unreadNotifications = notifications.value.filter(n => !n.isRead)
 			
@@ -122,22 +122,22 @@ export const useNotificationStore = defineStore('notification', () => {
 	
 	
 	// ダイアログを開く
-	const openDialog = async () => {
+	const openDialog = async (): Promise<void> => {
 		activeTab.value = 'notifications'
 	}
 	
 	// ダイアログを閉じる
-	const closeDialog = () => {
+	const closeDialog = (): void => {
 		isDialogOpen.value = false
 	}
 	
 	// タブを切り替え
-	const setActiveTab = (tab) => {
+	const setActiveTab = (tab: string): void => {
 		activeTab.value = tab
 	}
 	
 	// 通知タイトルを取得
-	const getNotificationTitle = (type, data) => {
+	const getNotificationTitle = (type: string, _data: any): string => {
 		switch (type) {
 			case 'like':
 				return 'いいねされました'
@@ -151,7 +151,7 @@ export const useNotificationStore = defineStore('notification', () => {
 	}
 	
 	// 通知メッセージを取得
-	const getNotificationMessage = (type, data) => {
+	const getNotificationMessage = (type: string, data: any): string => {
 		switch (type) {
 			case 'like':
 				return `${data.userName || 'ユーザー'}があなたの記事「${data.blogTitle || '記事'}」にいいねしました`
@@ -165,7 +165,7 @@ export const useNotificationStore = defineStore('notification', () => {
 	}
 	
 	// 初期化
-	const initialize = async () => {
+	const initialize = async (): Promise<void> => {
 		if (authStore.isLogin) {
 			await fetchNotifications()
 		}

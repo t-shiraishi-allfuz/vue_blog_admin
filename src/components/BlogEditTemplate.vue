@@ -10,8 +10,8 @@
 					<BlogCard
 						v-if="props.shareBlog"
 						class="mb-5"
-						:blog="props.shareBlog"
-						:setting="props.shareSetting"
+						:blog="props.shareBlog as any"
+						:setting="props.shareSetting as any"
 					/>
 					<VueEditor
 						v-model="blog.content"
@@ -120,27 +120,40 @@ import { VueEditor } from "vue3-editor"
 import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
 
-const props = defineProps({
-	blog: {
-		type: Object,
-		required: true,
-	},
-	shareBlog: {
-		type: Object,
-		required: false,
-		default: null,
-	},
-	shareSetting: {
-		type: Object,
-		required: false,
-		default: null,
-	},
-	isUpdate: {
-		type: Boolean,
-		required: true,
-	},
-})
-const blog = ref(props.blog)
+// 型定義
+interface BlogData {
+	id?: string
+	uid?: string
+	title: string
+	summary: string
+	content: string
+	category_id?: string | null
+	isAdult: boolean
+	isPublished: boolean
+	thumbUrl?: string | null
+	share_blog_id?: string | null
+	viewCount?: number
+	createdAt?: Date | null
+	updatedAt?: Date | null
+	password?: string | null
+	[key: string]: any
+}
+
+interface SettingData {
+	name: string
+	profileUrl?: string | null
+	[key: string]: any
+}
+
+interface Props {
+	blog: BlogData
+	shareBlog?: BlogData | null
+	shareSetting?: SettingData | null
+	isUpdate: boolean
+}
+
+const props = defineProps<Props>()
+const blog = ref<BlogData>(props.blog)
 
 const blogStore = useBlogStore()
 const imagesStore = useImagesStore()
@@ -159,13 +172,13 @@ const {
 	categoryList
 } = storeToRefs(blogCategoryStore)
 
-const imageSelectDialog = ref(false)
-const selectType = ref('content')
-const defaultSelect = ref({id: null, name: '指定なし'})
-const selectedFolderId = ref(null)
+const imageSelectDialog = ref<boolean>(false)
+const selectType = ref<string>('content')
+const defaultSelect = ref<{id: string | null, name: string}>({id: null, name: '指定なし'})
+const selectedFolderId = ref<string | null>(null)
 
-let quillEditor = null
-let cursorPosition = null
+let quillEditor: any = null
+let cursorPosition: number | null = null
 
 const editorOptions = ref({
 	theme: 'snow',
@@ -179,7 +192,7 @@ const editorOptions = ref({
 				[{ 'color': [] }, { 'background': [] }],
 			],
 			handlers: {
-				image: function () {
+				image: function (this: any) {
 					quillEditor = this.quill
 					cursorPosition = quillEditor.getSelection().index
 					openImageDialog('content')
@@ -194,7 +207,7 @@ const extendedFolderList = computed(() => {
 	return [defaultSelect.value, ...folderList.value]
 })
 
-watch(selectedFolderId, async (newId) => {
+watch(selectedFolderId, async (_newId) => {
 	await fetchImageList()
 })
 
@@ -203,13 +216,13 @@ const extendedImageList = computed(() => {
 })
 
 // 画像選択ダイアログ表示
-const openImageDialog = (type) => {
+const openImageDialog = (type: string): void => {
 	selectType.value = type
 	imageSelectDialog.value = true
 }
 
 // 画像を選択
-const selectImage = (imageUrl) => {
+const selectImage = (imageUrl: string): void => {
 	imageSelectDialog.value = false
 
 	if (selectType.value == 'content') {
@@ -234,10 +247,10 @@ const submitPost = async () => {
 
 	try {
 		if (props.isUpdate) {
-			await blogStore.update(blog.value)
+			await blogStore.update(blog.value as any)
 		} else {
 			blog.value.share_blog_id = props.shareBlog ? props.shareBlog.id : null
-			await blogStore.create(blog.value)
+			await blogStore.create(blog.value as any)
 		}
 
 		if (blog.value.isPublished) {

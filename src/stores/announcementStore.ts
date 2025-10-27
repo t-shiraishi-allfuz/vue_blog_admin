@@ -55,7 +55,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 				announcements.value = querySnapshot.docs.map(doc => ({
 					id: doc.id,
 					...doc.data()
-				}))
+				} as AnnouncementData))
 			}
 		} catch (error) {
 			console.error('お知らせ一覧取得エラー:', error)
@@ -64,7 +64,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	// お知らせを更新
-	const update = async (announcementId, announcementData) => {
+	const update = async (announcementId: string, announcementData: Partial<AnnouncementData>): Promise<boolean> => {
 		try {
 			const data = {
 				...announcementData,
@@ -83,7 +83,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	// お知らせを削除
-	const deleteAnnouncement = async (announcementId) => {
+	const deleteAnnouncement = async (announcementId: string): Promise<boolean> => {
 		try {
 			await BaseAPI.deleteData({ db_name: "announcements", item_id: announcementId })
 			return true
@@ -94,7 +94,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	// お知らせを既読にする
-	const markAnnouncementAsRead = async (announcementId) => {
+	const markAnnouncementAsRead = async (announcementId: string): Promise<void> => {
 		try {
 			await BaseAPI.setData(
 				{ db_name: "announcements", item_id: announcementId },
@@ -114,7 +114,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	// 全てのお知らせを既読にする
-	const markAllAnnouncementsAsRead = async () => {
+	const markAllAnnouncementsAsRead = async (): Promise<void> => {
 		try {
 			const unreadAnnouncements = announcements.value?.filter(a => !a.isRead) || []
 			
@@ -128,7 +128,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 	}
 
 	// 公開中のお知らせ一覧を取得（一般ユーザー向け）
-	const getPublicList = async () => {
+	const getPublicList = async (): Promise<void> => {
 		try {
 			const querySnapshot = await BaseAPI.getDataWithQuery({
 				db_name: "announcements",
@@ -142,7 +142,7 @@ export const useAnnouncementStore = defineStore('announcement', () => {
 				announcements.value = querySnapshot.docs.map(doc => ({
 					id: doc.id,
 					...doc.data()
-				}))
+				} as AnnouncementData))
 			}
 		} catch (error) {
 			console.error('公開お知らせ一覧取得エラー:', error)

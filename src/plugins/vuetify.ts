@@ -4,7 +4,7 @@ import 'vuetify/styles'
 import {createVuetify} from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import {en, ja} from 'vuetify/locale'
+import {ja} from 'vuetify/locale'
 
 export default createVuetify({
 	locale: {

@@ -1,6 +1,5 @@
 import BaseAPI from '@/api/base'
 import { defineStore } from 'pinia'
-import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 
@@ -21,7 +20,6 @@ export const useCommentStore = defineStore('comment', () => {
 	const commentList = ref<CommentData[]>([])
 	const commentDetail = ref<CommentData>({} as CommentData)
 
-	const authStore = useAuthStore()
 	const blogSettingStore = useBlogSettingStore()
 	const notificationStore = useNotificationStore()
 
@@ -50,6 +48,10 @@ export const useCommentStore = defineStore('comment', () => {
 	}
 
 	const create = async (payload: Partial<CommentData>, blog_title: string, blog_author_uid: string): Promise<void> => {
+		if (!payload.uid) {
+			throw new Error('ユーザーIDが取得できません')
+		}
+		
 		await BaseAPI.addData(
 			{db_name: "comment"},
 			payload
@@ -68,7 +70,7 @@ export const useCommentStore = defineStore('comment', () => {
 		}
 	}
 
-	const getList = async (blog_id) => {
+	const getList = async (blog_id: string): Promise<void> => {
 		const filters = [
 			["blog_id", "==", blog_id],
 		]
@@ -88,7 +90,7 @@ export const useCommentStore = defineStore('comment', () => {
 		}
 	}
 
-	const getDetail = async (comment_id) => {
+	const getDetail = async (comment_id: string): Promise<void> => {
 		const doc = await BaseAPI.getData(
 			{db_name: "comment", item_id: comment_id},
 		)
@@ -97,16 +99,16 @@ export const useCommentStore = defineStore('comment', () => {
 		}
 	}
 
-	const getCommentCounts = async (blogIds) => {
-		const promises = blogIds.map(id => getCommentCount(id))
+	const getCommentCounts = async (blogIds: string[]): Promise<Record<string, number>> => {
+		const promises = blogIds.map((id: string) => getCommentCount(id))
 		const results = await Promise.all(promises)
-		return blogIds.reduce((acc, id, index) => {
+		return blogIds.reduce((acc: Record<string, number>, id: string, index: number) => {
 			acc[id] = results[index]
 			return acc
 		}, {})
 	}
 
-	const getCommentCount = async (blogId) => {
+	const getCommentCount = async (blogId: string): Promise<number> => {
 		const filters = [
 			["blog_id", "==", blogId],
 		]
@@ -121,7 +123,7 @@ export const useCommentStore = defineStore('comment', () => {
 		return querySnapshot ? querySnapshot.size : 0
 	}
 
-	const deleteItem = async (comment_id) => {
+	const deleteItem = async (comment_id: string): Promise<void> => {
 		await BaseAPI.deleteData(
 			{db_name: "comment", item_id: comment_id},
 		)

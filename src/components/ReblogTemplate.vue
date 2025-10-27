@@ -3,9 +3,9 @@
 		<v-card class="post-create">
 			<v-card-text style="height: 400px">
 				<BlogEditTemplate
-					:blog="reblog"
-					:shareBlog="blog"
-					:shareSetting="setting"
+					:blog="reblog as any"
+					:shareBlog="blog as any"
+					:shareSetting="setting as any"
 					:isUpdate="false"
 				/>
 			</v-card-text>
@@ -17,25 +17,46 @@
 import { useBlogStore } from '@/stores/blogStore'
 import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 
-const props = defineProps({
-	blog: {
-		type: Object,
-		required: true,
-	},
-	setting: {
-		type: Object,
-		required: true,
-	}
-})
-const blog = ref(props.blog)
-const setting = ref(props.setting)
+// 型定義
+interface BlogData {
+	id?: string
+	uid?: string
+	title: string
+	summary: string
+	content: string
+	category_id?: string | null
+	isAdult: boolean
+	isPublished: boolean
+	thumbUrl?: string | null
+	share_blog_id?: string | null
+	viewCount?: number
+	createdAt?: Date | null
+	updatedAt?: Date | null
+	password?: string | null
+	[key: string]: any
+}
+
+interface SettingData {
+	name: string
+	profileUrl?: string | null
+	[key: string]: any
+}
+
+interface Props {
+	blog: BlogData
+	setting: SettingData
+}
+
+const props = defineProps<Props>()
+const blog = ref<BlogData>(props.blog)
+const setting = ref<SettingData>(props.setting)
 
 const blogStore = useBlogStore()
 const reblog = blogStore.tempBlog
 
-const openDialog = ref(false)
+const openDialog = ref<boolean>(false)
 
-onMounted(() => {
+onMounted((): void => {
 	openDialog.value = true
 })
 </script>

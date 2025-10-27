@@ -4,15 +4,39 @@ import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useImagesStore } from '@/stores/imagesStore'
 
+// 型定義
+interface ImagesFolderData {
+	id: string
+	uid: string
+	name: string
+	image_count: number
+	createdAt: Date
+	updatedAt: Date
+	[key: string]: any
+}
+
+interface CreateFolderData {
+	name: string
+}
+
+interface UpdateFolderData {
+	id: string
+	name: string
+}
+
 // 画像のフォルダ管理
 export const useImagesFolderStore = defineStore('images_folder', () => {
 	const authStore = useAuthStore()
 	const imagesStore = useImagesStore()
 
-	const folderList = ref([])
+	const folderList = ref<ImagesFolderData[]>([])
 
-	const create = async (folder) => {
+	const create = async (folder: CreateFolderData): Promise<void> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		await BaseAPI.addData(
 			{db_name: "images_folder"},
 			{
@@ -24,7 +48,7 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 		)
 	}
 
-	const update = async (folder) => {
+	const update = async (folder: UpdateFolderData): Promise<void> => {
 		await BaseAPI.setData(
 			{db_name: "images_folder", item_id: folder.id},
 			{
@@ -34,8 +58,12 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 		)
 	}
 
-	const getList = async () => {
+	const getList = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid],
 		]
@@ -50,30 +78,35 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 		)
 
 		if (querySnapshot) {
-			const result = []
+			const result: ImagesFolderData[] = []
 			for (const doc of querySnapshot.docs) {
 				const imageCount = await imagesStore.getImageCount(doc.id)
 
 				// 対象のフォルダに格納されている画像数を取得
-				const data = {
+				const data: ImagesFolderData = {
 					id: doc.id,
 					image_count: imageCount,
 					...doc.data()
-				}
-				if (data.createdAt && data.createdAt.toDate) {
-					data.createdAt = data.createdAt.toDate()
+				} as ImagesFolderData
+				
+				if (data.createdAt && (data.createdAt as any).toDate) {
+					data.createdAt = (data.createdAt as any).toDate()
 				}
 				result.push(data)
 			}
 			// createdAt の昇順でソート
-			result.sort((a, b) => a.createdAt - b.createdAt)
+			result.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
 
 			folderList.value = result
 		}
 	}
 
-	const deleteItem = async (docId) => {
+	const deleteItem = async (docId: string): Promise<void> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid],
 			["folder_id", "==", docId]
@@ -92,7 +125,7 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 		if (querySnapshot) {
 			const updatePromises = querySnapshot.docs.map(async (doc) => {
 				const imageDocRef = doc.ref
-				await BaseAPI.deleteData(
+				await BaseAPI.setData(
 					{db_name: "images", item_id: imageDocRef.id},
 					{ folder_id: null }
 				)

@@ -65,7 +65,6 @@ export const useBlogStore = defineStore('blog', () => {
 	const blogList = ref<BlogData[]>([])
 	const blogDetail = ref<BlogData>({} as BlogData)
 	const selectType = ref<number>(0)
-	const accessCounts = ref<Record<string, number>>({})
 
 	const tempBlog = ref<TempBlog>({
 		uid: null,
@@ -206,6 +205,10 @@ export const useBlogStore = defineStore('blog', () => {
 	// 自分のブログ一覧取得
 	const getList = async (): Promise<void> => {
 		const userInfo = authStore.userInfo
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid]
 		]

@@ -4,14 +4,37 @@ import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 
+// 型定義
+interface BlogCategoryData {
+	id: string
+	uid: string
+	pre_category_id: string | null
+	name: string
+	blog_count: number
+	createdAt: Date
+	updatedAt: Date
+	[key: string]: any
+}
+
+interface CreateCategoryData {
+	pre_category_id?: string | null
+	name: string
+}
+
+interface UpdateCategoryData {
+	id: string
+	pre_category_id?: string | null
+	name: string
+}
+
 // ブログカテゴリー管理
 export const useBlogCategoryStore = defineStore('blog_category', () => {
-	const categoryList = ref([])
+	const categoryList = ref<BlogCategoryData[]>([])
 
 	const authStore = useAuthStore()
 	const blogStore = useBlogStore()
 
-	const mapDocToCategory = (doc) => {
+	const mapDocToCategory = (doc: any): BlogCategoryData => {
 		const data = doc.data()
 		if (data.createdAt && data.createdAt.toDate) {
 			data.createdAt = data.createdAt.toDate()
@@ -26,8 +49,12 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 		}
 	}
 
-	const create = async (category) => {
+	const create = async (category: CreateCategoryData): Promise<void> => {
 		const userInfo = authStore.userInfo;
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		const payload = {
 			uid: userInfo.uid,
 			pre_category_id: category.pre_category_id || null,
@@ -41,12 +68,12 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 				{db_name: "blog_category"},
 				payload
 			)
-		} catch (error) {
+		} catch (error: any) {
 			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 
-	const update = async (category) => {
+	const update = async (category: UpdateCategoryData): Promise<void> => {
 		const payload = {
 			pre_category_id: category.pre_category_id || null,
 			name: category.name,
@@ -58,27 +85,31 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 				{db_name: "blog_category", item_id: category.id},
 				payload
 			)
-		} catch (error) {
+		} catch (error: any) {
 			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 
-	const getDetail = async (category_id) => {
+	const getDetail = async (category_id: string): Promise<BlogCategoryData | null> => {
 		try {
 			const doc = await BaseAPI.getData(
 				{db_name: "blog_category", item_id: category_id},
 			)
 			return doc ? mapDocToCategory(doc) : null
-		} catch (error) {
+		} catch (error: any) {
 			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 
-	const deleteItem = async (category) => {
+	const deleteItem = async (category: BlogCategoryData): Promise<void> => {
 		try {
 			// 親カテゴリーを削除する場合は、子カテゴリーの紐付きも削除する
 			if (category.pre_category_id == null) {
 				const userInfo = authStore.userInfo
+				if (!userInfo) {
+					throw new Error('ユーザー情報が取得できません')
+				}
+				
 				const filters = [
 					["uid", "==", userInfo.uid],
 					["pre_category_id", "==", category.id]
@@ -103,13 +134,17 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 					{db_name: "blog_category", item_id: category.id},
 				)
 			}
-		} catch (error) {
+		} catch (error: any) {
 			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}
 
-	const getList = async () => {
+	const getList = async (): Promise<void> => {
 		const userInfo = authStore.userInfo;
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
 		const filters = [
 			["uid", "==", userInfo.uid],
 		]
@@ -126,7 +161,7 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 
 			if (!querySnapshot) {
 				categoryList.value = []
-				return []
+				return
 			}
 
 			const rawCategories = querySnapshot.docs.map(mapDocToCategory)
@@ -139,7 +174,7 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 			const allCategories = await Promise.all(countPromises)
 
 			// 親カテゴリー順に並べ替え、子カテゴリーを末尾に追加
-			const categoryMap = new Map()
+			const categoryMap = new Map<string, BlogCategoryData>()
 			// ID でマッピング
 			allCategories.forEach(category => {
 				categoryMap.set(category.id, category)
@@ -155,21 +190,21 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 			})
 
 			// 親カテゴリーを優先して並べ替え、子カテゴリーを親の直後に追加
-			const sortedCategories = []
+			const sortedCategories: BlogCategoryData[] = []
 			allCategories
 				.filter(category => !category.pre_category_id)
-				.sort((a, b) => a.createdAt - b.createdAt)
+				.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
 				.forEach(parentCategory => {
 					sortedCategories.push(parentCategory)
 					allCategories
 						.filter(category => category.pre_category_id === parentCategory.id)
-						.sort((a, b) => a.createdAt - b.createdAt)
+						.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
 						.forEach(childCategory => {
 							sortedCategories.push(childCategory)
 						})
 				})
 			categoryList.value = sortedCategories
-		} catch (error) {
+		} catch (error: any) {
 			throw new Error(`エラーが発生しました: ${error.message}`)
 		}
 	}

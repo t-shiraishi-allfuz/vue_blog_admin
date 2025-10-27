@@ -6,8 +6,41 @@ import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage
 import { useAuthStore } from '@/stores/authStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 
+// 型定義
+interface BlogSettingData {
+	id?: string
+	title: string
+	description: string
+	name: string
+	profileUrl: string | null
+	is_follower: boolean
+	is_following: boolean
+	createdAt: Date | null
+	updatedAt: Date | null
+	[key: string]: any
+}
+
+interface TempSettingData {
+	title: string
+	description: string
+	name: string
+	profileUrl: string | null
+	is_follower: boolean
+	is_following: boolean
+	createdAt: Date | null
+	updatedAt: Date | null
+}
+
+interface UpdateData {
+	title: string
+	description: string
+	name: string
+	profileUrl?: string
+	[key: string]: any
+}
+
 export const useBlogSettingStore = defineStore('blogSetting', () => {
-	const tempSetting = ref({
+	const tempSetting = ref<TempSettingData>({
 		title: "仮タイトル",
 		description: "仮説明",
 		name: "名無しさん",
@@ -18,34 +51,40 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		updatedAt: null,
 	})
 
-	const blogSetting = ref(null)
+	const blogSetting = ref<BlogSettingData | null>(null)
 
 	const authStore = useAuthStore()
 	const followUsersStore = useFollowUsersStore()
 
-	const setBlogSetting = (setting) => {
-		return tempSetting.value = { ...setting }
+	const setBlogSetting = (setting: Partial<TempSettingData>): TempSettingData => {
+		return tempSetting.value = { ...tempSetting.value, ...setting }
 	}
 
-	const getBlogSetting = () => {
+	const getBlogSetting = (): BlogSettingData | null => {
 		return blogSetting.value
 	}
 
-	const create = async () => {
+	const create = async (): Promise<void> => {
 		const userInfo = authStore.getUserInfo()
+		if (!userInfo) {
+			throw new Error('ユーザー情報が取得できません')
+		}
 
-		blogSetting.value = tempSetting.value
-		blogSetting.value.createdAt = new Date()
-		blogSetting.value.updatedAt = new Date()
+		const settingData: BlogSettingData = {
+			...tempSetting.value,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		}
+		blogSetting.value = settingData
 
 		await BaseAPI.setData(
 			{db_name: "blog_setting", item_id: userInfo.uid},
-			blogSetting.value
+			settingData
 		)
 	}
 
 	// プロフィール画像アップロード
-	const uploadProfileImage = async (image) => {
+	const uploadProfileImage = async (image: any): Promise<string | null> => {
 		try {
 			// 画像が存在しない場合はnullを返す
 			if (!image || !image.value) {
@@ -68,13 +107,13 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 			// Firebase Storageに画像をアップロード
 			await uploadBytes(fileRef, image.value)
 			return await getDownloadURL(fileRef)
-		} catch (error) {
+		} catch (error: any) {
 			console.error('プロフィール画像アップロードエラー:', error)
 			throw new Error(`画像のアップロードに失敗しました: ${error.message}`)
 		}
 	}
 
-	const update = async (image, data) => {
+	const update = async (image: any, data: UpdateData): Promise<void> => {
 		try {
 			const userInfo = authStore.getUserInfo()
 			
@@ -106,15 +145,15 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 			)
 			
 			// ローカルの状態を更新
-			blogSetting.value = updateData
+			blogSetting.value = updateData as BlogSettingData
 			
-		} catch (error) {
+		} catch (error: any) {
 			console.error('ブログ設定更新エラー:', error)
 			throw error
 		}
 	}
 
-	const getDetail = async () => {
+	const getDetail = async (): Promise<void> => {
 		const userInfo = authStore.getUserInfo()
 		
 		// ユーザー情報がnullの場合は処理を中断
@@ -130,21 +169,21 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 			},
 		)
 		if (doc) {
-			blogSetting.value = doc.data()
+			blogSetting.value = doc.data() as BlogSettingData
 		}
 	}
 
-	const getForUids = async (uids) => {
-		const promises = uids.map(id => getForUid(id))
+	const getForUids = async (uids: string[]): Promise<Record<string, any>> => {
+		const promises = uids.map((id: string) => getForUid(id))
 		const results = await Promise.all(promises)
-		const userIds = {}
-		uids.forEach((id, index) => {
+		const userIds: Record<string, any> = {}
+		uids.forEach((id: string, index: number) => {
 			userIds[id] = results[index]
 		})
 		return userIds
 	}
 
-	const getForUid = async (uid) => {
+	const getForUid = async (uid: string): Promise<any> => {
 		const doc = await BaseAPI.getData(
 			{db_name: "blog_setting", item_id: uid},
 		)
@@ -158,7 +197,7 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 	}
 
 	// タイトルの重複チェック
-	const isTitleUnique = async (uid, title) => {
+	const isTitleUnique = async (uid: string, title: string): Promise<boolean> => {
 		try {
 			const filters = [
 				["title", "==", title],
@@ -178,7 +217,7 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 			
 			// 重複がない場合はtrue（ユニーク）、重複がある場合はfalse
 			return duplicateDocs.length === 0
-		} catch (error) {
+		} catch (error: any) {
 			console.error('タイトル重複チェックエラー:', error)
 			// エラーの場合は安全のためfalseを返す（重複ありとみなす）
 			return false
@@ -186,7 +225,7 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 	}
 
 	// ストアをクリアする関数
-	const clearStore = () => {
+	const clearStore = (): void => {
 		blogSetting.value = null
 		tempSetting.value = {
 			title: "仮タイトル",
