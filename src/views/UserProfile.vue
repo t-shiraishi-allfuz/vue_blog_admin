@@ -21,11 +21,21 @@
 								<div class="text-caption text-grey">記事</div>
 							</v-col>
 							<v-col cols="4">
-								<div class="text-h6">{{ userStats?.followerCount || 0 }}</div>
+								<div 
+									class="text-h6 cursor-pointer hover-text"
+									@click="openFollowersDialog"
+								>
+									{{ userStats?.followerCount || 0 }}
+								</div>
 								<div class="text-caption text-grey">フォロワー</div>
 							</v-col>
 							<v-col cols="4">
-								<div class="text-h6">{{ userStats?.followingCount || 0 }}</div>
+								<div 
+									class="text-h6 cursor-pointer hover-text"
+									@click="openFollowingDialog"
+								>
+									{{ userStats?.followingCount || 0 }}
+								</div>
 								<div class="text-caption text-grey">フォロー中</div>
 							</v-col>
 						</v-row>
@@ -115,6 +125,18 @@
 				</v-card>
 			</v-col>
 		</v-row>
+		
+		<!-- フォロワー・フォローリストダイアログ -->
+		<FollowListDialog
+			v-model="followersDialog"
+			dialog-type="followers"
+			:target-user-id="profileUserId"
+		/>
+		<FollowListDialog
+			v-model="followingDialog"
+			dialog-type="following"
+			:target-user-id="profileUserId"
+		/>
 	</v-container>
 </template>
 
@@ -123,6 +145,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import FollowListDialog from '@/components/FollowListDialog.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -167,6 +190,8 @@ const userStats = ref<UserStats | null>(null)
 const userBlogs = ref<BlogData[]>([])
 const isFollowing = ref<boolean>(false)
 const followLoading = ref<boolean>(false)
+const followersDialog = ref<boolean>(false)
+const followingDialog = ref<boolean>(false)
 
 // プロフィールのユーザーID
 const profileUserId = computed((): string => route.query.uid as string)
@@ -305,6 +330,16 @@ const goToBlogDetail = (blogId: string): void => {
 	})
 }
 
+// フォロワーダイアログを開く
+const openFollowersDialog = (): void => {
+	followersDialog.value = true
+}
+
+// フォロー中ダイアログを開く
+const openFollowingDialog = (): void => {
+	followingDialog.value = true
+}
+
 // コンポーネントマウント時にデータを取得
 onMounted(async (): Promise<void> => {
 	await fetchUserProfile()
@@ -333,5 +368,10 @@ onMounted(async (): Promise<void> => {
 	display: inline-block;
 	min-width: 20px;
 	text-align: right;
+}
+
+.hover-text:hover {
+	color: rgb(var(--v-theme-primary));
+	text-decoration: underline;
 }
 </style>

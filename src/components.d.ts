@@ -20,6 +20,7 @@ declare module 'vue' {
     CommonSidemenu: typeof import('./components/CommonSidemenu.vue')['default']
     CommonTemplate: typeof import('./components/CommonTemplate.vue')['default']
     CommonUsermenu: typeof import('./components/CommonUsermenu.vue')['default']
+    FollowListDialog: typeof import('./components/FollowListDialog.vue')['default']
     LoginDialog: typeof import('./components/LoginDialog.vue')['default']
     MomentCard: typeof import('./components/MomentCard.vue')['default']
     MomentCreateDialog: typeof import('./components/MomentCreateDialog.vue')['default']
