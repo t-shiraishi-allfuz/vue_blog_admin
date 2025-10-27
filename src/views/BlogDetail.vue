@@ -529,7 +529,8 @@ const cancelPasswordAuth = (): void => {
 
 // パスワード認証が必要かチェック
 const checkPasswordRequired = (): boolean => {
-	if (blogDetail.value.password && !isPasswordVerified.value) {
+	// パスワードが設定されており、かつ空文字列でない場合のみ認証が必要
+	if (blogDetail.value.password && blogDetail.value.password.trim() !== '' && !isPasswordVerified.value) {
 		passwordDialog.value = true
 		return false
 	}
@@ -541,7 +542,11 @@ onMounted(async (): Promise<void> => {
 	await blogStore.getDetailWithAccessCount(blog_id)
 
 	// パスワード認証が必要かチェック
-	checkPasswordRequired()
+	if (checkPasswordRequired()) {
+		// パスワード認証が不要な場合のみブログ内容を表示
+		isLoading.value = true
+		await fetchCommentList()
+	}
 })
 
 // 戻るボタンのテキストを計算
