@@ -78,13 +78,13 @@
 		</v-dialog>
 
 		<v-dialog v-model="updateDialog" max-width="400px">
-			<v-card>
+			<v-card v-if="categoryToUpdate">
 				<v-card-title>カテゴリー編集</v-card-title>
 				<v-card-text>
 					<v-text-field
 						type="text"
 						label="カテゴリー名を入力して下さい"
-						v-model="categoryToUpdate?.name"
+						v-model="categoryToUpdate.name"
 					/>
 				</v-card-text>
 				<v-card-text v-if="categoryList.length > 0">
@@ -93,7 +93,7 @@
 						:items="categoryList"
 						item-title="name"
 						item-value="id"
-						v-model="categoryToUpdate?.pre_category_id"
+						v-model="categoryToUpdate.pre_category_id"
 						hide-details
 					/>
 				</v-card-text>
@@ -108,6 +108,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
@@ -226,61 +228,116 @@ const openDeleteDialog = async (category: BlogCategoryData): Promise<void> => {
 
 // 新規カテゴリー作成
 const createCategory = async (): Promise<void> => {
-	createDialog.value = false
-	category.value.pre_category_id = selectedPreCategoryID.value
-
-	await blogCategoryStore.create(category.value)
-	await fetchCategoryList()
-
-	selectedPreCategoryID.value = null
-	category.value = { pre_category_id: null, name: "" }
-	await Swal.fire({
-		title: '成功',
-		text: 'カテゴリーが作成されました',
-		icon: 'success',
-		timer: 1500,
-		confirmButtonColor: '#27C1A3',
-	})
-}
-
-// カテゴリー更新
-const updateCategory = async (): Promise<void> => {
-	if (!categoryToUpdate.value) return
-	
-	updateDialog.value = false
-
-	// 親と同一IDはNG
-	if (categoryToUpdate.value.pre_category_id == categoryToUpdate.value.id) {
+	if (!category.value.name.trim()) {
 		await Swal.fire({
 			title: 'エラー',
-			text: '同じカテゴリーは選択出来ません',
+			text: 'カテゴリー名を入力してください',
 			icon: 'error',
 			confirmButtonColor: '#27C1A3',
 		})
 		return
 	}
 
-	await blogCategoryStore.update(categoryToUpdate.value)
-	await fetchCategoryList()
+	try {
+		createDialog.value = false
+		category.value.pre_category_id = selectedPreCategoryID.value
 
-	categoryToUpdate.value = null
-	await Swal.fire({
-		title: '成功',
-		text: 'カテゴリーを更新しました',
-		icon: 'success',
-		timer: 1500,
-		confirmButtonColor: '#27C1A3',
-	})
+		await blogCategoryStore.create(category.value)
+		await fetchCategoryList()
+
+		selectedPreCategoryID.value = null
+		category.value = { pre_category_id: null, name: "" }
+		await Swal.fire({
+			title: '成功',
+			text: 'カテゴリーが作成されました',
+			icon: 'success',
+			timer: 1500,
+			confirmButtonColor: '#27C1A3',
+		})
+	} catch (error) {
+		console.error('カテゴリー作成エラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: 'カテゴリーの作成に失敗しました',
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
+		})
+	}
+}
+
+// カテゴリー更新
+const updateCategory = async (): Promise<void> => {
+	if (!categoryToUpdate.value) return
+	
+	if (!categoryToUpdate.value.name.trim()) {
+		await Swal.fire({
+			title: 'エラー',
+			text: 'カテゴリー名を入力してください',
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
+		})
+		return
+	}
+
+	try {
+		updateDialog.value = false
+
+		// 親と同一IDはNG
+		if (categoryToUpdate.value.pre_category_id == categoryToUpdate.value.id) {
+			await Swal.fire({
+				title: 'エラー',
+				text: '同じカテゴリーは選択出来ません',
+				icon: 'error',
+				confirmButtonColor: '#27C1A3',
+			})
+			return
+		}
+
+		await blogCategoryStore.update(categoryToUpdate.value)
+		await fetchCategoryList()
+
+		categoryToUpdate.value = null
+		await Swal.fire({
+			title: '成功',
+			text: 'カテゴリーを更新しました',
+			icon: 'success',
+			timer: 1500,
+			confirmButtonColor: '#27C1A3',
+		})
+	} catch (error) {
+		console.error('カテゴリー更新エラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: 'カテゴリーの更新に失敗しました',
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
+		})
+	}
 }
 
 // 再取得
 const fetchCategoryList = async (): Promise<void> => {
-	await blogCategoryStore.getList()
+	try {
+		await blogCategoryStore.getList()
+	} catch (error) {
+		console.error('カテゴリー一覧取得エラー:', error)
+		await Swal.fire({
+			title: 'エラー',
+			text: 'カテゴリー一覧の取得に失敗しました',
+			icon: 'error',
+			confirmButtonColor: '#27C1A3',
+		})
+	}
 }
 
 onMounted(async (): Promise<void> => {
-	await fetchCategoryList()
-	isLoading.value = false
+	try {
+		await fetchCategoryList()
+		isLoading.value = false
+	} catch (error) {
+		console.error('初期化エラー:', error)
+		isLoading.value = false
+	}
 })
 </script>
 

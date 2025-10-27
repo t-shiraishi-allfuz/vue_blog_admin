@@ -6,6 +6,8 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import {ElementPlusResolver} from 'unplugin-vue-components/resolvers'
 import path from 'path'
+import { Buffer } from 'buffer'
+import process from 'process'
 
 const resolvers = [ElementPlusResolver()]
 
@@ -46,13 +48,68 @@ export default defineConfig({
 			extensions: ["vue"],
 			dts: "src/components.d.ts",
 		}),
+		// Buffer polyfill plugin
+		{
+			name: 'buffer-polyfill',
+			configureServer(server) {
+				server.middlewares.use('/buffer', (_req, res) => {
+					res.setHeader('Content-Type', 'application/javascript');
+					res.end('export { Buffer } from "buffer";');
+				});
+			}
+		},
+		// Process polyfill plugin
+		{
+			name: 'process-polyfill',
+			configureServer(server) {
+				server.middlewares.use('/process', (_req, res) => {
+					res.setHeader('Content-Type', 'application/javascript');
+					res.end('export { default } from "process/browser";');
+				});
+			}
+		}
 	],
-	define: { 'process.env': {} },
+	define: { 
+		'process.env': {},
+		global: 'globalThis',
+		process: process,
+		Buffer: Buffer,
+	},
 	resolve: {
 		alias: {
 			vue: 'vue/dist/vue.esm-bundler.js',
 			'$': 'jQuery',
 			'@': path.resolve(__dirname, './src'),
+			crypto: 'crypto-browserify',
+			stream: 'stream-browserify',
+			vm: 'vm-browserify',
+			util: 'util',
+			buffer: 'buffer',
+			process: 'process/browser',
+		}
+	},
+	optimizeDeps: {
+		include: ['crypto-browserify', 'stream-browserify', 'vm-browserify', 'util', 'buffer', 'process']
+	},
+	esbuild: {
+		define: {
+			global: 'globalThis',
+			process: 'process',
+			Buffer: 'Buffer',
+		},
+	},
+	build: {
+		rollupOptions: {
+			external: [],
+			output: {
+				globals: {
+					buffer: 'Buffer',
+					process: 'process'
+				}
+			}
+		},
+		commonjsOptions: {
+			transformMixedEsModules: true
 		}
 	}
 })
