@@ -14,6 +14,12 @@ const routes:RouteRecordRaw[] = [
 		component: () => import("@/views/UserProfile.vue"),
 	},
 	{
+		path: '/dm',
+		name: 'DmPage',
+		component: () => import("@/views/DmPage.vue"),
+		meta: { requiresAuth: true },
+	},
+	{
 		path: '/announcements/:id',
 		name: 'AnnouncementDetail',
 		component: () => import("@/views/AnnouncementDetail.vue"),

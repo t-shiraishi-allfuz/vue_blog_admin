@@ -163,10 +163,10 @@
 									<div v-if="comment.reply_id">
 										<div class="pa-4 mb-2 bg-pink-lighten-5 rounded">
 											<v-icon icon="mdi-message-reply-text" start />
-											<div v-html="comment.reply?.content?.replace(/\n/g, '<br>') || ''"></div>
+											<div v-html="comment.reply?.body?.replace(/\n/g, '<br>') || ''"></div>
 										</div>
 									</div>
-									<div v-html="comment.content.replace(/\n/g, '<br>')"></div>
+									<div v-html="(comment.body || '').replace(/\n/g, '<br>')"></div>
 								</div>
 							</v-col>
 							<v-col>
@@ -237,7 +237,7 @@
 				<v-textarea
 					label="コメント"
 					type="string"
-					v-model="comment.content"
+					v-model="comment.body"
 					solo
 				/>
 			</v-list-item>
@@ -275,11 +275,11 @@ import Swal from 'sweetalert2'
 
 interface CommentData {
 	id: string
-	content: string
+	body: string
 	createdAt: Date
 	reply_id?: string
 	reply?: {
-		content: string
+		body: string
 		[key: string]: any
 	}
 	setting?: {
@@ -321,7 +321,7 @@ const reply_id = ref<string | null>(null)
 const commentDialog = ref<boolean>(false)
 const comment = ref<Partial<CommentData>>({
 	uid: '',
-	content: '',
+	body: '',
 	blog_id: '',
 	reply_id: '',
 	createdAt: new Date(),
@@ -439,7 +439,7 @@ const deleteComment = async (comment: CommentData): Promise<void> => {
 }
 
 const executeComment = async (): Promise<void> => {
-	if (!comment.value.content || !userInfo.value) return
+	if (!comment.value.body || !userInfo.value) return
 
 	comment.value.uid = userInfo.value.uid
 	comment.value.blog_id = blogDetail.value.id
@@ -463,7 +463,16 @@ const executeComment = async (): Promise<void> => {
 }
 
 const fetchCommentList = async (): Promise<void> => {
-	await commentStore.getList(blogDetail.value.id)
+	try {
+		await commentStore.getList(blogDetail.value.id)
+	} catch (error) {
+		console.error('コメントの取得に失敗しました:', error)
+		Swal.fire({
+			title: 'エラー',
+			text: 'コメントの取得に失敗しました',
+			icon: 'error'
+		})
+	}
 }
 
 // お気に入り登録
@@ -506,8 +515,8 @@ const verifyPassword = async (): Promise<void> => {
 			passwordDialog.value = false
 			passwordInput.value = ''
 
-			await fetchCommentList()
 			isLoading.value = true
+			await fetchCommentList()
 		} else {
 			passwordError.value = 'パスワードが正しくありません'
 		}

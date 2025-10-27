@@ -2,7 +2,9 @@
 	<v-dialog v-model="dialog" max-width="600" scrollable>
 		<v-card>
 			<v-card-title class="d-flex align-center">
-				<v-icon class="mr-2">{{ dialogType === 'followers' ? 'mdi-account-group' : 'mdi-account-heart' }}</v-icon>
+				<v-icon class="mr-2">
+					{{ dialogType === 'followers' ? 'mdi-account-group' : 'mdi-account-heart' }}
+				</v-icon>
 				{{ dialogType === 'followers' ? 'フォロワー' : 'フォロー中' }}
 				<v-spacer />
 				<v-btn icon="mdi-close" variant="text" @click="closeDialog" />
@@ -50,6 +52,15 @@
 						<template #append>
 							<div v-if="!isOwnProfile && user.uid !== authStore.userInfo?.uid" class="d-flex align-center">
 								<v-btn
+									color="success"
+									size="small"
+									variant="outlined"
+									@click.stop="openDmDialog(user.uid)"
+								>
+									<v-icon size="16" class="mr-1">mdi-message-text</v-icon>
+									DM
+								</v-btn>
+								<v-btn
 									v-if="!user.isFollowing"
 									color="success"
 									size="small"
@@ -79,6 +90,13 @@
 				</v-list>
 			</v-card-text>
 		</v-card>
+		
+		<!-- DMダイアログ -->
+		<DmDialog
+			v-model="dmDialog"
+			:target-user-id="dmTargetUserId"
+			@message-sent="onMessageSent"
+		/>
 	</v-dialog>
 </template>
 
@@ -86,6 +104,7 @@
 import { useAuthStore } from '@/stores/authStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import DmDialog from '@/components/DmDialog.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -128,6 +147,8 @@ const dialog = computed({
 
 const userList = ref<UserData[]>([])
 const loading = ref<boolean>(false)
+const dmDialog = ref<boolean>(false)
+const dmTargetUserId = ref<string>('')
 
 // 自分のプロフィールかどうか
 const isOwnProfile = computed((): boolean => {
@@ -280,6 +301,17 @@ const goToUserProfile = (uid: string): void => {
 			query: { uid }
 		})
 	}
+}
+
+// DMダイアログを開く
+const openDmDialog = (uid: string): void => {
+	dmTargetUserId.value = uid
+	dmDialog.value = true
+}
+
+// メッセージ送信完了時の処理
+const onMessageSent = (): void => {
+	// 必要に応じて追加の処理を実装
 }
 
 // ダイアログが開かれた時にデータを取得

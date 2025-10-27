@@ -40,18 +40,34 @@
 							</v-col>
 						</v-row>
 						<div class="mt-6" v-if="!isOwnProfile">
-							<v-btn
-								:color="isFollowing ? 'grey-lighten-4' : 'success'"
-								:variant="isFollowing ? 'outlined' : 'flat'"
-								@click="toggleFollow"
-								:loading="followLoading"
-								:disabled="followLoading"
-							>
-								<v-icon class="mr-2">
-									{{ isFollowing ? 'mdi-account-minus' : 'mdi-account-plus' }}
-								</v-icon>
-								{{ isFollowing ? 'フォロー解除' : 'フォロー' }}
-							</v-btn>
+							<v-row>
+								<v-col cols="6">
+									<v-btn
+										:color="isFollowing ? 'grey-lighten-4' : 'success'"
+										:variant="isFollowing ? 'outlined' : 'flat'"
+										@click="toggleFollow"
+										:loading="followLoading"
+										:disabled="followLoading"
+										block
+									>
+										<v-icon class="mr-2">
+											{{ isFollowing ? 'mdi-account-minus' : 'mdi-account-plus' }}
+										</v-icon>
+										{{ isFollowing ? 'フォロー解除' : 'フォロー' }}
+									</v-btn>
+								</v-col>
+								<v-col cols="6">
+									<v-btn
+										color="primary"
+										variant="outlined"
+										@click="openDmDialog"
+										block
+									>
+										<v-icon class="mr-2">mdi-message-text</v-icon>
+										DM
+									</v-btn>
+								</v-col>
+							</v-row>
 						</div>
 					</v-card-text>
 				</v-card>
@@ -137,6 +153,13 @@
 			dialog-type="following"
 			:target-user-id="profileUserId"
 		/>
+		
+		<!-- DMダイアログ -->
+		<DmDialog
+			v-model="dmDialog"
+			:target-user-id="profileUserId"
+			@message-sent="onMessageSent"
+		/>
 	</v-container>
 </template>
 
@@ -146,6 +169,7 @@ import { useBlogStore } from '@/stores/blogStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import FollowListDialog from '@/components/FollowListDialog.vue'
+import DmDialog from '@/components/DmDialog.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -192,6 +216,7 @@ const isFollowing = ref<boolean>(false)
 const followLoading = ref<boolean>(false)
 const followersDialog = ref<boolean>(false)
 const followingDialog = ref<boolean>(false)
+const dmDialog = ref<boolean>(false)
 
 // プロフィールのユーザーID
 const profileUserId = computed((): string => route.query.uid as string)
@@ -338,6 +363,16 @@ const openFollowersDialog = (): void => {
 // フォロー中ダイアログを開く
 const openFollowingDialog = (): void => {
 	followingDialog.value = true
+}
+
+// DMダイアログを開く
+const openDmDialog = (): void => {
+	dmDialog.value = true
+}
+
+// メッセージ送信完了時の処理
+const onMessageSent = (): void => {
+	// 必要に応じて追加の処理を実装
 }
 
 // コンポーネントマウント時にデータを取得

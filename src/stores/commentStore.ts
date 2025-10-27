@@ -8,7 +8,7 @@ interface CommentData {
 	id: string
 	uid: string
 	blog_id: string
-	content: string
+	body: string
 	reply_id?: string
 	createdAt: Date
 	updatedAt: Date
@@ -71,22 +71,30 @@ export const useCommentStore = defineStore('comment', () => {
 	}
 
 	const getList = async (blog_id: string): Promise<void> => {
-		const filters = [
-			["blog_id", "==", blog_id],
-		]
-		const querySnapshot = await BaseAPI.getDataWithQuery(
-			{
-				db_name: "comment",
-				searchConditions: {
-					filters: filters,
+		try {
+			const filters = [
+				["blog_id", "==", blog_id],
+			]
+			const querySnapshot = await BaseAPI.getDataWithQuery(
+				{
+					db_name: "comment",
+					searchConditions: {
+						filters: filters,
+					}
 				}
-			}
-		)
+			)
 
-		if (querySnapshot) {
-			const promises = querySnapshot.docs.map(doc => setCommentData(doc))
-			const result = await Promise.all(promises)
-			commentList.value = result
+			if (querySnapshot) {
+				const promises = querySnapshot.docs.map(doc => setCommentData(doc))
+				const result = await Promise.all(promises)
+				commentList.value = result
+			} else {
+				commentList.value = []
+			}
+		} catch (error) {
+			console.error('コメント一覧の取得に失敗しました:', error)
+			commentList.value = []
+			throw error
 		}
 	}
 

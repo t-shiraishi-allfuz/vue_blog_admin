@@ -77,6 +77,15 @@ class BaseAPI {
 		}
 	}
 
+	static async addDataToSubCollection (param, payload) {
+		try {
+			const collectionRefs = collection(db, ...param.path)
+			await addDoc(collectionRefs, payload)
+		} catch (error) {
+			throw new Error(`エラーが発生しました': ${error.message}`)
+		}
+	}
+
 	static async setData (param, payload) {
 		try {
 			const docRefs = this.getDocRef(param.db_name, param.item_id)
