@@ -121,7 +121,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'updated'])
 
-const form = ref(null)
+const form = ref<any>(null)
 const valid = ref(false)
 const loading = ref(false)
 
@@ -143,13 +143,13 @@ const priorityOptions = [
 ]
 
 const titleRules = [
-	v => !!v || 'タイトルは必須です',
-	v => (v && v.length <= 100) || 'タイトルは100文字以内で入力してください'
+	(v: string) => !!v || 'タイトルは必須です',
+	(v: string) => (v && v.length <= 100) || 'タイトルは100文字以内で入力してください'
 ]
 
 const contentRules = [
-	v => !!v || '内容は必須です',
-	v => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
+	(v: string) => !!v || '内容は必須です',
+	(v: string) => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
 ]
 
 const isOpen = computed({
@@ -157,14 +157,14 @@ const isOpen = computed({
 	set: (value) => emit('update:modelValue', value)
 })
 
-const formatDate = (date) => {
+const formatDate = (date: any): string => {
 	if (!date) return ''
 	const d = date.toDate ? date.toDate() : new Date(date)
 	return d.toLocaleString('ja-JP')
 }
 
 const updateAnnouncement = async () => {
-	if (!form.value.validate()) return
+	if (!form.value?.validate()) return
 	
 	loading.value = true
 	
@@ -187,7 +187,7 @@ const updateAnnouncement = async () => {
 		
 	} catch (error) {
 		console.error('お知らせ更新エラー:', error)
-		alert('お知らせの更新に失敗しました: ' + error.message)
+		alert('お知らせの更新に失敗しました: ' + (error instanceof Error ? error.message : String(error)))
 	} finally {
 		loading.value = false
 	}

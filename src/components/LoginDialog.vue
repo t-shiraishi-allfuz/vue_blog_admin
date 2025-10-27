@@ -9,7 +9,7 @@
 				<v-card-text class="pa-6">
 					<v-text-field
 						v-model="email"
-						:prepend-inner-icon="mdi-email-outline"
+						prepend-inner-icon="mdi-email-outline"
 						label="メールアドレスを入力して下さい"
 						type="email"
 						:rules="emailRules"
@@ -17,7 +17,7 @@
 					/>
 					<v-text-field
 						v-model="password"
-						:prepend-inner-icon="mdi-lock-outline"
+						prepend-inner-icon="mdi-lock-outline"
 						:append-inner-icon="visibleIcon"
 						:type="visibleType"
 						label="パスワードを入力して下さい"

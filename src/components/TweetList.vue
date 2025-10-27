@@ -105,7 +105,6 @@
 
 <script setup lang="ts">
 import { useTweetStore } from '@/stores/tweetStore'
-import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
 import TweetCreateDialog from '@/components/TweetCreateDialog.vue'
@@ -113,15 +112,10 @@ import TweetCard from '@/components/TweetCard.vue'
 
 const router = useRouter()
 const tweetStore = useTweetStore()
-const blogSettingStore = useBlogSettingStore()
 
 const {
 	tweetList
 } = storeToRefs(tweetStore)
-
-const {
-	blogSetting
-} = storeToRefs(blogSettingStore)
 
 const search = ref('')
 const tweetToDelete = ref<any>(null)
@@ -270,7 +264,6 @@ const goToLikeList = (tweet: any) => {
 
 onMounted(async () => {
 	await fetchTweetList()
-	await blogSettingStore.getBlogSetting()
 })
 </script>
 

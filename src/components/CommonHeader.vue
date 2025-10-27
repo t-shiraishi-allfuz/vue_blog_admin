@@ -34,7 +34,7 @@
 				
 				<v-menu>
 					<template v-slot:activator="{ props }">
-						<v-avatar v-bind="props" :image="blogSetting.profileUrl" size="48" end />
+						<v-avatar v-bind="props" :image="(blogSetting as any)?.profileUrl" size="48" end />
 					</template>
 					<CommonUsermenu :setting="blogSetting" @openTweetDialog="openTweetDialog" />
 				</v-menu>
@@ -60,7 +60,6 @@
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import { useLikeStore } from '@/stores/likeStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useNotificationStore } from '@/stores/notificationStore'
@@ -76,7 +75,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
 const blogSettingStore = useBlogSettingStore()
-const likeStore = useLikeStore()
 const imagesStore = useImagesStore()
 const followUsersStore = useFollowUsersStore()
 const notificationStore = useNotificationStore()
@@ -139,8 +137,8 @@ const logout = async (): Promise<void> => {
 			},
 			didOpen: () => {
 				// ダイアログが開いた後にボタンのスタイルを適用
-				const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
-				const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+				const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+				const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
 				if (confirmBtn) {
 					confirmBtn.style.minWidth = '150px'
 					confirmBtn.style.width = '150px'

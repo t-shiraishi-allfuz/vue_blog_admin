@@ -236,7 +236,7 @@ const formatDate = (date: Date): string => {
 	
 	const now = new Date()
 	const notificationDate = (date as any).toDate ? (date as any).toDate() : new Date(date)
-	const diffInMinutes = Math.floor((now - notificationDate) / (1000 * 60))
+	const diffInMinutes = Math.floor((now.getTime() - notificationDate.getTime()) / (1000 * 60))
 	
 	if (diffInMinutes < 1) {
 		return 'たった今'

@@ -14,19 +14,19 @@
 						<v-divider class="mx-4" inset vertical />
 						<v-spacer></v-spacer>
 						<v-btn
-							color="primary"
-							prepend-icon="mdi-plus"
+							color="success"
+							variant="flat"
 							@click="goToCreatePage"
 						>
 							新規作成
 						</v-btn>
 						<v-text-field
+							class="ml-4"
 							label="検索"
 							v-model="search"
 							append-inner-icon="mdi-magnify"
 							single-line
 							hide-details
-							class="ml-4"
 						/>
 					</v-toolbar>
 				</template>

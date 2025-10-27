@@ -9,23 +9,23 @@
 		>
 			<div class="header-image-container">
 				<v-img
-					:src="tweet.thumbUrl"
+					:src="props.tweet.thumbUrl"
 					aspect-ratio="16/9"
 					cover
 				/>
 				<div class="overlay-text">
-					<div class="tweet-content-overlay">{{ tweet.content }}</div>
+					<div class="tweet-content-overlay">{{ props.tweet.content }}</div>
 				</div>
 			</div>
 			<v-card-actions class="tweet-actions">
 				<div class="d-flex align-center">
 					<v-btn
-						:icon="formatLike(tweet)"
-						:color="colorIconPink(tweet)"
+						:icon="formatLike(props.tweet)"
+						:color="colorIconPink(props.tweet)"
 						variant="text"
-						@click="addMomentLike(tweet)"
+						@click="addMomentLike(props.tweet)"
 					/>
-					<span class="text-caption ml-1">{{ tweet.like_count || 0 }}</span>
+					<span class="text-caption ml-1">{{ props.tweet.like_count || 0 }}</span>
 				</div>
 			</v-card-actions>
 		</v-card>
@@ -33,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+import { useLikeStore } from '@/stores/likeStore'
+
 // 型定義
 interface TweetData {
 	id: string
@@ -59,6 +61,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const likeStore = useLikeStore()
+
 // アイコン設定
 const formatLike = (item: any): string => {
 	return item.is_like ? "mdi-heart" : "mdi-heart-outline"
@@ -68,16 +72,20 @@ const colorIconPink = (item: any): string => {
 	return item.is_like ? "pink" : "black"
 }
 
-// いいね
-const addLike = async (tweet: any): Promise<void> => {
-	if (item.is_like) {
-		await likeStore.deleteItem(tweet.id)
-		tweet.is_like = false
-		tweet.like_count--
-	} else {
-		await likeStore.create(tweet.id, tweet.title, tweet.uid)
-		tweet.is_like = true
-		tweet.like_count++
+// ツイートのいいね
+const addMomentLike = async (tweet: any): Promise<void> => {
+	try {
+		if (tweet.is_like) {
+			await likeStore.deleteItem(tweet.id)
+			tweet.is_like = false
+			tweet.like_count--
+		} else {
+			await likeStore.create(tweet.id, tweet.title, tweet.uid)
+			tweet.is_like = true
+			tweet.like_count++
+		}
+	} catch (error) {
+		console.error('いいねエラー:', error)
 	}
 }
 </script>

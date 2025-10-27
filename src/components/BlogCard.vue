@@ -5,28 +5,28 @@
 	>
 		<div class="header-image">
 			<v-img
-				:src="blog.thumbUrl"
+				:src="props.blog.thumbUrl"
 				aspect-ratio="16/9"
 				cover
 			/>
 		</div>
 		<v-card-text>
-			<h4 class="text-h5 font-weight-bold mb-4">{{ blog.title }}</h4>
-			<div class="mb-5 text-body-3">{{ blog.summary }}</div>
+			<h4 class="text-h5 font-weight-bold mb-4">{{ props.blog.title }}</h4>
+			<div class="mb-5 text-body-3">{{ props.blog.summary }}</div>
 			<v-row class="d-flex">
 				<v-avatar
 					class="mt-2"
 					size="48"
-					:image="setting.profileUrl"
+					:image="props.setting.profileUrl"
 					end
 				/>
 				<v-col>
 					<div class="ml-1 mb-1">
-						{{ setting.name }}
+						{{ props.setting.name }}
 					</div>
 					<div class="ml-1 mb-1">
 						<v-icon icon="mdi-clock" start />
-						{{ formatDate(blog.createdAt) }}
+						{{ formatDate(props.blog.createdAt) }}
 					</div>
 				</v-col>
 			</v-row>
@@ -34,12 +34,12 @@
 		<div class="d-flex">
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
-					:icon="formatLike(blog)"
-					:color="colorIconPink(blog.is_like)"
+					:icon="formatLike(props.blog)"
+					:color="colorIconPink(props.blog.is_like)"
 					variant="text"
-					@click="addLike(blog)"
+					@click="addLike(props.blog)"
 				/>
-				<div class="text-truncate">{{ blog.like_count }}</div>
+				<div class="text-truncate">{{ props.blog.like_count }}</div>
 			</div>
 		</div>
 	</v-card>
@@ -87,6 +87,12 @@ const formatLike = (blog: BlogData): string => {
 // アイコン設定（カラー）
 const colorIconPink = (flag: boolean): string => {
 	return flag ? "pink" : "black"
+}
+
+// いいね機能（仮実装）
+const addLike = (blog: BlogData): void => {
+	// TODO: いいね機能の実装
+	console.log('いいね機能:', blog.id)
 }
 </script>
 

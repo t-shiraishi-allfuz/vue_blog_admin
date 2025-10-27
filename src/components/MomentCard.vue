@@ -13,7 +13,7 @@
 				crossfade
 			>
 				<v-carousel-item
-					v-for="(tweet, index) in moment.tweets"
+					v-for="tweet in props.moment.tweets"
 					:key="tweet.id"
 					cover
 				>
@@ -35,27 +35,27 @@
 			<v-card-actions class="moment-actions">
 				<div class="d-flex align-center">
 					<v-btn
-						:icon="formatLike(moment)"
-						:color="colorIconPink(moment)"
+						:icon="formatLike(props.moment)"
+						:color="colorIconPink(props.moment)"
 						variant="text"
-						@click="addMomentLike(moment)"
+						@click="addMomentLike(props.moment)"
 					/>
-					<span class="text-caption ml-1">{{ moment.like_count || 0 }}</span>
+					<span class="text-caption ml-1">{{ props.moment.like_count || 0 }}</span>
 					
 					<v-btn
-						:icon="formatBookmark(moment)"
-						:color="colorIconPrimary(moment)"
+						:icon="formatBookmark(props.moment)"
+						:color="colorIconPrimary(props.moment)"
 						variant="text"
 						class="ml-3"
-						@click="addMomentBookmark(moment)"
+						@click="addMomentBookmark(props.moment)"
 					/>
 				</div>
 				
 				<div class="d-flex align-center ml-auto">
 					<v-icon size="small" class="mr-1">mdi-message-text</v-icon>
-					<span class="text-caption">{{ moment.tweets?.length || 0 }}</span>
+					<span class="text-caption">{{ props.moment.tweets?.length || 0 }}</span>
 					<v-icon size="small" class="ml-3 mr-1">mdi-eye</v-icon>
-					<span class="text-caption">{{ moment.viewCount || 0 }}</span>
+					<span class="text-caption">{{ props.moment.viewCount || 0 }}</span>
 				</div>
 			</v-card-actions>
 		</v-card>
@@ -63,7 +63,8 @@
 </template>
 
 <script setup lang="ts">
-import { useMomentStore } from '@/stores/momentStore'
+import { useLikeStore } from '@/stores/likeStore'
+import { useBookmarkStore } from '@/stores/bookmarkStore'
 
 // 型定義
 interface TweetData {
@@ -97,7 +98,8 @@ interface Props {
 }
 const props = defineProps<Props>()
 
-const momentStore = useMomentStore()
+const likeStore = useLikeStore()
+const bookmarkStore = useBookmarkStore()
 
 // アイコン設定
 const formatLike = (item: any): string => {
@@ -118,26 +120,34 @@ const colorIconPrimary = (item: any): string => {
 }
 
 // モーメントのいいね
-const addLike = async (moment: any): Promise<void> => {
-	if (moment.is_like) {
-		await likeStore.deleteItem(moment.id)
-		moment.is_like = false
-		moment.like_count--
-	} else {
-		await likeStore.create(moment.id, moment.title, moment.uid)
-		moment.is_like = true
-		moment.like_count++
+const addMomentLike = async (moment: any): Promise<void> => {
+	try {
+		if (moment.is_like) {
+			await likeStore.deleteItem(moment.id)
+			moment.is_like = false
+			moment.like_count--
+		} else {
+			await likeStore.create(moment.id, moment.title, moment.uid)
+			moment.is_like = true
+			moment.like_count++
+		}
+	} catch (error) {
+		console.error('いいねエラー:', error)
 	}
 }
 
 // モーメントのブックマーク
-const addBookmark = async (moment: any): Promise<void> => {
-	if (moment.is_bookmark) {
-		await bookmarkStore.deleteItem(moment.id)
-		moment.is_bookmark = false
-	} else {
-		await bookmarkStore.create(moment.id)
-		moment.is_bookmark = true
+const addMomentBookmark = async (moment: any): Promise<void> => {
+	try {
+		if (moment.is_bookmark) {
+			await bookmarkStore.deleteItem(moment.id)
+			moment.is_bookmark = false
+		} else {
+			await bookmarkStore.create(moment.id)
+			moment.is_bookmark = true
+		}
+	} catch (error) {
+		console.error('ブックマークエラー:', error)
 	}
 }
 </script>

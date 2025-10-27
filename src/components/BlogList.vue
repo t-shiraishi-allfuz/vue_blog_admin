@@ -41,7 +41,14 @@
 								outlined
 								height="280"
 							>
-								<v-img :src="item.thumbUrl || '/default-thumbnail.png'" aspect-ratio="16/9" cover />
+								<v-img
+									:src="item.thumbUrl || '/placeholder-image.png'"
+									width="200"
+									height="150"
+									position="top"
+									aspect-ratio="16/9"
+									cover
+								/>
 								<v-card-text class="d-flex flex-column" style="height: 60px;">
 									<strong class="text-h6">{{ item.title }}</strong>
 									<div class="chip-container" style="min-height: 10px;">
@@ -102,7 +109,14 @@
 								outlined
 								height="280"
 							>
-								<v-img :src="item.thumbUrl || '/default-thumbnail.png'" aspect-ratio="16/9" cover />
+								<v-img
+									:src="item.thumbUrl || '/placeholder-image.png'"
+									width="200"
+									height="150"
+									position="top"
+									aspect-ratio="16/9"
+									cover
+								/>
 								<v-card-text class="d-flex flex-column" style="height: 60px;">
 									<strong class="text-h6">{{ truncateContent(item.content) }}</strong>
 								</v-card-text>
@@ -151,7 +165,14 @@
 								outlined
 								height="280"
 							>
-								<v-img :src="item.thumbUrl || '/default-thumbnail.png'" aspect-ratio="16/9" cover />
+								<v-img
+									:src="item.thumbUrl || '/placeholder-image.png'"
+									width="200"
+									height="150"
+									position="top"
+									aspect-ratio="16/9"
+									cover
+								/>
 								<v-card-text class="d-flex flex-column" style="height: 60px;">
 									<strong class="text-h6">{{ truncateContent(item.title) }}</strong>
 									<div class="chip-container" style="min-height: 10px;">
@@ -291,6 +312,7 @@ interface MomentItem {
 	like_count: number
 	is_like: boolean
 	is_bookmark: boolean
+	password: string | null
 }
 
 interface UserData {
@@ -334,7 +356,6 @@ const passwordDialog = ref<boolean>(false)
 const passwordInput = ref<string>('')
 const passwordError = ref<string>('')
 const passwordVerifying = ref<boolean>(false)
-const selectedMoment = ref<any>(null)
 
 const extendBlogList = computed((): BlogItem[] => {
 	if (!blogList.value) {
@@ -629,7 +650,7 @@ onMounted(async (): Promise<void> => {
 	img {
 		width: 100%;
 		height: auto;
-		vertical-align: top;
+		object-position: top;
 	}
 
 	.v-responsive {
