@@ -1,9 +1,9 @@
 <template>
 	<BlogEditTemplate
 		v-if="isLoading"
-		:blog="tempBlog"
-		:shareBlog="shareBlog"
-		:shareSetting="shareSetting"
+		:blog="tempBlog as any"
+		:shareBlog="shareBlog as any"
+		:shareSetting="shareSetting as any"
 		:isUpdate="false"
 	/>
 </template>

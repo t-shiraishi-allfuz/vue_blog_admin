@@ -22,26 +22,48 @@
 <script setup lang="ts">
 import { useLikeStore } from '@/stores/likeStore'
 
+// 型定義
+interface LikeData {
+	id: string
+	uid: string
+	blog_id: string
+	user: {
+		name: string
+	}
+	createdAt: Date
+	updatedAt: Date
+}
+
+interface HeaderItem {
+	title: string
+	value: string
+}
+
 const route = useRoute()
 const router = useRouter()
 const likeStore = useLikeStore()
-const likeList = ref([])
+const likeList = ref<LikeData[]>([])
 
-const headers = [
+const headers: HeaderItem[] = [
 	{title: "ユーザー名", value: "user" }
 ]
 
 // 一覧取得
-const fetchLikeList = async () => {
-	likeList.value = await likeStore.getListForBlog(route.params.blog_id)
+const fetchLikeList = async (): Promise<void> => {
+	const blogId = route.params.blog_id as string
+	if (!blogId) {
+		console.error('ブログIDが取得できません')
+		return
+	}
+	likeList.value = await likeStore.getListForBlog(blogId) as LikeData[]
 }
 
 // ブログ一覧ページに移動
-const goToList = () => {
+const goToList = (): void => {
 	router.push({path: "/admin", query: {id: "1"}})
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await fetchLikeList()
 })
 </script>

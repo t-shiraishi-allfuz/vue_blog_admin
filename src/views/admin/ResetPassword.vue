@@ -7,7 +7,7 @@
 				</v-card-title>
 				<v-card-text>
 					<v-text-field
-						:prepend-inner-icon="mdiEmailOutline"
+						prepend-inner-icon="mdi-email-outline"
 						v-model="email"
 						label="登録済みのメールアドレスを入力して下さい"
 						type="email" />
@@ -26,10 +26,10 @@ import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
 
-const email = ref('')
+const email = ref<string>('')
 
 // パスワードリセット
-const resetPassword = async () => {
+const resetPassword = async (): Promise<void> => {
 	if (!email.value) {
 		await Swal.fire({
 			title: 'エラー',

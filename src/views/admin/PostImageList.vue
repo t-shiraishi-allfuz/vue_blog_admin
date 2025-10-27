@@ -81,14 +81,25 @@ import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import Swal from 'sweetalert2'
 
+// 型定義
+interface PreviewFile {
+	name: string
+	url: string
+}
+
+interface FolderData {
+	id: string
+	name: string
+	image_count: number
+	createdAt: Date
+	updatedAt: Date
+}
+
 const PostImage = defineAsyncComponent(() => import('@/views/admin/PostImage.vue'))
 const ImageFolderList = defineAsyncComponent(() => import('@/views/admin/ImageFolderList.vue'))
 
 // 画像リスト取得
 const imagesStore = useImagesStore()
-const {
-	imageList
-} = storeToRefs(imagesStore)
 
 // 画像フォルダ取得
 const imagesFolderStore = useImagesFolderStore()
@@ -102,46 +113,52 @@ const tabComponents = [
 	ImageFolderList
 ]
 
-const activeTab = ref(0)
-const fileInputValue = ref(null)
-const selectedFiles = ref([]) // 選択した画像ファイル
-const previewFiles = ref([])
-const defaultSelect = ref({id: null, name: '指定なし'})
-const selectedFolderId = ref(null)
-const isLoading = ref(true)
+const activeTab = ref<number>(0)
+const fileInputValue = ref<File[] | null>(null)
+const selectedFiles = ref<File[]>([]) // 選択した画像ファイル
+const previewFiles = ref<PreviewFile[]>([])
+const defaultSelect = ref<FolderData>({id: '', name: '指定なし', image_count: 0, createdAt: new Date(), updatedAt: new Date()})
+const selectedFolderId = ref<string | null>(null)
+const isLoading = ref<boolean>(true)
 
 // モーダル用データ
-const imageViewerDialog = ref(false)
-const currentImage = ref(null)
+const imageViewerDialog = ref<boolean>(false)
+const currentImage = ref<string>("")
 
 // フォルダリストにデフォルト値を追加
-const extendedFolderList = computed(() => {
+const extendedFolderList = computed<FolderData[]>(() => {
 	return [defaultSelect.value, ...folderList.value]
 })
 
 // ファイル選択時の処理
-const handleFileUpload = (event) => {
-	const files = event.target.files
+const handleFileUpload = (event: Event): void => {
+	const target = event.target as HTMLInputElement
+	const files = target.files
+	if (!files) return
+	
 	selectedFiles.value = Array.from(files)
 
 	// プレビュー用のURLとファイル名を取得
-	const promises = selectedFiles.value.map(file => {
+	const promises = selectedFiles.value.map((file: File): Promise<PreviewFile> => {
 		return new Promise((resolve) => {
 			const reader = new FileReader()
-			reader.onload = (e) => {
-				resolve({ name: file.name, url: e.target.result })
+			reader.onload = (e: ProgressEvent<FileReader>) => {
+				const target = e.target as FileReader
+				if (target.result) {
+					resolve({ name: file.name, url: target.result as string })
+				}
 			}
 			reader.readAsDataURL(file)
 		})
 	})
 
-	Promise.all(promises).then(results => {
+	Promise.all(promises).then((results: PreviewFile[]) => {
 		previewFiles.value = results
 	})
 }
 
 // 画像をサーバーにアップロードする処理
-const submitImages = async () => {
+const submitImages = async (): Promise<void> => {
 	if (selectedFiles.value.length === 0) {
 		await Swal.fire({
 			title: 'エラー',
@@ -153,8 +170,8 @@ const submitImages = async () => {
 	}
 
 	try {
-		const folderId = selectedFolderId.value === null ? undefined : selectedFolderId.value
-		await Promise.all(selectedFiles.value.map((file) => imagesStore.create(file, folderId)))
+		const folderId = selectedFolderId.value === null ? null : selectedFolderId.value
+		await Promise.all(selectedFiles.value.map((file: File) => imagesStore.create(file, folderId)))
 		await fetchImageList()
 		await fetchFolderList()
 
@@ -180,28 +197,28 @@ const submitImages = async () => {
 }
 
 // プレビュー表示
-const openImageViewer = (imageUrl) => {
+const openImageViewer = (imageUrl: string): void => {
 	currentImage.value = imageUrl
 	imageViewerDialog.value = true
 }
 
 // フォルダ切り替え
-const changeFolderList = async (newValueId) => {
+const changeFolderList = async (newValueId: string | null): Promise<void> => {
 	selectedFolderId.value = newValueId
 	await fetchImageList()
 }
 
 // データ再取得
-const fetchImageList = async () => {
+const fetchImageList = async (): Promise<void> => {
 	await imagesStore.getList(selectedFolderId.value)
 }
 
 // データ再取得
-const fetchFolderList = async () => {
+const fetchFolderList = async (): Promise<void> => {
 	await imagesFolderStore.getList()
 }
 
-onMounted(async() => {
+onMounted(async (): Promise<void> => {
 	await fetchImageList()
 	await fetchFolderList()
 	isLoading.value = false

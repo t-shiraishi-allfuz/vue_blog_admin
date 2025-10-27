@@ -85,7 +85,7 @@ const validationRules = {
 }
 
 // ファイルアップロードの処理
-const handleFileUpload = (event: Event) => {
+const handleFileUpload = (event: Event): void => {
 	const target = event.target as HTMLInputElement
 	const file = target.files?.[0]
 	if (file && blogSetting.value) {
@@ -93,9 +93,10 @@ const handleFileUpload = (event: Event) => {
     
 		// 画像のプレビュー
 		const reader = new FileReader()
-		reader.onload = (e) => {
-			if (e.target?.result && blogSetting.value) {
-				(blogSetting.value as any).profileUrl = e.target.result as string
+		reader.onload = (e: ProgressEvent<FileReader>) => {
+			const target = e.target as FileReader
+			if (target?.result && blogSetting.value) {
+				(blogSetting.value as any).profileUrl = target.result as string
 			}
 		}
 		reader.readAsDataURL(file)
@@ -106,7 +107,17 @@ const handleFileUpload = (event: Event) => {
 const settingForm = ref<any>(null)
 
 // ブログ設定更新
-const updateSetting = async () => {
+const updateSetting = async (): Promise<void> => {
+	// blogSettingの存在チェック
+	if (!blogSetting.value) {
+		await Swal.fire({
+			title: 'エラー',
+			text: 'ブログ設定が読み込まれていません',
+			icon: 'error'
+		})
+		return
+	}
+
 	// フォームバリデーション
 	if (settingForm.value) {
 		const { valid } = await settingForm.value.validate()
@@ -116,7 +127,7 @@ const updateSetting = async () => {
 	}
 
 	try {
-		await blogSettingStore.update(profileImage, blogSetting.value)
+		await blogSettingStore.update(profileImage.value, blogSetting.value as any)
 		profileImage.value = null
 		
 		// 成功メッセージ

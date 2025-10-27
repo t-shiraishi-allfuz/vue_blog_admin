@@ -11,14 +11,14 @@
 						:type="visibleType"
 						v-model="password"
 						label="新しいパスワードを入力して下さい"
-						:prepend-inner-icon="mdiLockOutline"
+						prepend-inner-icon="mdi-lock-outline"
 						@click:append-inner="changeVisible" />
 					<v-text-field
 						:append-inner-icon="visibleIcon"
 						:type="visibleType"
 						v-model="confirmPassword"
 						label="もう一度新しいパスワードを入力して下さい"
-						:prepend-inner-icon="mdiLockOutline"
+						prepend-inner-icon="mdi-lock-outline"
 						@click:append-inner="changeVisible" />
 				</v-card-text>
 				<v-card-actions>
@@ -34,28 +34,37 @@ import { useAuthStore } from '@/stores/authStore'
 import Swal from 'sweetalert2'
 
 const route = useRoute()
-const oobCode = route.query.oobCode
+const oobCode = route.query.oobCode as string
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const password = ref('')
-const confirmPassword = ref('')
-const visibleIcon = ref("mdi-eye-off")
-const visibleType = ref('password')
+const password = ref<string>('')
+const confirmPassword = ref<string>('')
+const visibleIcon = ref<string>("mdi-eye-off")
+const visibleType = ref<string>('password')
 
 // 入力タイプ切り替え
-const changeVisible = () => {
+const changeVisible = (): void => {
 	visibleIcon.value = visibleIcon.value === "mdi-eye-off" ? "mdi-eye" : "mdi-eye-off"
 	visibleType.value = visibleType.value === 'password' ? 'text' : 'password'
 }
 
 // パスワードリセット
-const resetPassword = async () => {
+const resetPassword = async (): Promise<void> => {
 	if (password.value !== confirmPassword.value) {
 		await Swal.fire({
 			title: 'エラー',
 			text: 'パスワードが一致しません',
+			icon: 'error'
+		})
+		return
+	}
+
+	if (!oobCode) {
+		await Swal.fire({
+			title: 'エラー',
+			text: 'パスワード再設定コードがありません',
 			icon: 'error'
 		})
 		return
@@ -81,9 +90,9 @@ const resetPassword = async () => {
 			icon: 'error'
 		})
 	}
-};
+}
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	if (!oobCode) {
 		await Swal.fire({
 			title: 'エラー',

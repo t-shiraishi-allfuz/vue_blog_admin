@@ -9,18 +9,18 @@
 					</v-toolbar>
 				</template>
 				<template v-slot:[`item.comment`]="{ item }">
-					<a @click.prevent="goToList(item)" class="blog-title" href="#">
-						{{ item.title }}
+					<a @click.prevent="goToList" class="blog-title" href="#">
+						{{ item.content }}
 					</a>
 				</template>
 				<template v-slot:[`item.createdAt`]="{ item }">
 					{{ formatDate(item.createdAt) }}
 				</template>
 				<template v-slot:[`item.reply_count`]="{ item }">
-					<span>{{ item.reply_count }}</span>
+					<span>{{ (item as any).reply_count || 0 }}</span>
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon class="delete-icon" :icon="mdiDelete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
+					<v-icon class="delete-icon" icon="mdi-delete" aria-label="削除" role="button" @click="openDeleteDialog(item)" />
 				</template>
 			</v-data-table>
 		</v-card>
@@ -42,6 +42,27 @@
 import { useCommentStore } from '@/stores/commentStore'
 import { format } from 'date-fns'
 
+// 型定義
+interface CommentData {
+	id: string
+	uid: string
+	blog_id: string
+	content: string
+	reply_id?: string
+	createdAt: Date
+	updatedAt: Date
+	setting?: any
+	reply?: any
+	title?: string
+	reply_count?: number
+}
+
+interface HeaderItem {
+	title: string
+	value: string
+	sortable?: boolean
+}
+
 const route = useRoute()
 const router = useRouter()
 const commentStore = useCommentStore()
@@ -50,10 +71,10 @@ const {
 	commentList
 } = storeToRefs(commentStore)
 
-const deleteDialog = ref(false)
-const commentToDelete = ref(null)
+const deleteDialog = ref<boolean>(false)
+const commentToDelete = ref<CommentData | null>(null)
 
-const headers = [
+const headers: HeaderItem[] = [
 	{title: "コメント", value: "comment" },
 	{title: "投稿日時", value: "createdAt" },
 	{title: "返信数", value: "reply_count" },
@@ -61,35 +82,45 @@ const headers = [
 ]
 
 // 一覧取得
-const fetchCommentList = async () => {
-	await commentStore.getList(route.params.blog_id)
+const fetchCommentList = async (): Promise<void> => {
+	const blogId = route.params.blog_id as string
+	if (!blogId) {
+		console.error('ブログIDが取得できません')
+		return
+	}
+	await commentStore.getList(blogId)
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = (blog) => {
-	commentToDelete.value = blog
+const openDeleteDialog = (comment: CommentData): void => {
+	commentToDelete.value = comment
 	deleteDialog.value = true
 }
 
 // 個別削除を確定する
-const deleteComment = async () => {
+const deleteComment = async (): Promise<void> => {
+	if (!commentToDelete.value) {
+		console.error('削除するコメントが選択されていません')
+		return
+	}
+	
 	await commentStore.deleteItem(commentToDelete.value.id)
-	commentList.value.filter(comment => comment.id !== commentToDelete.value.id)
+	commentList.value = commentList.value.filter(comment => comment.id !== commentToDelete.value!.id)
 
 	deleteDialog.value = false
 }
 
 // 日時フォーマット関数
-const formatDate = (date) => {
+const formatDate = (date: any): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
 // ブログ一覧ページに移動
-const goToList = () => {
+const goToList = (): void => {
 	router.push({path: "/admin", query: {id: "3"}})
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await fetchCommentList()
 })
 </script>

@@ -33,8 +33,19 @@ const {
 } = storeToRefs(blogSettingStore)
 
 // ブログ設定更新
-const updateSetting = async () => {
+const updateSetting = async (): Promise<void> => {
 	try {
+		// blogSettingの存在チェック
+		if (!blogSetting.value) {
+			await Swal.fire({
+				title: 'エラー',
+				text: 'ブログ設定が読み込まれていません',
+				icon: 'error',
+				confirmButtonColor: '#F784C3'
+			})
+			return
+		}
+
 		// 確認ダイアログを表示
 		const result = await Swal.fire({
 			title: '設定を保存しますか？',
@@ -60,7 +71,7 @@ const updateSetting = async () => {
 				}
 			})
 
-			await blogSettingStore.update(null, blogSetting.value)
+			await blogSettingStore.update(null, blogSetting.value as any)
 			
 			// 成功ダイアログ
 			await Swal.fire({
@@ -75,9 +86,10 @@ const updateSetting = async () => {
 		}
 	} catch (error) {
 		console.error('設定保存エラー:', error)
+		const errorMessage = error instanceof Error ? error.message : '設定の保存に失敗しました'
 		await Swal.fire({
 			title: 'エラー',
-			text: error.message || '設定の保存に失敗しました',
+			text: errorMessage,
 			icon: 'error',
 			confirmButtonText: 'OK',
 			confirmButtonColor: '#F784C3'
@@ -85,7 +97,7 @@ const updateSetting = async () => {
 	}
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await blogSettingStore.getDetail()
 })
 </script>

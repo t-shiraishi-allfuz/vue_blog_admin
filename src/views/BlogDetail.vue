@@ -44,7 +44,7 @@
 		border="md"
 		max-width="800"
 	>
-		<div class="header-image mb-4">
+		<div class="header-image mb-4" v-if="blogDetail.thumbUrl">
 			<img
 				:src="blogDetail.thumbUrl"
 				aspect-ratio="16/9"
@@ -70,7 +70,7 @@
 						{{ formatDate(blogDetail.createdAt) }}
 					</div>
 				</v-col>
-				<div v-if="userInfo.uid !== blogDetail.uid">
+				<div v-if="userInfo?.uid !== blogDetail.uid">
 					<v-col>
 						<div v-if="blogDetail.setting?.is_follower === true">
 							<v-btn @click="deleteFollowUser">フォロー中</v-btn>
@@ -88,7 +88,7 @@
 		<BlogCard
 			v-if="blogDetail.shareBlog"
 			class="mb-5"
-			:blog="blogDetail.shareBlog"
+			:blog="blogDetail.shareBlog as any"
 			:setting="blogDetail.shareBlog.setting"
 		/>
 		<div class="mb-4 text-body-1" v-html="blogDetail.content"></div>
@@ -108,7 +108,7 @@
 					color="grey-lighten-4"
 					variant="text"
 				/>
-				<div class="text-truncate">{{ blogDetail.view_count || 0 }}</div>
+				<div class="text-truncate">{{ blogDetail.viewCount || 0 }}</div>
 			</div>
 			<div class="d-flex align-center text-caption text-medium-emphasis me-1">
 				<v-btn
@@ -163,10 +163,10 @@
 									<div v-if="comment.reply_id">
 										<div class="pa-4 mb-2 bg-pink-lighten-5 rounded">
 											<v-icon icon="mdi-message-reply-text" start />
-											<div v-html="comment.reply.body.replace(/\n/g, '<br>')"></div>
+											<div v-html="comment.reply?.content?.replace(/\n/g, '<br>') || ''"></div>
 										</div>
 									</div>
-									<div v-html="comment.body.replace(/\n/g, '<br>')"></div>
+									<div v-html="comment.content.replace(/\n/g, '<br>')"></div>
 								</div>
 							</v-col>
 							<v-col>
@@ -208,14 +208,14 @@
 	<v-dialog v-model="shareDialog" max-width="400px">
 		<v-list>
 			<v-list-item
-				:prepend-icon="mdi-link-variant"
+				prepend-icon="mdi-link-variant"
 				title="リンクをコピー"
 				value="copy"
 				@click="copyUrl"
 			/>
 			<v-divider />
 			<v-list-item
-				:prepend-icon="mdi-note-edit"
+				prepend-icon="mdi-note-edit"
 				title="リブログ"
 				@click="reblog"
 			/>
@@ -237,7 +237,7 @@
 				<v-textarea
 					label="コメント"
 					type="string"
-					v-model="comment.body"
+					v-model="comment.content"
 					solo
 				/>
 			</v-list-item>
@@ -275,14 +275,14 @@ import Swal from 'sweetalert2'
 
 interface CommentData {
 	id: string
-	body: string
+	content: string
 	createdAt: Date
 	reply_id?: string
 	reply?: {
-		body: string
+		content: string
 		[key: string]: any
 	}
-	setting: {
+	setting?: {
 		name: string
 		profileUrl: string
 		[key: string]: any
@@ -321,7 +321,7 @@ const reply_id = ref<string | null>(null)
 const commentDialog = ref<boolean>(false)
 const comment = ref<Partial<CommentData>>({
 	uid: '',
-	body: '',
+	content: '',
 	blog_id: '',
 	reply_id: '',
 	createdAt: new Date(),
@@ -414,7 +414,7 @@ const copyUrl = async (): Promise<void> => {
 }
 
 // リブログ
-const reblog = async () => {
+const reblog = async (): Promise<void> => {
 	// キャッシュしておく
 	localStorage.setItem("shareBlog", JSON.stringify(blogDetail.value))
 	localStorage.setItem("shareSetting", JSON.stringify(blogDetail.value.setting))
@@ -423,7 +423,7 @@ const reblog = async () => {
 }
 
 // コメント
-const addComment = () => {
+const addComment = (): void => {
 	commentDialog.value = true
 }
 
@@ -438,8 +438,8 @@ const deleteComment = async (comment: CommentData): Promise<void> => {
 	blogDetail.value.comment_count--
 }
 
-const executeComment = async () => {
-	if (!comment.value.body || !userInfo.value) return
+const executeComment = async (): Promise<void> => {
+	if (!comment.value.content || !userInfo.value) return
 
 	comment.value.uid = userInfo.value.uid
 	comment.value.blog_id = blogDetail.value.id
@@ -462,12 +462,12 @@ const executeComment = async () => {
 	commentDialog.value = false
 }
 
-const fetchCommentList = async () => {
+const fetchCommentList = async (): Promise<void> => {
 	await commentStore.getList(blogDetail.value.id)
 }
 
 // お気に入り登録
-const addBookmark = async () => {
+const addBookmark = async (): Promise<void> => {
 	if (blogDetail.value.is_bookmark) {
 		await bookmarkStore.deleteItem(blogDetail.value.id)
 		blogDetail.value.is_bookmark = false
@@ -478,19 +478,19 @@ const addBookmark = async () => {
 }
 
 // フォロー
-const followUser = async () => {
+const followUser = async (): Promise<void> => {
 	if (!userInfo.value) return
 	await followUsersStore.create(blogDetail.value.uid)
 }
 
 // フォロー外す
-const deleteFollowUser = async () => {
+const deleteFollowUser = async (): Promise<void> => {
 	if (!userInfo.value) return
 	await followUsersStore.deleteItem(blogDetail.value.uid)
 }
 
 // パスワード認証
-const verifyPassword = async () => {
+const verifyPassword = async (): Promise<void> => {
 	if (!passwordInput.value.trim()) {
 		passwordError.value = 'パスワードを入力してください'
 		return
@@ -519,8 +519,16 @@ const verifyPassword = async () => {
 	}
 }
 
+// パスワード認証をキャンセル
+const cancelPasswordAuth = (): void => {
+	passwordDialog.value = false
+	passwordInput.value = ''
+	passwordError.value = ''
+	router.push({ path: '/' })
+}
+
 // パスワード認証が必要かチェック
-const checkPasswordRequired = () => {
+const checkPasswordRequired = (): boolean => {
 	if (blogDetail.value.password && !isPasswordVerified.value) {
 		passwordDialog.value = true
 		return false
@@ -529,7 +537,7 @@ const checkPasswordRequired = () => {
 }
 
 // ブログデータ取得
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await blogStore.getDetailWithAccessCount(blog_id)
 
 	// パスワード認証が必要かチェック
@@ -537,7 +545,7 @@ onMounted(async () => {
 })
 
 // 戻るボタンのテキストを計算
-const backButtonText = computed(() => {
+const backButtonText = computed((): string => {
 	const from = route.query.from
 	if (from === 'profile') {
 		return 'プロフィールに戻る'
@@ -546,7 +554,7 @@ const backButtonText = computed(() => {
 })
 
 // 戻る処理
-const goBack = () => {
+const goBack = (): void => {
 	const from = route.query.from
 	if (from === 'profile') {
 		const profileUid = route.query.profile_uid

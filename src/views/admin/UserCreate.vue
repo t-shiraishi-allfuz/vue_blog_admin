@@ -6,7 +6,7 @@
 			</v-card-title>
 			<v-card-text>
 				<v-text-field
-					:prepend-inner-icon="mdi-email-outline"
+					prepend-inner-icon="mdi-email-outline"
 					v-model="email"
 					label="メールアドレスを入力して下さい"
 					type="email" />
@@ -15,7 +15,7 @@
 					:type="visibleType"
 					v-model="password"
 					label="パスワードを入力して下さい"
-					:prepend-inner-icon="mdi-lock-outline"
+					prepend-inner-icon="mdi-lock-outline"
 					@click:append-inner="changeVisible" />
 			</v-card-text>
 			<v-card-text>
@@ -53,15 +53,15 @@ import Swal from 'sweetalert2'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('')
-const password = ref('')
-const visibleIcon = ref("mdi-eye-off")
-const visibleType = ref('password')
-const isGoogleLoading = ref(false)
-const errorMessage = ref('')
+const email = ref<string>('')
+const password = ref<string>('')
+const visibleIcon = ref<string>("mdi-eye-off")
+const visibleType = ref<string>('password')
+const isGoogleLoading = ref<boolean>(false)
+const errorMessage = ref<string>('')
 
 // Google認証の設定
-const googleClientId = computed(() => {
+const googleClientId = computed<string>(() => {
 	// 環境変数からGoogle Client IDを取得
 	return import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 })
@@ -77,13 +77,13 @@ const googleButtonConfig = {
 }
 
 // Google認証のエラーハンドリング
-const handleGoogleError = (error) => {
+const handleGoogleError = (error: any): void => {
 	console.error('Google認証エラー:', error)
 	errorMessage.value = 'Google認証でエラーが発生しました'
 }
 
 // 新規ユーザー登録成功ダイアログ
-const showRegistrationSuccessDialog = async () => {
+const showRegistrationSuccessDialog = async (): Promise<void> => {
 	try {
 		const result = await Swal.fire({
 			title: '登録完了',
@@ -107,7 +107,7 @@ const showRegistrationSuccessDialog = async () => {
 }
 
 // 既存ユーザー用ダイアログ
-const showExistingUserDialog = async () => {
+const showExistingUserDialog = async (): Promise<void> => {
 	try {
 		const result = await Swal.fire({
 			title: 'ログイン完了',
@@ -131,25 +131,26 @@ const showExistingUserDialog = async () => {
 }
 
 // 入力タイプ切り替え
-const changeVisible = () => {
+const changeVisible = (): void => {
 	visibleIcon.value = visibleIcon.value === "mdi-eye-off" ? "mdi-eye" : "mdi-eye-off"
 	visibleType.value = visibleType.value === 'password' ? 'text' : 'password'
 }
 
 // ユーザー登録処理
-const createUser = async () => {
+const createUser = async (): Promise<void> => {
 	try {
 		errorMessage.value = ''
 		await authStore.create(email.value, password.value)
 		await showRegistrationSuccessDialog()
 	} catch (error) {
 		console.error('ユーザー登録エラー:', error)
-		errorMessage.value = error.message || 'ユーザー登録に失敗しました'
+		const errorMsg = error instanceof Error ? error.message : 'ユーザー登録に失敗しました'
+		errorMessage.value = errorMsg
 	}
 }
 
 // Google認証でログイン
-const handleGoogleLogin = async (response) => {
+const handleGoogleLogin = async (response: any): Promise<void> => {
 	try {
 		errorMessage.value = ''
 		isGoogleLoading.value = true
@@ -171,7 +172,8 @@ const handleGoogleLogin = async (response) => {
 		}
 	} catch (error) {
 		console.error('Google認証エラー:', error)
-		errorMessage.value = error.message || 'Google認証に失敗しました'
+		const errorMsg = error instanceof Error ? error.message : 'Google認証に失敗しました'
+		errorMessage.value = errorMsg
 	} finally {
 		isGoogleLoading.value = false
 	}

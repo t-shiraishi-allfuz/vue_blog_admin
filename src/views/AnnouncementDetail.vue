@@ -84,12 +84,11 @@
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
 const route = useRoute()
-const router = useRouter()
 const announcementStore = useAnnouncementStore()
 const { announcements } = storeToRefs(announcementStore)
 
-const loading = ref(false)
-const markingAsRead = ref(false)
+const loading = ref<boolean>(false)
+const markingAsRead = ref<boolean>(false)
 
 // 現在のお知らせを取得
 const announcement = computed(() => {
@@ -98,7 +97,7 @@ const announcement = computed(() => {
 })
 
 // お知らせ一覧を読み込み
-const loadAnnouncements = async () => {
+const loadAnnouncements = async (): Promise<void> => {
 	loading.value = true
 	try {
 		await announcementStore.getPublicList()
@@ -111,7 +110,7 @@ const loadAnnouncements = async () => {
 }
 
 // 既読にする
-const markAsRead = async () => {
+const markAsRead = async (): Promise<void> => {
 	if (!announcement.value) return
 	
 	markingAsRead.value = true
@@ -125,13 +124,8 @@ const markAsRead = async () => {
 	}
 }
 
-// 戻る
-const goBack = () => {
-	router.push({ name: 'Announcements' })
-}
-
 // 優先度の色を取得
-const getPriorityColor = (priority: string) => {
+const getPriorityColor = (priority: string): string => {
 	const colors = {
 		low: 'grey',
 		normal: 'blue',
@@ -142,7 +136,7 @@ const getPriorityColor = (priority: string) => {
 }
 
 // 優先度のテキストを取得
-const getPriorityText = (priority: string) => {
+const getPriorityText = (priority: string): string => {
 	const texts = {
 		low: '低',
 		normal: '通常',
@@ -153,7 +147,7 @@ const getPriorityText = (priority: string) => {
 }
 
 // 日付をフォーマット
-const formatDate = (date: any) => {
+const formatDate = (date: any): string => {
 	if (!date) return ''
 	const d = date.toDate ? date.toDate() : new Date(date)
 	return d.toLocaleString('ja-JP', {
@@ -165,7 +159,7 @@ const formatDate = (date: any) => {
 	})
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await loadAnnouncements()
 })
 </script>

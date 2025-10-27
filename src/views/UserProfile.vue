@@ -66,7 +66,7 @@
 								>
 									<template #prepend>
 										<v-avatar
-											:image="blog.thumbUrl"
+											:image="blog.thumbUrl || undefined"
 											size="60"
 											class="mr-3"
 											rounded
@@ -145,10 +145,11 @@ interface BlogData {
 	title: string
 	summary: string
 	thumbUrl: string | null
-	createdAt: Date
+	createdAt: Date | null
 	like_count: number
 	comment_count: number
 	viewCount?: number
+	isPublished?: boolean
 	[key: string]: any
 }
 
@@ -236,15 +237,15 @@ const fetchUserStats = async (): Promise<void> => {
 }
 
 // ユーザーの記事一覧を取得
-const fetchUserBlogs = async () => {
+const fetchUserBlogs = async (): Promise<void> => {
 	try {
 		if (isOwnProfile.value) {
 			// 自分のプロフィールの場合は全ての記事を取得（管理画面と一致させる）
 			await blogStore.getList()
-			userBlogs.value = blogStore.blogList
+			userBlogs.value = blogStore.blogList as BlogData[]
 		} else {
 			// 他のユーザーのプロフィールの場合は公開中の記事のみを取得
-			userBlogs.value = await blogStore.getListForUser(profileUserId.value)
+			userBlogs.value = await blogStore.getListForUser(profileUserId.value) as BlogData[]
 		}
 	} catch (error) {
 		console.error('ユーザー記事の取得に失敗しました:', error)
@@ -253,7 +254,7 @@ const fetchUserBlogs = async () => {
 }
 
 // フォロー状態を確認
-const checkFollowStatus = async () => {
+const checkFollowStatus = async (): Promise<void> => {
 	try {
 		isFollowing.value = await followUsersStore.isFollower(profileUserId.value)
 	} catch (error) {
@@ -263,7 +264,7 @@ const checkFollowStatus = async () => {
 }
 
 // フォロー/フォロー解除
-const toggleFollow = async () => {
+const toggleFollow = async (): Promise<void> => {
 	try {
 		followLoading.value = true
 		
@@ -305,7 +306,7 @@ const goToBlogDetail = (blogId: string): void => {
 }
 
 // コンポーネントマウント時にデータを取得
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await fetchUserProfile()
 })
 </script>

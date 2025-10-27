@@ -22,20 +22,24 @@ const {
 	blogDetail
 } = storeToRefs(blogStore)
 
-const blog_id = route.query.blog_id
-const isLoading = ref(false)
+const blog_id = route.query.blog_id as string
+const isLoading = ref<boolean>(false)
 
 // ブログデータ取得
-const fetchBlogDetail = async () => {
+const fetchBlogDetail = async (): Promise<void> => {
+	if (!blog_id) {
+		console.error('ブログIDが取得できません')
+		return
+	}
 	await blogStore.getDetail(blog_id)
 }
 
 // 一覧ページに戻る
-const goToList = () => {
+const goToList = (): void => {
 	router.push({path: "/admin", query: {tab: 1}})
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await fetchBlogDetail()
 	isLoading.value = true
 })

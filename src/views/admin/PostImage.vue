@@ -20,7 +20,7 @@
 					<v-divider class="mx-4" inset vertical />
 					<v-spacer></v-spacer>
 					<v-select
-						v-if="extendedFolderList.length > 0"
+						v-if="extendedFolderList && extendedFolderList.length > 0"
 						label="画像フォルダ選択"
 						:items="extendedFolderList"
 						item-title="name"
@@ -47,7 +47,10 @@
 						>
 							<v-card
 								class="selection-card"
-								:class="{ 'selected': selectedCardIds.includes(image) }"
+								:class="{ 
+									'selected': selectedCardIds.includes(image),
+									'used-as-thumbnail': isImageUsedAsThumbnail(image)
+								}"
 								width="100"
 								height="150"
 								@click="openImageViewer(image.url)"
@@ -59,6 +62,36 @@
 										:model-value="selectedCardIds.includes(image)"
 										@click.stop="toggleCardSelection(image)"
 										hide-details
+									/>
+								</div>
+								<div class="usage-indicator" v-if="isImageUsedAsThumbnail(image)">
+									<v-chip
+										size="x-small"
+										color="warning"
+										variant="elevated"
+										class="usage-chip"
+									>
+										サムネイル
+									</v-chip>
+								</div>
+								<div class="action-overlay">
+									<v-btn
+										icon="mdi-folder-move"
+										size="small"
+										color="primary"
+										variant="elevated"
+										@click.stop="openMoveDialog(image)"
+										class="action-btn"
+									/>
+									<v-btn
+										icon="mdi-delete"
+										size="small"
+										:color="isImageDeletable(image) ? 'error' : 'grey'"
+										variant="elevated"
+										:disabled="!isImageDeletable(image)"
+										@click.stop="openDeleteDialog(image)"
+										class="action-btn"
+										:class="{ 'disabled-btn': !isImageDeletable(image) }"
 									/>
 								</div>
 								<v-img
@@ -91,14 +124,14 @@
 
 		<v-dialog v-model="moveDialog" max-width="400px">
 			<v-card>
-				<v-card-title>移動確認</v-card-title>
+				<v-card-title>画像移動</v-card-title>
 				<v-card-text>
 					<v-select
-						v-if="extendedFolderList.length > 0"
-						label="移動する画像フォルダ選択を選択して下さい"
+						v-if="extendedFolderList && extendedFolderList.length > 0"
+						label="移動先のフォルダを選択してください"
 						:items="extendedFolderList"
 						item-title="name"
-						item-id="id"
+						item-value="id"
 						v-model="selectedMoveFolderId"
 						hide-details
 					/>
@@ -115,48 +148,67 @@
 
 <script setup lang="ts">
 import { useImagesStore } from '@/stores/imagesStore'
-import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import Swal from 'sweetalert2'
 
-const props = defineProps({
-	selectedFolderId: {
-		type: [String, null],
-		default: null
-	}
-})
-const selectedFolderId = ref(props.selectedFolderId)
-const emit = defineEmits(["changeFolderList"])
+// 型定義
+interface ImageData {
+	id: string
+	url: string
+	folder_id: string
+	createdAt: Date
+	updatedAt: Date
+	isUsedAsThumbnail?: boolean // サムネイルとして使用されているか
+	usedInBlogs?: string[] // 使用されているブログのIDリスト
+	usedInMoments?: string[] // 使用されているつぶやきのIDリスト
+}
 
-const extendedFolderList = defineModel("folderList")
+interface FolderData {
+	id: string
+	name: string
+	image_count: number
+	createdAt: Date
+	updatedAt: Date
+}
+
+interface Props {
+	selectedFolderId: string | null
+}
+
+const props = defineProps<Props>()
+const selectedFolderId = ref<string | null>(props.selectedFolderId)
+const emit = defineEmits<{
+	changeFolderList: [folderId: string | null]
+}>()
+
+const extendedFolderList = defineModel<FolderData[]>("folderList")
 
 // 画像取得
 const imagesStore = useImagesStore()
-const imagesFolderStore = useImagesFolderStore()
 const {
 	imageList,
 } = storeToRefs(imagesStore)
 
 // モーダル用データ
-const imageViewerDialog = ref(false)
-const currentImage = ref(null)
+const imageViewerDialog = ref<boolean>(false)
+const currentImage = ref<string>("")
 
-const selectedCardIds = ref<string[]>([])
+const selectedCardIds = ref<ImageData[]>([])
 
-const selectedMoveFolderId = ref(null)
-const moveDialog = ref(false)
-const imageToMove = ref(null)
+const selectedMoveFolderId = ref<string | null>(null)
+const moveDialog = ref<boolean>(false)
+const imageToMove = ref<ImageData | null>(null)
 
-const selectedForDelete = ref([]) // 削除用の選択画像リスト
-const imageToDelete = ref(null)
+const selectedForDelete = ref<ImageData[]>([]) // 削除用の選択画像リスト
+const imageToDelete = ref<ImageData | null>(null)
 
 const isAllSelectedComputed = computed({
 	get: () => selectedForDelete.value.length === imageList.value.length && imageList.value.length > 0,
-	set: (value) => {
+	set: (value: boolean) => {
 		selectedForDelete.value = value ? [...imageList.value] : []
 	},
 })
 
-const toggleCardSelection = (image: any) => {
+const toggleCardSelection = (image: ImageData): void => {
 	const index = selectedCardIds.value.indexOf(image)
 	if (index > -1) {
 		selectedCardIds.value.splice(index, 1)
@@ -165,27 +217,79 @@ const toggleCardSelection = (image: any) => {
 	}
 }
 
-const openImageViewer = (imageUrl) => {
+// 画像が削除可能かどうかを判定
+const isImageDeletable = (image: ImageData): boolean => {
+	return !image.isUsedAsThumbnail && 
+		   (!image.usedInBlogs || image.usedInBlogs.length === 0) && 
+		   (!image.usedInMoments || image.usedInMoments.length === 0)
+}
+
+// 画像がサムネイルとして使用されているかどうかを判定
+const isImageUsedAsThumbnail = (image: ImageData): boolean => {
+	return image.isUsedAsThumbnail === true
+}
+
+const openImageViewer = (imageUrl: string): void => {
 	currentImage.value = imageUrl
 	imageViewerDialog.value = true
 }
 
 // 移動確認ダイアログを開く
-const openMoveDialog = (image) => {
+const openMoveDialog = (image: ImageData): void => {
 	imageToMove.value = image
 	moveDialog.value = true
 }
 
 // 画像移動
-const moveImage = async () => {
+const moveImage = async (): Promise<void> => {
+	if (!imageToMove.value || !selectedMoveFolderId.value) {
+		console.error('移動する画像またはフォルダが選択されていません')
+		return
+	}
+	
 	moveDialog.value = false
 
 	await imagesStore.update(imageToMove.value, selectedMoveFolderId.value)
 	emit('changeFolderList', selectedFolderId.value)
+	
+	// 移動完了メッセージ
+	Swal.fire({
+		title: '移動完了',
+		text: '画像を移動しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false
+	})
+	
+	imageToMove.value = null
+	selectedMoveFolderId.value = null
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = async (image) => {
+const openDeleteDialog = async (image: ImageData): Promise<void> => {
+	// 削除不可の画像の場合は警告を表示
+	if (!isImageDeletable(image)) {
+		let message = 'この画像は削除できません。\n'
+		if (image.isUsedAsThumbnail) {
+			message += '・ブログまたはつぶやきのサムネイルとして使用されています。'
+		}
+		if (image.usedInBlogs && image.usedInBlogs.length > 0) {
+			message += `・${image.usedInBlogs.length}件のブログで使用されています。`
+		}
+		if (image.usedInMoments && image.usedInMoments.length > 0) {
+			message += `・${image.usedInMoments.length}件のつぶやきで使用されています。`
+		}
+		
+		await Swal.fire({
+			title: '削除不可',
+			text: message,
+			icon: 'warning',
+			confirmButtonColor: '#27C1A3',
+			confirmButtonText: '了解'
+		})
+		return
+	}
+
 	imageToDelete.value = image
 	
 	const result = await Swal.fire({
@@ -204,8 +308,8 @@ const openDeleteDialog = async (image) => {
 		},
 		didOpen: () => {
 			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
 			if (confirmBtn) {
 				confirmBtn.style.minWidth = '150px'
 				confirmBtn.style.width = '150px'
@@ -217,7 +321,7 @@ const openDeleteDialog = async (image) => {
 		}
 	})
 
-	if (result.isConfirmed) {
+	if (result.isConfirmed && imageToDelete.value) {
 		await imagesStore.deleteItem(imageToDelete.value)
 		imageToDelete.value = null
 		emit('changeFolderList', selectedFolderId.value)
@@ -234,12 +338,32 @@ const openDeleteDialog = async (image) => {
 }
 
 // 一括削除確認ダイアログを開く
-const openBatchDeleteDialog = async () => {
+const openBatchDeleteDialog = async (): Promise<void> => {
 	if (selectedForDelete.value.length === 0) return
+	
+	// 削除可能な画像のみをフィルタリング
+	const deletableImages = selectedForDelete.value.filter(image => isImageDeletable(image))
+	const nonDeletableImages = selectedForDelete.value.filter(image => !isImageDeletable(image))
+	
+	if (deletableImages.length === 0) {
+		await Swal.fire({
+			title: '削除不可',
+			text: '選択した画像はすべて削除できません。\nブログやつぶやきで使用されている画像は削除できません。',
+			icon: 'warning',
+			confirmButtonColor: '#27C1A3',
+			confirmButtonText: '了解'
+		})
+		return
+	}
+	
+	let confirmMessage = `${deletableImages.length}件の画像を削除しますか？`
+	if (nonDeletableImages.length > 0) {
+		confirmMessage += `\n\n※${nonDeletableImages.length}件の画像は使用中のため削除されません。`
+	}
 	
 	const result = await Swal.fire({
 		title: '一括削除確認',
-		text: '選択した画像をすべて削除しますか？',
+		text: confirmMessage,
 		showCancelButton: true,
 		confirmButtonColor: '#27C1A3',
 		cancelButtonColor: '#9e9e9e',
@@ -253,8 +377,8 @@ const openBatchDeleteDialog = async () => {
 		},
 		didOpen: () => {
 			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
 			if (confirmBtn) {
 				confirmBtn.style.minWidth = '150px'
 				confirmBtn.style.width = '150px'
@@ -272,19 +396,28 @@ const openBatchDeleteDialog = async () => {
 }
 
 // 一括削除
-const deleteSelectedImages = async () => {
+const deleteSelectedImages = async (): Promise<void> => {
 	if (selectedForDelete.value.length === 0) return
 
-	await Promise.all(selectedForDelete.value.map((image) => imagesStore.deleteItem(image)))
+	// 削除可能な画像のみをフィルタリングして削除
+	const deletableImages = selectedForDelete.value.filter(image => isImageDeletable(image))
+	const nonDeletableImages = selectedForDelete.value.filter(image => !isImageDeletable(image))
+
+	await Promise.all(deletableImages.map((image) => imagesStore.deleteItem(image)))
 	selectedForDelete.value = []
 	emit('changeFolderList', selectedFolderId.value)
 	
 	// 削除完了メッセージ
+	let message = `${deletableImages.length}件の画像を削除しました`
+	if (nonDeletableImages.length > 0) {
+		message += `\n※${nonDeletableImages.length}件の画像は使用中のため削除されませんでした`
+	}
+	
 	Swal.fire({
 		title: '削除完了',
-		text: '選択した画像を削除しました',
+		text: message,
 		icon: 'success',
-		timer: 1500,
+		timer: 2000,
 		showConfirmButton: false
 	})
 }
@@ -332,6 +465,49 @@ watch(() => props.selectedFolderId, (newValue) => {
 
 .checkbox-overlay .v-checkbox {
 	margin: 0;
+}
+
+.action-overlay {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.selection-card:hover .action-overlay {
+	opacity: 1;
+}
+
+.action-btn {
+	min-width: 32px !important;
+	width: 32px !important;
+	height: 32px !important;
+}
+
+.disabled-btn {
+	opacity: 0.5 !important;
+	cursor: not-allowed !important;
+}
+
+.used-as-thumbnail {
+	border: 2px solid #ff9800 !important;
+}
+
+.usage-indicator {
+	position: absolute;
+	bottom: 5px;
+	left: 5px;
+	z-index: 10;
+}
+
+.usage-chip {
+	font-size: 10px !important;
+	height: 18px !important;
 }
 </style>
 

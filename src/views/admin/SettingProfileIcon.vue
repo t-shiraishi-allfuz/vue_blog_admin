@@ -43,26 +43,41 @@ const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
 
-const profileImage = ref(null)
+const profileImage = ref<File | null>(null)
 
 // ファイルアップロードの処理
-const handleFileUpload = (event) => {
-	const file = event.target.files[0]
-	if (file) {
+const handleFileUpload = (event: Event): void => {
+	const target = event.target as HTMLInputElement
+	const file = target.files?.[0]
+	if (file && blogSetting.value) {
 		profileImage.value = file
     
 		// 画像のプレビュー
 		const reader = new FileReader()
-		reader.onload = (e) => {
-			blogSetting.value.profileUrl = e.target.result
+		reader.onload = (e: ProgressEvent<FileReader>) => {
+			const target = e.target as FileReader
+			if (target?.result && blogSetting.value) {
+				blogSetting.value.profileUrl = target.result as string
+			}
 		}
 		reader.readAsDataURL(file)
 	}
 }
 
 // ブログ設定更新
-const updateSetting = async () => {
+const updateSetting = async (): Promise<void> => {
 	try {
+		// blogSettingの存在チェック
+		if (!blogSetting.value) {
+			await Swal.fire({
+				title: 'エラー',
+				text: 'ブログ設定が読み込まれていません',
+				icon: 'error',
+				confirmButtonColor: '#F784C3'
+			})
+			return
+		}
+
 		// 確認ダイアログを表示
 		const result = await Swal.fire({
 			title: '設定を完了しますか？',
@@ -89,7 +104,7 @@ const updateSetting = async () => {
 			})
 
 			if (profileImage.value) {
-				await blogSettingStore.update(profileImage, blogSetting.value)
+				await blogSettingStore.update(profileImage.value, blogSetting.value as any)
 			}
 			
 			// 成功ダイアログ
@@ -105,9 +120,10 @@ const updateSetting = async () => {
 		}
 	} catch (error) {
 		console.error('設定保存エラー:', error)
+		const errorMessage = error instanceof Error ? error.message : '設定の保存に失敗しました'
 		await Swal.fire({
 			title: 'エラー',
-			text: error.message || '設定の保存に失敗しました',
+			text: errorMessage,
 			icon: 'error',
 			confirmButtonText: 'OK',
 			confirmButtonColor: '#F784C3'
@@ -116,7 +132,7 @@ const updateSetting = async () => {
 }
 
 // 設定をスキップする処理
-const skipSetting = async () => {
+const skipSetting = async (): Promise<void> => {
 	try {
 		const result = await Swal.fire({
 			title: '設定をスキップしますか？',
@@ -142,9 +158,10 @@ const skipSetting = async () => {
 		}
 	} catch (error) {
 		console.error('スキップ処理エラー:', error)
+		const errorMessage = error instanceof Error ? error.message : '処理中にエラーが発生しました'
 		await Swal.fire({
 			title: 'エラー',
-			text: '処理中にエラーが発生しました',
+			text: errorMessage,
 			icon: 'error',
 			confirmButtonText: 'OK',
 			confirmButtonColor: '#F784C3'
@@ -152,7 +169,7 @@ const skipSetting = async () => {
 	}
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await blogSettingStore.getDetail()
 })
 </script>

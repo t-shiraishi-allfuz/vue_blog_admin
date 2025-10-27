@@ -77,47 +77,74 @@ import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
 
+// 型定義
+interface FolderData {
+	id: string
+	name: string
+	image_count: number
+	createdAt: Date
+	updatedAt: Date
+}
+
+interface CreateFolderData {
+	name: string
+}
+
+interface UpdateFolderData {
+	id: string
+	name: string
+	image_count: number
+	createdAt: Date
+	updatedAt: Date
+}
+
+interface HeaderItem {
+	title: string
+	value: string
+	sortable: boolean
+}
+
 const imagesFolderStore = useImagesFolderStore()
 const {
 	folderList
 } = storeToRefs(imagesFolderStore)
 
-const createDialog = ref(false)
-const folder = ref({
+const createDialog = ref<boolean>(false)
+const folder = ref<CreateFolderData>({
 	name: ""
 })
 
-const updateDialog = ref(false)
-const folderToUpdate = ref(null)
-const changeName = ref(null)
+const updateDialog = ref<boolean>(false)
+const folderToUpdate = ref<FolderData | null>(null)
+const changeName = ref<string>("")
 
-const folderToDelete = ref(null)
+const folderToDelete = ref<FolderData | null>(null)
 
-const headers = [
+const headers: HeaderItem[] = [
 	{title: "フォルダ名", value: "name", sortable: true },
 	{title: "作成日時", value: "createdAt", sortable: true },
 	{title: "削除", value: "actions", sortable: false },
 ]
 
 // 日時フォーマット関数
-const formatDate = (date) => {
+const formatDate = (date: any): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
 // フォルダ作成確認ダイアログを開く
-const openCreateDialog = () => {
+const openCreateDialog = (): void => {
 	createDialog.value = true
 }
 
 // フォルダ更新確認ダイアログを開く
-const openUpdateDialog = (folder) => {
+const openUpdateDialog = (folder: FolderData): void => {
 	folderToUpdate.value = folder
 	changeName.value = folder.name
 	updateDialog.value = true
 }
 
 // フォルダ削除確認ダイアログを開く
-const openDeleteDialog = async (folder) => {
+const openDeleteDialog = async (folder: FolderData): Promise<void> => {
 	folderToDelete.value = folder
 	
 	const result = await Swal.fire({
@@ -136,14 +163,14 @@ const openDeleteDialog = async (folder) => {
 		},
 		didOpen: () => {
 			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
 			if (confirmBtn) confirmBtn.style.width = '150px'
 			if (cancelBtn) cancelBtn.style.width = '150px'
 		}
 	})
 
-	if (result.isConfirmed) {
+	if (result.isConfirmed && folderToDelete.value) {
 		await imagesFolderStore.deleteItem(folderToDelete.value.id)
 		await fetchList()
 		
@@ -161,7 +188,7 @@ const openDeleteDialog = async (folder) => {
 }
 
 // 新規フォルダ作成
-const createFolder = async () => {
+const createFolder = async (): Promise<void> => {
 	createDialog.value = false
 
 	await imagesFolderStore.create(folder.value)
@@ -170,22 +197,27 @@ const createFolder = async () => {
 	folder.value.name = ""
 }
 
-const updateFolder = async () => {
+const updateFolder = async (): Promise<void> => {
+	if (!folderToUpdate.value) {
+		console.error('更新するフォルダが選択されていません')
+		return
+	}
+
 	updateDialog.value = false
 
 	// フォルダ名を更新
 	folderToUpdate.value.name = changeName.value
-	await imagesFolderStore.update(folderToUpdate.value)
+	await imagesFolderStore.update(folderToUpdate.value as UpdateFolderData)
 	await fetchList()
 
 	folderToUpdate.value = null
 }
 
-const fetchList = async () => {
+const fetchList = async (): Promise<void> => {
 	await imagesFolderStore.getList()
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await fetchList()
 })
 </script>

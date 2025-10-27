@@ -53,13 +53,13 @@
 						color="blue"
 						icon="mdi-pencil"
 						variant="text"
-						@click="openEditDialog(item)"
+						@click="openEditDialog(item as any)"
 					/>
 					<v-btn
 						color="red"
 						icon="mdi-delete"
 						variant="text"
-						@click="deleteAnnouncement(item)"
+						@click="deleteAnnouncement(item as any)"
 					/>
 				</template>
 			</v-data-table>
@@ -75,7 +75,7 @@
 	<!-- 編集ダイアログ -->
 	<AnnouncementEditDialog
 		v-model="editDialogOpen"
-		:announcement-data="selectedAnnouncement"
+		:announcement-data="selectedAnnouncement as any"
 		@updated="onAnnouncementUpdated"
 	/>
 	
@@ -112,19 +112,37 @@ import { useAnnouncementStore } from '@/stores/announcementStore'
 import AnnouncementCreateDialog from '@/components/AnnouncementCreateDialog.vue'
 import AnnouncementEditDialog from '@/components/AnnouncementEditDialog.vue'
 
+// 型定義
+interface AnnouncementData {
+	id: string
+	title: string
+	content: string
+	priority: 'low' | 'normal' | 'high' | 'urgent'
+	isPublished: boolean
+	createdAt: Date
+	updatedAt: Date
+	[key: string]: any
+}
+
+interface HeaderItem {
+	title: string
+	key: string
+	sortable: boolean
+}
+
 const announcementStore = useAnnouncementStore()
 const {
 	announcements
 } = storeToRefs(announcementStore)
 
-const loading = ref(false)
-const createDialogOpen = ref(false)
-const editDialogOpen = ref(false)
-const deleteDialog = ref(false)
-const deleting = ref(false)
-const selectedAnnouncement = ref(null)
+const loading = ref<boolean>(false)
+const createDialogOpen = ref<boolean>(false)
+const editDialogOpen = ref<boolean>(false)
+const deleteDialog = ref<boolean>(false)
+const deleting = ref<boolean>(false)
+const selectedAnnouncement = ref<AnnouncementData | null>(null)
 
-const headers = [
+const headers: HeaderItem[] = [
 	{ title: 'タイトル', key: 'title', sortable: true },
 	{ title: '優先度', key: 'priority', sortable: true },
 	{ title: '公開状態', key: 'isPublished', sortable: true },
@@ -132,8 +150,8 @@ const headers = [
 	{ title: '操作', key: 'actions', sortable: false }
 ]
 
-const getPriorityColor = (priority) => {
-	const colors = {
+const getPriorityColor = (priority: string): string => {
+	const colors: Record<string, string> = {
 		low: 'grey',
 		normal: 'blue',
 		high: 'orange',
@@ -142,8 +160,8 @@ const getPriorityColor = (priority) => {
 	return colors[priority] || 'grey'
 }
 
-const getPriorityText = (priority) => {
-	const texts = {
+const getPriorityText = (priority: string): string => {
+	const texts: Record<string, string> = {
 		low: '低',
 		normal: '通常',
 		high: '高',
@@ -152,13 +170,13 @@ const getPriorityText = (priority) => {
 	return texts[priority] || '通常'
 }
 
-const formatDate = (date) => {
+const formatDate = (date: any): string => {
 	if (!date) return ''
 	const d = date.toDate ? date.toDate() : new Date(date)
 	return d.toLocaleString('ja-JP')
 }
 
-const loadAnnouncements = async () => {
+const loadAnnouncements = async (): Promise<void> => {
 	loading.value = true
 
 	try {
@@ -171,29 +189,29 @@ const loadAnnouncements = async () => {
 	}
 }
 
-const openCreateDialog = () => {
+const openCreateDialog = (): void => {
 	createDialogOpen.value = true
 }
 
-const openEditDialog = (announcement) => {
+const openEditDialog = (announcement: AnnouncementData): void => {
 	selectedAnnouncement.value = announcement
 	editDialogOpen.value = true
 }
 
-const onAnnouncementSaved = async () => {
+const onAnnouncementSaved = async (): Promise<void> => {
 	await loadAnnouncements()
 }
 
-const onAnnouncementUpdated = async () => {
+const onAnnouncementUpdated = async (): Promise<void> => {
 	await loadAnnouncements()
 }
 
-const deleteAnnouncement = (announcement) => {
+const deleteAnnouncement = (announcement: AnnouncementData): void => {
 	selectedAnnouncement.value = announcement
 	deleteDialog.value = true
 }
 
-const confirmDelete = async () => {
+const confirmDelete = async (): Promise<void> => {
 	if (!selectedAnnouncement.value) return
 	
 	deleting.value = true
@@ -211,7 +229,7 @@ const confirmDelete = async () => {
 	}
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await loadAnnouncements()
 })
 </script>

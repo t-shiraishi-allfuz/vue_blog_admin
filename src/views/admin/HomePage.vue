@@ -54,7 +54,7 @@ const tabComponents = computed(() => {
 	return baseTabComponents
 })
 
-const checkOwnerStatus = async () => {
+const checkOwnerStatus = async (): Promise<void> => {
 	if (authStore.isLogin && authStore.userInfo) {
 		try {
 			isOwner.value = await usersStore.isOwner(authStore.userInfo.uid)
@@ -66,12 +66,15 @@ const checkOwnerStatus = async () => {
 	}
 }
 
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
 	await checkOwnerStatus()
 	
-	const tab = route.query.tab
-	if (tab !== undefined) {
-		activeTab.value = parseInt(tab)
+	const tab = route.query.tab as string
+	if (tab !== undefined && tab !== null) {
+		const tabNumber = parseInt(tab)
+		if (!isNaN(tabNumber)) {
+			activeTab.value = tabNumber
+		}
 	}
 })
 </script>

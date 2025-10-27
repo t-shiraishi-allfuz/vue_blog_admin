@@ -28,7 +28,7 @@
 					<v-icon
 						v-if="item.pre_category_id"
 						icon="mdi-subdirectory-arrow-right"
-						style="marginLeft: 20px"
+						style="margin-left: 20px"
 					/>
 					<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
 						{{ item.name }}（{{ item.blog_count }}）
@@ -84,7 +84,7 @@
 					<v-text-field
 						type="text"
 						label="カテゴリー名を入力して下さい"
-						v-model="categoryToUpdate.name"
+						v-model="categoryToUpdate?.name"
 					/>
 				</v-card-text>
 				<v-card-text v-if="categoryList.length > 0">
@@ -93,7 +93,7 @@
 						:items="categoryList"
 						item-title="name"
 						item-value="id"
-						v-model="categoryToUpdate.pre_category_id"
+						v-model="categoryToUpdate?.pre_category_id"
 						hide-details
 					/>
 				</v-card-text>
@@ -112,49 +112,72 @@ import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
 
+// 型定義
+interface BlogCategoryData {
+	id: string
+	uid: string
+	pre_category_id: string | null
+	name: string
+	blog_count: number
+	createdAt: Date
+	updatedAt: Date
+	[key: string]: any
+}
+
+interface CreateCategoryData {
+	pre_category_id: string | null
+	name: string
+}
+
+interface HeaderItem {
+	title: string
+	value: string
+	sortable?: boolean
+}
+
 const blogCategoryStore = useBlogCategoryStore()
 const {
 	categoryList
 } = storeToRefs(blogCategoryStore)
 
-const isLoading = ref(true)
+const isLoading = ref<boolean>(true)
 
-const createDialog = ref(false)
-const category = ref({
+const createDialog = ref<boolean>(false)
+const category = ref<CreateCategoryData>({
 	pre_category_id: null,
 	name: ""
 })
-const selectedPreCategoryID = ref(null)
+const selectedPreCategoryID = ref<string | null>(null)
 
-const updateDialog = ref(false)
-const categoryToUpdate = ref(null)
+const updateDialog = ref<boolean>(false)
+const categoryToUpdate = ref<BlogCategoryData | null>(null)
 
-const categoryToDelete = ref(null)
+const categoryToDelete = ref<BlogCategoryData | null>(null)
 
-const headers = [
+const headers: HeaderItem[] = [
 	{title: "カテゴリー名", value: "name" },
 	{title: "作成日時", value: "createdAt" },
 	{title: "削除", value: "actions", sortable: false },
 ]
 
 // 日時フォーマット関数
-const formatDate = (date) => {
+const formatDate = (date: any): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
 // カテゴリー作成確認ダイアログを開く
-const openCreateDialog = () => {
+const openCreateDialog = (): void => {
 	createDialog.value = true
 }
 
 // カテゴリー更新確認ダイアログを開く
-const openUpdateDialog = (category) => {
+const openUpdateDialog = (category: BlogCategoryData): void => {
 	categoryToUpdate.value = category
 	updateDialog.value = true
 }
 
 // カテゴリー削除確認ダイアログを開く
-const openDeleteDialog = async (category) => {
+const openDeleteDialog = async (category: BlogCategoryData): Promise<void> => {
 	categoryToDelete.value = category
 	
 	const result = await Swal.fire({
@@ -173,8 +196,8 @@ const openDeleteDialog = async (category) => {
 		},
 		didOpen: () => {
 			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width')
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width')
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
 			if (confirmBtn) {
 				confirmBtn.style.minWidth = '150px'
 				confirmBtn.style.width = '150px'
@@ -186,7 +209,7 @@ const openDeleteDialog = async (category) => {
 		}
 	})
 
-	if (result.isConfirmed) {
+	if (result.isConfirmed && categoryToDelete.value) {
 		await blogCategoryStore.deleteItem(categoryToDelete.value)
 		await fetchCategoryList()
 		
@@ -202,7 +225,7 @@ const openDeleteDialog = async (category) => {
 }
 
 // 新規カテゴリー作成
-const createCategory = async () => {
+const createCategory = async (): Promise<void> => {
 	createDialog.value = false
 	category.value.pre_category_id = selectedPreCategoryID.value
 
@@ -221,7 +244,9 @@ const createCategory = async () => {
 }
 
 // カテゴリー更新
-const updateCategory = async () => {
+const updateCategory = async (): Promise<void> => {
+	if (!categoryToUpdate.value) return
+	
 	updateDialog.value = false
 
 	// 親と同一IDはNG
@@ -249,11 +274,11 @@ const updateCategory = async () => {
 }
 
 // 再取得
-const fetchCategoryList = async () => {
+const fetchCategoryList = async (): Promise<void> => {
 	await blogCategoryStore.getList()
 }
 
-onMounted(async() => {
+onMounted(async (): Promise<void> => {
 	await fetchCategoryList()
 	isLoading.value = false
 })

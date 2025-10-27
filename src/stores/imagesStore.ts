@@ -80,12 +80,172 @@ export const useImagesStore = defineStore('images', () => {
 
 		if (!querySnapshot) return []
 
-		imageList.value = querySnapshot.docs.map((doc) => {
+		const images = querySnapshot.docs.map((doc) => {
 			const data = { id: doc.id, ...doc.data() }
 			return data
 		})
+
+		// 各画像の使用状況をチェック（最適化版）
+		const imagesWithUsage = await checkImagesUsageBatch(images)
 		
+		imageList.value = imagesWithUsage
 		return imageList.value
+	}
+
+	// 複数画像の使用状況をバッチでチェックする関数（最適化版）
+	const checkImagesUsageBatch = async (images: any[]) => {
+		const userInfo = authStore.userInfo
+		
+		if (!userInfo || !userInfo.uid || images.length === 0) {
+			return images.map(image => ({
+				...image,
+				isUsedAsThumbnail: false,
+				usedInBlogs: [],
+				usedInMoments: []
+			}))
+		}
+
+		try {
+			// すべての画像URLを取得
+			const imageUrls = images.map(img => img.url)
+			
+			// FirestoreのIN演算子は最大30個までなので、チャンクに分割
+			const chunkSize = 30
+			const urlChunks = []
+			for (let i = 0; i < imageUrls.length; i += chunkSize) {
+				urlChunks.push(imageUrls.slice(i, i + chunkSize))
+			}
+
+			// 各チャンクに対してクエリを実行
+			const blogUsageMap = new Map<string, string[]>()
+			const momentUsageMap = new Map<string, string[]>()
+
+			// ブログでの使用状況をチャンクごとにチェック
+			for (const urlChunk of urlChunks) {
+				const blogFilters = [
+					["uid", "==", userInfo.uid],
+					["thumbUrl", "in", urlChunk]
+				]
+				const blogSnapshot = await BaseAPI.getDataWithQuery({
+					db_name: "blogs",
+					searchConditions: {
+						filters: blogFilters,
+					}
+				})
+
+				if (blogSnapshot) {
+					blogSnapshot.docs.forEach(doc => {
+						const thumbUrl = doc.data().thumbUrl
+						if (!blogUsageMap.has(thumbUrl)) {
+							blogUsageMap.set(thumbUrl, [])
+						}
+						blogUsageMap.get(thumbUrl)!.push(doc.id)
+					})
+				}
+			}
+
+			// つぶやき（moments）での使用状況をチャンクごとにチェック
+			for (const urlChunk of urlChunks) {
+				const momentFilters = [
+					["uid", "==", userInfo.uid],
+					["thumbUrl", "in", urlChunk]
+				]
+				const momentSnapshot = await BaseAPI.getDataWithQuery({
+					db_name: "moments",
+					searchConditions: {
+						filters: momentFilters,
+					}
+				})
+
+				if (momentSnapshot) {
+					momentSnapshot.docs.forEach(doc => {
+						const thumbUrl = doc.data().thumbUrl
+						if (!momentUsageMap.has(thumbUrl)) {
+							momentUsageMap.set(thumbUrl, [])
+						}
+						momentUsageMap.get(thumbUrl)!.push(doc.id)
+					})
+				}
+			}
+
+			// 各画像に使用状況を追加
+			return images.map(image => {
+				const usedInBlogs = blogUsageMap.get(image.url) || []
+				const usedInMoments = momentUsageMap.get(image.url) || []
+				const isUsedAsThumbnail = usedInBlogs.length > 0 || usedInMoments.length > 0
+				
+				return {
+					...image,
+					isUsedAsThumbnail,
+					usedInBlogs,
+					usedInMoments
+				}
+			})
+		} catch (error) {
+			console.error('画像使用状況のバッチチェックに失敗しました:', error)
+			return images.map(image => ({
+				...image,
+				isUsedAsThumbnail: false,
+				usedInBlogs: [],
+				usedInMoments: []
+			}))
+		}
+	}
+
+	// 画像の使用状況をチェックする関数
+	const checkImageUsage = async (imageUrl: string) => {
+		const userInfo = authStore.userInfo
+		
+		if (!userInfo || !userInfo.uid) {
+			return {
+				isUsedAsThumbnail: false,
+				usedInBlogs: [],
+				usedInMoments: []
+			}
+		}
+
+		try {
+			// ブログでの使用状況をチェック
+			const blogFilters = [
+				["uid", "==", userInfo.uid],
+				["thumbUrl", "==", imageUrl]
+			]
+			const blogSnapshot = await BaseAPI.getDataWithQuery({
+				db_name: "blogs",
+				searchConditions: {
+					filters: blogFilters,
+				}
+			})
+
+			// つぶやき（moments）での使用状況をチェック
+			const momentFilters = [
+				["uid", "==", userInfo.uid],
+				["thumbUrl", "==", imageUrl]
+			]
+			const momentSnapshot = await BaseAPI.getDataWithQuery({
+				db_name: "moments",
+				searchConditions: {
+					filters: momentFilters,
+				}
+			})
+
+			const usedInBlogs = blogSnapshot ? blogSnapshot.docs.map(doc => doc.id) : []
+			const usedInMoments = momentSnapshot ? momentSnapshot.docs.map(doc => doc.id) : []
+			const isUsedAsThumbnail = usedInBlogs.length > 0 || usedInMoments.length > 0
+
+			return {
+				isUsedAsThumbnail,
+				usedInBlogs,
+				usedInMoments
+			}
+		} catch (error) {
+			console.error('画像使用状況のチェックに失敗しました:', error)
+			return {
+				isUsedAsThumbnail: false,
+				usedInBlogs: [],
+				usedInMoments: []
+			}
+		}
 	}
 
 	// フォルダに格納されている画像数取得
@@ -146,6 +306,8 @@ export const useImagesStore = defineStore('images', () => {
 		getList,
 		getImageCount,
 		deleteItem,
-		clearStore
+		clearStore,
+		checkImageUsage,
+		checkImagesUsageBatch
 	}
 })

@@ -6,10 +6,10 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import jQuery from 'jquery'
-window.$ = jQuery
+;(window as any).$ = jQuery
 
 import Alpine from 'alpinejs'
-window.Alpine = Alpine
+;(window as any).Alpine = Alpine
 Alpine.start()
 
 import { createApp } from 'vue'
