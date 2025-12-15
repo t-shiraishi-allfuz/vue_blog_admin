@@ -140,6 +140,15 @@
 		<div class="my-4">
 			<div class="pa-4">
 				コメント数&nbsp;{{ blogDetail.comment_count }}
+				<v-divider />
+				<v-btn
+					class="mt-2"
+					color="success"
+					variant="flat"
+					@click="addComment()"
+				>
+					コメントする
+				</v-btn>
 			</div>
 			<div v-if="commentList.length > 0">
 				<div v-for="(comment, index) in commentList" :key="index">
