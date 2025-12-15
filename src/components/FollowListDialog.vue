@@ -52,16 +52,18 @@
 						<template #append>
 							<div v-if="user.uid !== authStore.userInfo?.uid" class="d-flex align-center">
 								<v-btn
+									class="mx-2"
 									color="success"
 									size="small"
 									variant="flat"
 									@click.stop="goToDmPage(user.uid)"
 								>
-									<v-icon size="16" class="mr-1">mdi-message-text</v-icon>
+									<v-icon size="16" class="mr-2">mdi-message-text</v-icon>
 									DM
 								</v-btn>
 								<v-btn
 									v-if="!user.isFollowing"
+									class="mx-2"
 									color="success"
 									size="small"
 									variant="flat"
@@ -69,11 +71,12 @@
 									:loading="user.followLoading"
 									:disabled="user.followLoading"
 								>
-									<v-icon size="16" class="mr-1">mdi-account-plus</v-icon>
+									<v-icon size="16" class="mr-2">mdi-account-plus</v-icon>
 									フォロー
 								</v-btn>
 								<v-btn
 									v-else
+									class="mx-2"
 									color="grey-lighten-4"
 									size="small"
 									variant="flat"
@@ -81,7 +84,7 @@
 									:loading="user.followLoading"
 									:disabled="user.followLoading"
 								>
-									<v-icon size="16" class="mr-1">mdi-account-minus</v-icon>
+									<v-icon size="16" class="mr-2">mdi-account-minus</v-icon>
 									解除
 								</v-btn>
 							</div>
