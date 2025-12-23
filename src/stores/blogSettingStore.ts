@@ -1,6 +1,4 @@
 import BaseAPI from '@/api/base'
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
 import { storage } from '@/setting/firebase'
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { useAuthStore } from '@/stores/authStore'

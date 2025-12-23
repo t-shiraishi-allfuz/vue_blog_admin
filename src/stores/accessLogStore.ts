@@ -1,5 +1,4 @@
 import BaseAPI from '@/api/base'
-import { defineStore } from 'pinia'
 
 export const useAccessLogStore = defineStore('accessLog', () => {
 	// アクセスログを記録（詳細な分析用）

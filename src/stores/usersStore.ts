@@ -1,5 +1,4 @@
 import BaseAPI from '@/api/base'
-import { defineStore } from 'pinia'
 import bcryptjs from 'bcryptjs'
 import type { User } from 'firebase/auth'
 

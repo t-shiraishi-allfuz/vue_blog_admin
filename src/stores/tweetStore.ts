@@ -1,5 +1,4 @@
 import BaseAPI from '@/api/base'
-import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'

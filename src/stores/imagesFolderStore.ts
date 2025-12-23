@@ -1,6 +1,4 @@
 import BaseAPI from '@/api/base'
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useImagesStore } from '@/stores/imagesStore'
 

@@ -1,5 +1,4 @@
 import BaseAPI from '@/api/base'
-import { defineStore } from 'pinia'
 
 // 型定義
 interface AnnouncementData {
