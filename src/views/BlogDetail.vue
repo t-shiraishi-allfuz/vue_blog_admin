@@ -560,11 +560,12 @@ onMounted(async (): Promise<void> => {
 	await blogStore.getDetailWithAccessCount(blog_id)
 
 	// パスワード認証が必要かチェック
-	if (checkPasswordRequired()) {
-		// パスワード認証が不要な場合のみブログ内容を表示
-		isLoading.value = true
-		await fetchCommentList()
+	if (!checkPasswordRequired()) {
+		return
 	}
+	// パスワード認証が不要で、コイン消費も完了した場合のみブログ内容を表示
+	isLoading.value = true
+	await fetchCommentList()
 })
 
 // 戻るボタンのテキストを計算

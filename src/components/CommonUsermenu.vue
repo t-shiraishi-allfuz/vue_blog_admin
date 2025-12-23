@@ -19,6 +19,15 @@
 			</template>
 		</v-list-item>
 		<v-list-item prepend-icon="mdi-robot" title="AIトーク" value="ai_talk" @click="goToAiTalk" />
+		<v-list-item title="チャージ" value="charge" @click="goToCharge">
+			<template #prepend>
+				<img
+					src="@/assets/images/img_coin.png"
+					alt="コイン"
+					class="img-coin"
+				/>
+			</template>
+		</v-list-item>
 		<v-list-item prepend-icon="mdi-account" title="プロフィール" value="profile" @click="goToUserProfile" />
 		<v-list-item prepend-icon="mdi-cog" title="設定" value="setting" @click="goToProfile" />
 	</v-list>
@@ -82,4 +91,17 @@ const goToDmPage = (): void => {
 const goToAiTalk = (): void => {
 	router.push({ path: '/ai-talk' })
 }
+
+const goToCharge = (): void => {
+	router.push({ path: '/charge' })
+}
 </script>
+
+<style scoped>
+.img-coin {
+	width: 20px;
+	height: 20px;
+	object-fit: contain;
+	margin-right: 32px; /* 他のメニューのアイコン余白に合わせる */
+}
+</style>

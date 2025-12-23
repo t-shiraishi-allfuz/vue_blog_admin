@@ -23,6 +23,13 @@ const routes:RouteRecordRaw[] = [
 		path: '/ai-talk',
 		name: 'AiTalk',
 		component: () => import("@/views/AiTalk.vue"),
+		meta: { requiresAuth: true },
+	},
+	{
+		path: '/charge',
+		name: 'Charge',
+		component: () => import("@/views/Charge.vue"),
+		meta: { requiresAuth: true },
 	},
 	{
 		path: '/announcements/:id',

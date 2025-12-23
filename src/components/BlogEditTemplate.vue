@@ -52,7 +52,7 @@
 					<v-switch
 						label="閲覧制限の設定"
 						v-model="blog.isAdult"
-						hint="ブログに18歳未満の閲覧制限を付ける場合は設定して下さい"
+						hint="ブログに18歳未満の閲覧制限を付ける場合は設定して下さい。閲覧制限ありの場合は、1投稿につき10コイン必要です"
 						persistent-hint
 					/>
 					<v-switch
@@ -116,6 +116,7 @@ import { useBlogStore } from '@/stores/blogStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
+import { useCoinStore } from '@/stores/coinStore'
 import { VueEditor } from "vue3-editor"
 import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
@@ -159,6 +160,7 @@ const blogStore = useBlogStore()
 const imagesStore = useImagesStore()
 const imagesFolderStore = useImagesFolderStore()
 const blogCategoryStore = useBlogCategoryStore()
+const coinStore = useCoinStore()
 
 const {
 	imageList
@@ -235,6 +237,8 @@ const selectImage = (imageUrl: string): void => {
 	}
 }
 
+const BLOG_POST_COST = 10
+
 const submitPost = async () => {
 	if (!blog.value.title || !blog.value.content) {
 		await Swal.fire({
@@ -245,12 +249,50 @@ const submitPost = async () => {
 		return
 	}
 
+	// 閲覧制限付き投稿時のみコインチェック
+	if (blog.value.isAdult && !props.isUpdate) {
+		if (!coinStore.hasEnoughCoins(BLOG_POST_COST)) {
+			await Swal.fire({
+				title: 'コインが不足しています',
+				text: `閲覧制限付きの投稿には${BLOG_POST_COST}コイン必要です。チャージしてください。`,
+				icon: 'warning',
+				confirmButtonColor: '#27C1A3'
+			})
+			return
+		}
+	}
+
 	try {
 		if (props.isUpdate) {
 			await blogStore.update(blog.value as any)
 		} else {
 			blog.value.share_blog_id = props.shareBlog ? props.shareBlog.id : null
 			await blogStore.create(blog.value as any)
+		}
+
+		// 閲覧制限付きの場合のみコイン消費
+		if (blog.value.isAdult && !props.isUpdate) {
+			try {
+				const consumed = await coinStore.consumeCoins(BLOG_POST_COST)
+				if (!consumed) {
+					await Swal.fire({
+						title: 'コイン消費に失敗しました',
+						text: `閲覧制限付きの投稿には${BLOG_POST_COST}コイン必要です。チャージしてください。`,
+						icon: 'warning',
+						confirmButtonColor: '#27C1A3'
+					})
+					return
+				}
+			} catch (err) {
+				console.error('コイン消費エラー:', err)
+				await Swal.fire({
+					title: 'エラー',
+					text: 'コインの消費に失敗しました。再度お試しください。',
+					icon: 'error',
+					confirmButtonColor: '#d33'
+				})
+				return
+			}
 		}
 
 		if (blog.value.isPublished) {
@@ -300,6 +342,7 @@ onMounted(async() => {
 	await blogCategoryStore.getList()
 	await fetchImageList()
 	await imagesFolderStore.getList()
+	await coinStore.getCoins()
 })
 </script>
 

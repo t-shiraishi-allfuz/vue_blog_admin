@@ -1,16 +1,19 @@
 import { openAIConfig } from '@/setting/openai'
 import { useAiSettingStore, type Message } from '@/stores/aiSettingStore'
+import { useCoinStore } from '@/stores/coinStore'
 
 export type { Message }
 
 export function useChat() {
 	const aiSettingStore = useAiSettingStore()
+	const coinStore = useCoinStore()
 	const systemPrompt = ref<string>(openAIConfig.systemMessage)
 	const messages = ref<Message[]>([
 		{ role: 'system', content: systemPrompt.value }
 	])
 	const isLoading = ref(false)
 	const error = ref<string | null>(null)
+	const AI_TALK_COST = 1 // AIトーク1回あたりのコイン消費
 
 	// 初期化時にFirebaseから設定と会話履歴を読み込む
 	const initialize = async () => {
@@ -77,10 +80,30 @@ export function useChat() {
 	const sendMessage = async (content: string) => {
 		if (!content.trim()) return
 
+		// コイン消費チェック
+		if (!coinStore.hasEnoughCoins(AI_TALK_COST)) {
+			error.value = `コインが不足しています。AIトークには${AI_TALK_COST}コイン必要です。チャージしてください。`
+			return
+		}
+
 		isLoading.value = true
 		error.value = null
 
 		ensureSystemMessage()
+
+		// コインを消費
+		try {
+			const consumed = await coinStore.consumeCoins(AI_TALK_COST)
+			if (!consumed) {
+				error.value = `コインが不足しています。AIトークには${AI_TALK_COST}コイン必要です。チャージしてください。`
+				isLoading.value = false
+				return
+			}
+		} catch (err) {
+			error.value = `コインの消費に失敗しました: ${err instanceof Error ? err.message : '予期せぬエラー'}`
+			isLoading.value = false
+			return
+		}
 
 		// ユーザーメッセージを追加
 		const userMessage: Message = { role: 'user', content }

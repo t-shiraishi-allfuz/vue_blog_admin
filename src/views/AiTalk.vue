@@ -99,13 +99,23 @@
 
 			<v-col cols="12" md="8">
 				<v-card class="chat-card">
-					<v-card-title class="d-flex align-center">
-						<v-icon class="mr-2">mdi-robot-outline</v-icon>
-						AIトーク
+					<v-card-title class="d-flex align-center flex-wrap gap-2">
+						<div class="d-flex align-center">
+							<v-icon class="mr-2">mdi-robot-outline</v-icon>
+							AIトーク
+						</div>
 						<v-spacer />
-						<v-chip size="small" variant="tonal" color="primary">
-							{{ displayMessages.length }} メッセージ
-						</v-chip>
+						<div class="d-flex align-center gap-2">
+							<v-chip size="small" variant="tonal" color="amber-darken-2">
+								所持コイン: {{ (coins || 0).toLocaleString() }}
+							</v-chip>
+							<v-chip size="small" variant="tonal" color="primary">
+								消費: {{ AI_TALK_COST }} コイン/送信
+							</v-chip>
+							<v-chip size="small" variant="tonal" color="primary">
+								{{ displayMessages.length }} メッセージ
+							</v-chip>
+						</div>
 					</v-card-title>
 
 					<v-divider />
@@ -170,7 +180,7 @@
 										type="submit"
 										color="primary"
 										:loading="isLoading"
-										:disabled="!userInput.trim() || isLoading"
+										:disabled="!userInput.trim() || isLoading || !hasEnoughCoins"
 									>
 										<v-icon class="mr-2">mdi-send</v-icon>
 										送信
@@ -219,7 +229,11 @@ import Swal from 'sweetalert2'
 import { useChat } from '@/api/openai'
 import { useAiSettingStore } from '@/stores/aiSettingStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
+import { useCoinStore } from '@/stores/coinStore'
 import { storeToRefs } from 'pinia'
+
+// 消費コスト
+const AI_TALK_COST = 20
 
 const {
 	messages,
@@ -234,7 +248,9 @@ const {
 
 const aiSettingStore = useAiSettingStore()
 const blogSettingStore = useBlogSettingStore()
+const coinStore = useCoinStore()
 const { blogSetting } = storeToRefs(blogSettingStore)
+const { coins } = storeToRefs(coinStore)
 
 const persona = ref(systemPrompt.value)
 const characterName = ref<string>(aiSettingStore.getCharacterName() || '')
@@ -252,6 +268,8 @@ const userIconUrl = computed(() => blogSetting.value?.profileUrl || null)
 const aiCharacterName = computed(() => aiSettingStore.getCharacterName() || 'AI')
 // ユーザー名
 const userName = computed(() => blogSetting.value?.name || 'あなた')
+// コイン所持チェック
+const hasEnoughCoins = computed(() => coinStore.hasEnoughCoins(AI_TALK_COST))
 
 const displayMessages = computed(() =>
 	messages.value.filter((message) => message.role !== 'system')
@@ -319,6 +337,16 @@ const resetChat = async () => {
 
 const handleSend = async () => {
 	if (!userInput.value.trim()) return
+	if (!hasEnoughCoins.value) {
+		await Swal.fire({
+			title: 'コインが不足しています',
+			text: `AIトークには${AI_TALK_COST}コイン必要です。トークを続ける場合は、チャージをしてください。`,
+			icon: 'warning',
+			confirmButtonColor: '#27C1A3',
+			confirmButtonText: 'OK'
+		})
+		return
+	}
 	await sendMessage(userInput.value)
 	userInput.value = ''
 }
@@ -346,6 +374,7 @@ const handleFileUpload = (event: Event): void => {
 onMounted(async () => {
 	await initialize()
 	await blogSettingStore.getDetail()
+	await coinStore.getCoins()
 	// キャラクター名を読み込む
 	characterName.value = aiSettingStore.getCharacterName() || ''
 })

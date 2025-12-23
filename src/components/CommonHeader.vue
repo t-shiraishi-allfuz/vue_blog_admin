@@ -16,6 +16,14 @@
 		</v-app-bar-title>
 		<template v-slot:append>
 			<div v-if="isLogin && blogSetting">
+				<v-chip
+					color="amber"
+					variant="flat"
+					class="mr-2"
+					prepend-icon="mdi-coin"
+				>
+					{{ coins }}
+				</v-chip>
 				<v-btn
 					icon="mdi-bell"
 					variant="text"
@@ -65,6 +73,7 @@ import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import { useDmStore } from '@/stores/dmStore'
+import { useCoinStore } from '@/stores/coinStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import NotificationDialog from '@/components/NotificationDialog.vue'
@@ -81,6 +90,7 @@ const followUsersStore = useFollowUsersStore()
 const notificationStore = useNotificationStore()
 const announcementStore = useAnnouncementStore()
 const dmStore = useDmStore()
+const coinStore = useCoinStore()
 const {
 	blogSetting
 } = storeToRefs(blogSettingStore)
@@ -88,6 +98,10 @@ const {
 const {
 	isLogin
 } = storeToRefs(authStore)
+
+const {
+	coins
+} = storeToRefs(coinStore)
 
 // 未読通知数とお知らせ数とDM未読数を取得
 const totalUnreadCount = computed((): number => 
@@ -103,6 +117,7 @@ onMounted(async (): Promise<void> => {
 	// 認証状態に応じてブログ設定を取得
 	if (isLogin.value) {
 		await blogSettingStore.getDetail()
+		await coinStore.getCoins()
 		await notificationStore.initialize()
 		await announcementStore.getList()
 		await dmStore.getConversations()
@@ -114,12 +129,14 @@ watch(isLogin, async (newIsLogin: boolean): Promise<void> => {
 	if (newIsLogin) {
 		// ログインした場合、ブログ設定を取得
 		await blogSettingStore.getDetail()
+		await coinStore.getCoins()
 		await notificationStore.initialize()
 		await announcementStore.getList()
 		await dmStore.getConversations()
 	} else {
 		// ログアウトした場合、ブログ設定をクリア
 		blogSettingStore.clearStore()
+		coinStore.clearStore()
 		dmStore.clearStore()
 	}
 })
@@ -161,6 +178,7 @@ const logout = async (): Promise<void> => {
 			blogSettingStore.clearStore()
 			imagesStore.clearStore()
 			followUsersStore.clearStore()
+			coinStore.clearStore()
 			dmStore.clearStore()
 			router.push({path: '/'})
 		}
