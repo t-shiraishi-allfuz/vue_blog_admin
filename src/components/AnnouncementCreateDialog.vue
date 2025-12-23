@@ -72,7 +72,7 @@
 					variant="elevated"
 					@click="cancel"
 				>
-					キャンセル
+					閉じる
 				</v-btn>
 				<v-btn
 					color="success"

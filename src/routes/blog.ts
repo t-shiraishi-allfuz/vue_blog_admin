@@ -20,6 +20,11 @@ const routes:RouteRecordRaw[] = [
 		meta: { requiresAuth: true },
 	},
 	{
+		path: '/ai-talk',
+		name: 'AiTalk',
+		component: () => import("@/views/AiTalk.vue"),
+	},
+	{
 		path: '/announcements/:id',
 		name: 'AnnouncementDetail',
 		component: () => import("@/views/AnnouncementDetail.vue"),

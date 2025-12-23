@@ -18,6 +18,7 @@
 				/>
 			</template>
 		</v-list-item>
+		<v-list-item prepend-icon="mdi-robot" title="AIトーク" value="ai_talk" @click="goToAiTalk" />
 		<v-list-item prepend-icon="mdi-account" title="プロフィール" value="profile" @click="goToUserProfile" />
 		<v-list-item prepend-icon="mdi-cog" title="設定" value="setting" @click="goToProfile" />
 	</v-list>
@@ -76,5 +77,9 @@ const goToMomentCreate = (): void => {
 
 const goToDmPage = (): void => {
 	router.push({path: '/dm'})
+}
+
+const goToAiTalk = (): void => {
+	router.push({ path: '/ai-talk' })
 }
 </script>
