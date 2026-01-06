@@ -40,6 +40,7 @@
     "util": "^0.12.5",
     "vee-validate": "^4.14.4",
     "vite": "^5.2.0",
+    "vite-plugin-html": "^3.2.2",
     "vite-plugin-vuetify": "^2.0.3",
     "vm-browserify": "^1.1.2",
     "vue": "^3.4.21",
