@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import admin_router from '@/routes/admin'
 import blog_router from '@/routes/blog'
+import login_router from '@/routes/login'
 import { useAuthStore } from '@/stores/authStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { storeToRefs } from 'pinia'
@@ -25,6 +26,7 @@ const routes: RouteRecordRaw[] = [
 			...admin_router
 		]
 	},
+	...login_router
 ]
 
 // ルーターの作成

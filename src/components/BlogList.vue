@@ -1,264 +1,281 @@
 <template>
-	<v-container fluid>
-		<!-- 生年月日入力ダイアログ -->
-		<BirthDateDialog 
-			v-model="showBirthDateDialog" 
-			@saved="onBirthDateSaved"
-		/>
-		
-		<!-- タブ切り替え -->
-		<v-tabs v-model="activeTab" color="success" class="mb-4">
-			<v-tab value="blogs">
-				<v-icon start icon="mdi-post" />
-				ブログ記事
-			</v-tab>
-			<v-tab value="tweets">
-				<v-icon start icon="mdi-note" />
-				つぶやき
-			</v-tab>
-			<v-tab value="moments">
-				<v-icon start icon="mdi-note-multiple" />
-				モーメント
-			</v-tab>
-		</v-tabs>
+	<!-- 生年月日入力ダイアログ -->
+	<BirthDateDialog 
+		v-model="showBirthDateDialog" 
+		@saved="onBirthDateSaved"
+	/>
 
-		<v-window v-model="activeTab">
-			<!-- ブログ記事タブ -->
-			<v-window-item
-				value="blogs"
-				transition="none"
-				reverse-transition="none"
-			>
-				<v-row class="horizontal-scroll" no-gutters>
-					<v-slide-group v-if="extendBlogList.length > 0" show-arrows>
-						<v-slide-group-item
-							v-for="(item, index) in extendBlogList"
-							:key="index"
+	<LoginDialog 
+		v-model:dialog="isLoginDialog"
+		@open-user-create="isUserCreateDialog = true"
+	/>
+
+	<!-- ユーザー登録ダイアログ -->
+	<UserCreateDialog 
+		v-model:dialog="isUserCreateDialog"
+		@open-login="isLoginDialog = true"
+	/>
+	
+	<!-- タブ切り替え -->
+	<v-tabs v-model="activeTab" color="success" class="mb-4">
+		<v-tab value="blogs">
+			<v-icon start icon="mdi-post" />
+			ブログ記事
+		</v-tab>
+		<v-tab value="tweets">
+			<v-icon start icon="mdi-note" />
+			つぶやき
+		</v-tab>
+		<v-tab value="moments">
+			<v-icon start icon="mdi-note-multiple" />
+			モーメント
+		</v-tab>
+	</v-tabs>
+
+	<v-window v-model="activeTab">
+		<!-- ブログ記事タブ -->
+		<v-window-item
+			value="blogs"
+			transition="none"
+			reverse-transition="none"
+		>
+			<v-row class="horizontal-scroll" no-gutters>
+				<v-slide-group v-if="extendBlogList.length > 0" show-arrows>
+					<v-slide-group-item
+						v-for="(item, index) in extendBlogList"
+						:key="index"
+					>
+						<v-card
+							class="blog-card d-inline-block"
+							@click="goToBlogDetail(item)"
+							outlined
+							height="280"
 						>
-							<v-card
-								class="blog-card d-inline-block"
-								@click="goToBlogDetail(item)"
-								outlined
-								height="280"
-							>
-								<v-img
-									:src="item.thumbUrl || '/placeholder-image.png'"
-									width="200"
-									height="150"
-									position="top"
-									aspect-ratio="16/9"
-									cover
-								/>
-								<v-card-text class="d-flex flex-column" style="height: 60px;">
+							<v-img
+								:src="item.thumbUrl || '/placeholder-image.png'"
+								width="200"
+								height="150"
+								position="top"
+								aspect-ratio="16/9"
+								cover
+							/>
+							<v-card-text class="d-flex flex-column" style="height: 60px;">
+								<div class="d-flex align-center gap-1">
 									<strong class="text-h6">{{ item.title }}</strong>
-									<div class="chip-container" style="min-height: 10px;">
-										<v-chip 
-											v-if="item.isAdult" 
-											size="x-small" 
-											color="warning"
-										>
-											18歳以上向け
-										</v-chip>
+									<v-icon 
+										v-if="item.isAdult || item.password" 
+										size="small" 
+										color="warning"
+										icon="mdi-lock"
+									/>
+								</div>
+								<div class="chip-container" style="min-height: 10px;">
+									<v-chip 
+										v-if="item.isAdult" 
+										size="x-small" 
+										color="warning"
+									>
+										18歳以上向け
+									</v-chip>
+								</div>
+							</v-card-text>
+							<v-card-actions>
+								<div class="d-flex">
+									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+										<v-btn
+											:icon="formatLike(item)"
+											:color="colorIconPink(item)"
+											variant="text"
+											@click.stop="addLike(item)"
+										/>
+										<div class="text-truncate">{{ item.like_count }}</div>
 									</div>
-								</v-card-text>
-								<v-card-actions>
-									<div class="d-flex">
-										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-											<v-btn
-												:icon="formatLike(item)"
-												:color="colorIconPink(item)"
-												variant="text"
-												@click.stop="addLike(item)"
-											/>
-											<div class="text-truncate">{{ item.like_count }}</div>
-										</div>
-										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-											<v-btn
-												:icon="formatBookmark(item)"
-												:color="colorIconPrimary(item)"
-												variant="text"
-												@click.stop="addBookmark(item)"
-											/>
-										</div>
+									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+										<v-btn
+											:icon="formatBookmark(item)"
+											:color="colorIconPrimary(item)"
+											variant="text"
+											@click.stop="addBookmark(item)"
+										/>
 									</div>
-								</v-card-actions>
-							</v-card>
-						</v-slide-group-item>
-					</v-slide-group>
-					<v-alert type="info" v-else>
-						ブログがありません
-					</v-alert>
-				</v-row>
-			</v-window-item>
+								</div>
+							</v-card-actions>
+						</v-card>
+					</v-slide-group-item>
+				</v-slide-group>
+				<v-alert type="info" v-else>
+					ブログがありません
+				</v-alert>
+			</v-row>
+		</v-window-item>
 
-			<!-- つぶやきタブ -->
-			<v-window-item
-				value="tweets"
-				transition="none"
-				reverse-transition="none"
-			>
-				<v-row class="horizontal-scroll" no-gutters>
-					<v-slide-group v-if="extendTweetList.length > 0" show-arrows>
-						<v-slide-group-item
-							v-for="(item, index) in extendTweetList"
-							:key="index"
+		<!-- つぶやきタブ -->
+		<v-window-item
+			value="tweets"
+			transition="none"
+			reverse-transition="none"
+		>
+			<v-row class="horizontal-scroll" no-gutters>
+				<v-slide-group v-if="extendTweetList.length > 0" show-arrows>
+					<v-slide-group-item
+						v-for="(item, index) in extendTweetList"
+						:key="index"
+					>
+						<v-card
+							class="blog-card d-inline-block"
+							@click="openPreviewTweetDialog(item)"
+							outlined
+							height="280"
 						>
-							<v-card
-								class="blog-card d-inline-block"
-								@click="openPreviewTweetDialog(item)"
-								outlined
-								height="280"
-							>
-								<v-img
-									:src="item.thumbUrl || '/placeholder-image.png'"
-									width="200"
-									height="150"
-									position="top"
-									aspect-ratio="16/9"
-									cover
-								/>
-								<v-card-text class="d-flex flex-column" style="height: 60px;">
-									<strong class="text-h6">{{ truncateContent(item.content) }}</strong>
-								</v-card-text>
-								<v-card-actions>
-									<div class="d-flex">
-										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-											<v-btn
-												:icon="formatLike(item)"
-												:color="colorIconPink(item)"
-												variant="text"
-												@click.stop="addTweetLike(item)"
-											/>
-											<div class="text-truncate">{{ item.like_count }}</div>
-										</div>
+							<v-img
+								:src="item.thumbUrl || '/placeholder-image.png'"
+								width="200"
+								height="150"
+								position="top"
+								aspect-ratio="16/9"
+								cover
+							/>
+							<v-card-text class="d-flex flex-column" style="height: 60px;">
+								<strong class="text-h6">{{ truncateContent(item.content) }}</strong>
+							</v-card-text>
+							<v-card-actions>
+								<div class="d-flex">
+									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+										<v-btn
+											:icon="formatLike(item)"
+											:color="colorIconPink(item)"
+											variant="text"
+											@click.stop="addTweetLike(item)"
+										/>
+										<div class="text-truncate">{{ item.like_count }}</div>
 									</div>
-								</v-card-actions>
-							</v-card>
-						</v-slide-group-item>
-					</v-slide-group>
-					<v-alert type="info" v-else>
-						つぶやきがありません
-					</v-alert>
-				</v-row>
-				<TweetCard
-					v-if="tweetToPreview"
-					v-model="isPreviewTweetDialogOpen"
-					:tweet="tweetToPreview"
-					:setting="tweetToPreview.setting"
-				/>
-			</v-window-item>
+								</div>
+							</v-card-actions>
+						</v-card>
+					</v-slide-group-item>
+				</v-slide-group>
+				<v-alert type="info" v-else>
+					つぶやきがありません
+				</v-alert>
+			</v-row>
+			<TweetCard
+				v-if="tweetToPreview"
+				v-model="isPreviewTweetDialogOpen"
+				:tweet="tweetToPreview"
+				:setting="tweetToPreview.setting"
+			/>
+		</v-window-item>
 
-			<v-window-item
-				value="moments"
-				transition="none"
-				reverse-transition="none"
-			>
-				<v-row class="horizontal-scroll" no-gutters>
-					<v-slide-group v-if="extendMomentList.length > 0" show-arrows>
-						<v-slide-group-item
-							v-for="(item, index) in extendMomentList"
-							:key="index"
+		<v-window-item
+			value="moments"
+			transition="none"
+			reverse-transition="none"
+		>
+			<v-row class="horizontal-scroll" no-gutters>
+				<v-slide-group v-if="extendMomentList.length > 0" show-arrows>
+					<v-slide-group-item
+						v-for="(item, index) in extendMomentList"
+						:key="index"
+					>
+						<v-card
+							class="blog-card d-inline-block"
+							@click="openPreviewMomentDialog(item)"
+							outlined
+							height="280"
 						>
-							<v-card
-								class="blog-card d-inline-block"
-								@click="openPreviewMomentDialog(item)"
-								outlined
-								height="280"
-							>
-								<v-img
-									:src="item.thumbUrl || '/placeholder-image.png'"
-									width="200"
-									height="150"
-									position="top"
-									aspect-ratio="16/9"
-									cover
-								/>
-								<v-card-text class="d-flex flex-column" style="height: 60px;">
-									<strong class="text-h6">{{ truncateContent(item.title) }}</strong>
-									<div class="chip-container" style="min-height: 10px;">
-										<v-chip 
-											v-if="item.isAdult" 
-											size="x-small" 
-											color="warning"
-										>
-											18歳以上向け
-										</v-chip>
+							<v-img
+								:src="item.thumbUrl || '/placeholder-image.png'"
+								width="200"
+								height="150"
+								position="top"
+								aspect-ratio="16/9"
+								cover
+							/>
+							<v-card-text class="d-flex flex-column" style="height: 60px;">
+								<strong class="text-h6">{{ truncateContent(item.title) }}</strong>
+								<div class="chip-container" style="min-height: 10px;">
+									<v-chip 
+										v-if="item.isAdult" 
+										size="x-small" 
+										color="warning"
+									>
+										18歳以上向け
+									</v-chip>
+								</div>
+							</v-card-text>
+							<v-card-actions>
+								<div class="d-flex">
+									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+										<v-btn
+											:icon="formatLike(item)"
+											:color="colorIconPink(item)"
+											variant="text"
+											@click.stop="addMomentLike(item)"
+										/>
+										<div class="text-truncate">{{ item.like_count }}</div>
 									</div>
-								</v-card-text>
-								<v-card-actions>
-									<div class="d-flex">
-										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-											<v-btn
-												:icon="formatLike(item)"
-												:color="colorIconPink(item)"
-												variant="text"
-												@click.stop="addMomentLike(item)"
-											/>
-											<div class="text-truncate">{{ item.like_count }}</div>
-										</div>
-										<div class="d-flex align-center text-caption text-medium-emphasis me-1">
-											<v-btn
-												:icon="formatBookmark(item)"
-												:color="colorIconPrimary(item)"
-												variant="text"
-												@click.stop="addMomentBookmark(item)"
-											/>
-										</div>
+									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+										<v-btn
+											:icon="formatBookmark(item)"
+											:color="colorIconPrimary(item)"
+											variant="text"
+											@click.stop="addMomentBookmark(item)"
+										/>
 									</div>
-								</v-card-actions>
-							</v-card>
-						</v-slide-group-item>
-					</v-slide-group>
-					<v-alert type="info" v-else>
-						モーメントがありません
-					</v-alert>
-				</v-row>
-				<MomentCard
-					v-if="momentToPreview"
-					v-model="isPreviewMomentDialogOpen"
-					:moment="momentToPreview"
+								</div>
+							</v-card-actions>
+						</v-card>
+					</v-slide-group-item>
+				</v-slide-group>
+				<v-alert type="info" v-else>
+					モーメントがありません
+				</v-alert>
+			</v-row>
+			<MomentCard
+				v-if="momentToPreview"
+				v-model="isPreviewMomentDialogOpen"
+				:moment="momentToPreview"
+			/>
+		</v-window-item>
+	</v-window>
+	<v-dialog v-model="passwordDialog" persistent max-width="400">
+		<v-card>
+			<v-card-title class="text-h5">
+				<v-icon class="mr-2">mdi-lock</v-icon>
+				パスワード認証
+			</v-card-title>
+			<v-card-text>
+				<p class="text-body-1 mb-4">このモーメントはパスワードで保護されています。</p>
+				<v-text-field
+					v-model="passwordInput"
+					label="パスワード"
+					type="password"
+					variant="outlined"
+					:error-messages="passwordError"
+					@keyup.enter="verifyPassword"
+					autofocus
 				/>
-			</v-window-item>
-		</v-window>
-		<v-dialog v-model="passwordDialog" persistent max-width="400">
-			<v-card>
-				<v-card-title class="text-h5">
-					<v-icon class="mr-2">mdi-lock</v-icon>
-					パスワード認証
-				</v-card-title>
-				<v-card-text>
-					<p class="text-body-1 mb-4">このモーメントはパスワードで保護されています。</p>
-					<v-text-field
-						v-model="passwordInput"
-						label="パスワード"
-						type="password"
-						variant="outlined"
-						:error-messages="passwordError"
-						@keyup.enter="verifyPassword"
-						autofocus
-					/>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer />
-					<v-btn
-						color="grey-lighten-4"
-						variant="flat"
-						@click="cancelPasswordAuth"
-					>
-						閉じる
-					</v-btn>
-					<v-btn
-						color="success"
-						variant="flat"
-						@click="verifyPassword"
-						:loading="passwordVerifying"
-					>
-						認証
-					</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
-	</v-container>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer />
+				<v-btn
+					color="grey-lighten-4"
+					variant="flat"
+					@click="cancelPasswordAuth"
+				>
+					閉じる
+				</v-btn>
+				<v-btn
+					color="success"
+					variant="flat"
+					@click="verifyPassword"
+					:loading="passwordVerifying"
+				>
+					認証
+				</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -283,6 +300,7 @@ interface BlogItem {
 	is_bookmark: boolean
 	like_count: number
 	uid: string
+	password: string | null
 }
 
 interface TweetItem {
@@ -344,6 +362,8 @@ const {
 
 const activeTab = ref('blogs')
 const showBirthDateDialog = ref<boolean>(false)
+const isLoginDialog = ref<boolean>(false)
+const isUserCreateDialog = ref<boolean>(false)
 const userData = ref<UserData | null>(null)
 const isUserAdult = ref<boolean>(false)
 const tweetToPreview = ref<any>(null)
@@ -516,6 +536,12 @@ const cancelPasswordAuth = () => {
 
 // いいね
 const addLike = async (blog: BlogItem): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+	
 	if (blog.is_like) {
 		await likeStore.deleteItem(blog.id)
 		blog.is_like = false
@@ -530,6 +556,12 @@ const addLike = async (blog: BlogItem): Promise<void> => {
 
 // お気に入り登録
 const addBookmark = async (blog: BlogItem): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+	
 	if (blog.is_bookmark) {
 		await bookmarkStore.deleteItem(blog.id)
 		blog.is_bookmark = false
@@ -542,6 +574,12 @@ const addBookmark = async (blog: BlogItem): Promise<void> => {
 
 // つぶやきのいいね
 const addTweetLike = async (tweet: TweetItem): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+	
 	if (tweet.is_like) {
 		await likeStore.deleteItem(tweet.id)
 		tweet.is_like = false
@@ -556,6 +594,12 @@ const addTweetLike = async (tweet: TweetItem): Promise<void> => {
 
 // モーメントのいいね
 const addMomentLike = async (moment: MomentItem): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+	
 	try {
 		await momentStore.toggleLike(moment)
 		await fetchMomentList()
@@ -566,6 +610,12 @@ const addMomentLike = async (moment: MomentItem): Promise<void> => {
 
 // モーメントのブックマーク
 const addMomentBookmark = async (moment: MomentItem): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+	
 	try {
 		await momentStore.toggleBookmark(moment)
 		await fetchMomentList()
@@ -580,7 +630,6 @@ const truncateContent = (content: string): string => {
 	if (content.length <= 10) return content
 	return content.substring(0, 10) + '...'
 }
-
 
 watch(() => blogStore.selectType, async (newType: number) => {
 	await fetchBlogList(newType)

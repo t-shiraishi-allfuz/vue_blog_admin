@@ -1,4 +1,14 @@
 <template>
+	<LoginDialog 
+		v-model:dialog="isLoginDialog"
+		@open-user-create="isUserCreateDialog = true"
+	/>
+	<!-- ユーザー登録ダイアログ -->
+	<UserCreateDialog 
+		v-model:dialog="isUserCreateDialog"
+		@open-login="isLoginDialog = true"
+	/>
+
 	<v-dialog v-model="passwordDialog" persistent max-width="400">
 		<v-card>
 			<v-card-title class="text-h5">
@@ -325,6 +335,8 @@ const {
 
 const isLoading = ref<boolean>(false)
 const shareDialog = ref<boolean>(false)
+const isLoginDialog = ref<boolean>(false)
+const isUserCreateDialog = ref<boolean>(false)
 
 const reply_id = ref<string | null>(null)
 const commentDialog = ref<boolean>(false)
@@ -380,6 +392,12 @@ const colorIconPrimary = computed((): string => {
 
 // いいね
 const addLike = async (): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+
 	if (blogDetail.value.is_like) {
 		await likeStore.deleteItem(blogDetail.value.id)
 		blogDetail.value.is_like = false
@@ -397,6 +415,11 @@ const addLike = async (): Promise<void> => {
 
 // シェア
 const addShare = (): void => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
 	shareDialog.value = true
 }
 
@@ -424,6 +447,12 @@ const copyUrl = async (): Promise<void> => {
 
 // リブログ
 const reblog = async (): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+
 	// キャッシュしておく
 	localStorage.setItem("shareBlog", JSON.stringify(blogDetail.value))
 	localStorage.setItem("shareSetting", JSON.stringify(blogDetail.value.setting))
@@ -433,15 +462,30 @@ const reblog = async (): Promise<void> => {
 
 // コメント
 const addComment = (): void => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
 	commentDialog.value = true
 }
 
 const replyComment = (comment: CommentData): void => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
 	reply_id.value = comment.id
 	commentDialog.value = true
 }
 
 const deleteComment = async (comment: CommentData): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
 	await commentStore.deleteItem(comment.id)
 	await fetchCommentList()
 	blogDetail.value.comment_count--
@@ -486,6 +530,12 @@ const fetchCommentList = async (): Promise<void> => {
 
 // お気に入り登録
 const addBookmark = async (): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+
 	if (blogDetail.value.is_bookmark) {
 		await bookmarkStore.deleteItem(blogDetail.value.id)
 		blogDetail.value.is_bookmark = false
@@ -497,12 +547,24 @@ const addBookmark = async (): Promise<void> => {
 
 // フォロー
 const followUser = async (): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+
 	if (!userInfo.value) return
 	await followUsersStore.create(blogDetail.value.uid)
 }
 
 // フォロー外す
 const deleteFollowUser = async (): Promise<void> => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+
 	if (!userInfo.value) return
 	await followUsersStore.deleteItem(blogDetail.value.uid)
 }

@@ -54,12 +54,19 @@
 			</div>
 			<div v-else>
 				<v-btn text @click="openLoginDialog">ログイン</v-btn>
-				<v-btn text to="/user_create">登録</v-btn>
+				<v-btn text @click="openUserCreateDialog">登録</v-btn>
 			</div>
 		</template>
 	</v-app-bar>
 	
-	<LoginDialog v-model:dialog="isLoginDialog" />
+	<LoginDialog 
+		v-model:dialog="isLoginDialog"
+		@open-user-create="isUserCreateDialog = true"
+	/>
+	<UserCreateDialog 
+		v-model:dialog="isUserCreateDialog"
+		@open-login="isLoginDialog = true"
+	/>
 	<NotificationDialog v-model="isNotificationDialogOpen" />
 	<TweetCreateDialog v-model="isTweetDialogOpen" @saved="onTweetSaved" />
 </template>
@@ -75,7 +82,6 @@ import { useAnnouncementStore } from '@/stores/announcementStore'
 import { useDmStore } from '@/stores/dmStore'
 import { useCoinStore } from '@/stores/coinStore'
 import CommonUsermenu from '@/components/CommonUsermenu.vue'
-import LoginDialog from '@/components/LoginDialog.vue'
 import NotificationDialog from '@/components/NotificationDialog.vue'
 import TweetCreateDialog from '@/components/TweetCreateDialog.vue'
 import Swal from 'sweetalert2'
@@ -110,6 +116,7 @@ const totalUnreadCount = computed((): number =>
 
 const search = ref<string>('')
 const isLoginDialog = ref<boolean>(false)
+const isUserCreateDialog = ref<boolean>(false)
 const isNotificationDialogOpen = ref<boolean>(false)
 const isTweetDialogOpen = ref<boolean>(false)
 
@@ -199,6 +206,10 @@ const goToHome = (): void => {
 
 const openLoginDialog = (): void => {
 	isLoginDialog.value = true
+}
+
+const openUserCreateDialog = (): void => {
+	isUserCreateDialog.value = true
 }
 
 // 通知ダイアログを開く

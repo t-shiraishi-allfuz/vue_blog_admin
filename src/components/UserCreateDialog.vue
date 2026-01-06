@@ -2,10 +2,10 @@
 	<v-dialog v-model="dialog" max-width="500px">
 		<v-card>
 			<v-card-title class="text-center pa-6">
-				<h4 class="text-h5">ログイン</h4>
+				<h4 class="text-h5">ユーザー登録</h4>
 			</v-card-title>
 			
-			<v-form ref="loginForm" @submit.prevent="loginUser">
+			<v-form ref="createForm" @submit.prevent="createUser">
 				<v-card-text class="pa-6">
 					<v-text-field
 						v-model="email"
@@ -41,20 +41,10 @@
 						<v-btn
 							variant="text"
 							color="primary"
-							@click="goToResetPassword"
+							@click="goToLogin"
 							class="text-decoration-none"
 						>
-							パスワードを忘れた方はこちら
-						</v-btn>
-					</div>
-					<div class="text-center">
-						<v-btn
-							variant="text"
-							color="primary"
-							@click="goToUserCreate"
-							class="text-decoration-none"
-						>
-							新規登録はこちら
+							登録済みの方はこちら
 						</v-btn>
 					</div>
 				</v-card-text>
@@ -74,7 +64,7 @@
 						type="submit"
 						:loading="isLoading"
 					>
-						ログイン
+						登録する
 					</v-btn>
 					<v-spacer />
 				</v-card-actions>
@@ -98,9 +88,7 @@
 </template>
 
 <script setup lang="ts">
-
 import { useAuthStore } from '@/stores/authStore'
-import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { GoogleLogin } from 'vue3-google-login'
 import Swal from 'sweetalert2'
 
@@ -123,12 +111,11 @@ interface GoogleButtonConfig {
 const dialog = defineModel<boolean>('dialog')
 
 const emit = defineEmits<{
-	openUserCreate: []
+	openLogin: []
 }>()
 
 const router = useRouter()
 const authStore = useAuthStore()
-const blogSettingStore = useBlogSettingStore()
 
 const email = ref<string>('')
 const password = ref<string>('')
@@ -146,7 +133,7 @@ const googleButtonConfig: GoogleButtonConfig = {
 	type: 'standard',
 	theme: 'outline',
 	size: 'large',
-	text: 'signin_with',
+	text: 'signup_with',
 	shape: 'rectangular',
 	logo_alignment: 'left',
 	width: '300'
@@ -169,32 +156,24 @@ const changeVisible = (): void => {
 
 const closeDialog = (): void => {
 	dialog.value = false
-
 	email.value = ''
 	password.value = ''
 	errorMessage.value = ''
 }
 
-const goToResetPassword = (): void => {
+const goToLogin = (): void => {
 	closeDialog()
-	router.push('/reset_password')
+	emit('openLogin')
 }
 
-const goToUserCreate = (): void => {
-	closeDialog()
-	emit('openUserCreate')
-}
-
-const showLoginSuccessDialog = async (): Promise<void> => {
+// 新規ユーザー登録成功ダイアログ
+const showRegistrationSuccessDialog = async (): Promise<void> => {
 	dialog.value = false
 
 	try {
-		// ログイン成功後、ブログ設定を取得
-		await blogSettingStore.getDetail()
-		
 		const result = await Swal.fire({
-			title: 'ログイン完了',
-			text: 'ログインが完了しました。',
+			title: '登録完了',
+			text: 'ユーザー登録が完了しました。初期設定画面に移動します。',
 			icon: 'success',
 			confirmButtonText: 'OK',
 			confirmButtonColor: '#F784C3',
@@ -204,25 +183,52 @@ const showLoginSuccessDialog = async (): Promise<void> => {
 		})
 		
 		if (result.isConfirmed) {
-			closeDialog()
+			router.push('/setting_first')
 		}
-	} catch (error: any) {
+	} catch (error) {
 		console.error('ダイアログエラー:', error)
-		closeDialog()
+		// ダイアログでエラーが発生した場合も設定画面にリダイレクト
+		router.push('/setting_first')
 	}
 }
 
-// ログイン処理
-const loginUser = async (): Promise<void> => {
+// 既存ユーザー用ダイアログ
+const showExistingUserDialog = async (): Promise<void> => {
+	dialog.value = false
+
+	try {
+		const result = await Swal.fire({
+			title: 'ログイン完了',
+			text: '既に登録済みのアカウントです。ホームページに移動します。',
+			icon: 'success',
+			confirmButtonText: 'OK',
+			confirmButtonColor: '#F784C3',
+			showCancelButton: false,
+			allowOutsideClick: false,
+			allowEscapeKey: false
+		})
+		
+		if (result.isConfirmed) {
+			router.push('/')
+		}
+	} catch (error) {
+		console.error('ダイアログエラー:', error)
+		// ダイアログでエラーが発生した場合もホームページにリダイレクト
+		router.push('/')
+	}
+}
+
+// ユーザー登録処理
+const createUser = async (): Promise<void> => {
 	try {
 		errorMessage.value = ''
 		isLoading.value = true
 		
-		await authStore.login(email.value, password.value)
-		await showLoginSuccessDialog()
+		await authStore.create(email.value, password.value)
+		await showRegistrationSuccessDialog()
 	} catch (error: any) {
-		console.error('ログインエラー:', error)
-		errorMessage.value = error.message || 'ログインに失敗しました'
+		console.error('ユーザー登録エラー:', error)
+		errorMessage.value = error.message || 'ユーザー登録に失敗しました'
 	} finally {
 		isLoading.value = false
 	}
@@ -238,9 +244,16 @@ const handleGoogleLogin = async (response: GoogleResponse): Promise<void> => {
 		
 		// 認証成功後の処理
 		if (authStore.isLogin) {
-			await showLoginSuccessDialog()
+			// 新規ユーザーか既存ユーザーかを判定してリダイレクト
+			if (authStore.isNewUser) {
+				// 新規ユーザー
+				await showRegistrationSuccessDialog()
+			} else {
+				// 既存ユーザー - ダイアログを表示してからリダイレクト
+				await showExistingUserDialog()
+			}
 		} else {
-			errorMessage.value = 'ログインに失敗しました'
+			errorMessage.value = '認証に失敗しました'
 		}
 	} catch (error: any) {
 		console.error('Google認証エラー:', error)
@@ -271,3 +284,4 @@ const handleGoogleError = (error: any): void => {
 	font-weight: 500;
 }
 </style>
+
