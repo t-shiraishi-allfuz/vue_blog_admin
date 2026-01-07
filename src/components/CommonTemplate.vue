@@ -17,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-// 共通テンプレートコンポーネント
 </script>
 
 <style scoped>

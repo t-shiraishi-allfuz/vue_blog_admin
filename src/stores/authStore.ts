@@ -150,12 +150,18 @@ export const useAuthStore = defineStore('auth', () => {
 	const resetPassword = async (email: string): Promise<void> => {
 		try {
 			const actionCodeSettings = {
-				url: process.env.VUE_APP_ROOT +'/reset_password_confirm',
+				url: import.meta.env.VITE_APP_ROOT || window.location.origin,
 				handleCodeInApp: true,
 			}
 			await sendPasswordResetEmail(auth, email, actionCodeSettings)
-		} catch (error) {
-			throw new Error('メールの送信に失敗しました')
+		} catch (error: any) {
+			console.error('パスワードリセットエラー:', error)
+			if (error.code === 'auth/user-not-found') {
+				throw new Error('このメールアドレスは登録されていません')
+			} else if (error.code === 'auth/invalid-email') {
+				throw new Error('無効なメールアドレスです')
+			}
+			throw new Error(error.message || 'メールの送信に失敗しました')
 		}
 	}
 
@@ -174,10 +180,29 @@ export const useAuthStore = defineStore('auth', () => {
 			// 新しいパスワード設定
 			await confirmPasswordReset(auth, oobCode, password)
 
-			// パスワードを更新
-			await usersStore.update(userInfo.value as any, email, password)
-		} catch (error) {
-			throw new Error('パスワードの再設定に失敗しました')
+			// Firestore側のパスワードハッシュを更新（未ログインでも更新できるようEmailからUIDを特定）
+			const user = await usersStore.getUserByEmail(email)
+			if (user?.uid) {
+				await usersStore.update({ uid: user.uid } as any, email, password)
+			} else {
+				console.warn('usersコレクションに該当ユーザーが見つからないため、passwordHash更新をスキップしました')
+			}
+		} catch (error: any) {
+			console.error('パスワード再設定エラー:', error)
+			switch (error?.code) {
+				case 'auth/invalid-action-code':
+					throw new Error('再設定リンクが無効です。もう一度パスワード再設定メールを送信してください')
+				case 'auth/expired-action-code':
+					throw new Error('再設定リンクの有効期限が切れています。もう一度パスワード再設定メールを送信してください')
+				case 'auth/weak-password':
+					throw new Error('パスワードが短すぎます。6文字以上のパスワードを設定してください')
+				default:
+					// 上流で投げたError（同一パスワードなど）はそのまま返す
+					if (error instanceof Error && error.message) {
+						throw error
+					}
+					throw new Error('パスワードの再設定に失敗しました')
+			}
 		}
 	}
 

@@ -27,17 +27,6 @@
 						@click:append-inner="changeVisible"
 						class="mb-4"
 					/>
-					
-					<v-alert
-						v-if="errorMessage"
-						type="error"
-						variant="tonal"
-						closable
-						@click:close="errorMessage = ''"
-						class="mb-4"
-					>
-						{{ errorMessage }}
-					</v-alert>
 				</v-card-text>
 				
 				<v-card-actions class="pa-6 pt-0">
@@ -74,6 +63,7 @@ const emit = defineEmits<{
 	openLogin: []
 }>()
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -81,8 +71,8 @@ const password = ref<string>('')
 const confirmPassword = ref<string>('')
 const visibleIcon = ref<string>("mdi-eye-off")
 const visibleType = ref<string>('password')
-const errorMessage = ref<string>('')
 const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
+const oobCode = ref<string>((route.query.oobCode as string) || '')
 
 const passwordRules = [
 	(v: string): boolean | string => !!v || 'パスワードは必須です',
@@ -97,14 +87,12 @@ const changeVisible = (): void => {
 const initRefs = (): void => {
 	password.value = ''
 	confirmPassword.value = ''
-	errorMessage.value = ''
 }
 
 const closeDialog = (): void => {
 	if (dialogTemplateRef.value) {
 		dialogTemplateRef.value.closeDialog()
 	}
-	initRefs()
 }
 
 const goToLogin = (): void => {
@@ -114,6 +102,8 @@ const goToLogin = (): void => {
 
 // パスワードリセット
 const resetPassword = async (): Promise<void> => {
+	closeDialog()
+
 	if (password.value !== confirmPassword.value) {
 		await Swal.fire({
 			title: 'エラー',
@@ -123,7 +113,7 @@ const resetPassword = async (): Promise<void> => {
 		return
 	}
 
-	if (!oobCode) {
+	if (!oobCode.value) {
 		await Swal.fire({
 			title: 'エラー',
 			text: 'パスワード再設定コードがありません',
@@ -133,7 +123,7 @@ const resetPassword = async (): Promise<void> => {
 	}
 
 	try {
-		await authStore.resetPasswordConfirm(oobCode, password.value)
+		await authStore.resetPasswordConfirm(oobCode.value, password.value)
 		await Swal.fire({
 			title: '成功',
 			text: 'パスワードがリセットされました',
@@ -143,20 +133,25 @@ const resetPassword = async (): Promise<void> => {
 		})
 
 		await authStore.initializeAuth()
-		router.push({path: "/user_login"})
+		initRefs()
+		emit('openLogin')
 	} catch(error) {
+		await Swal.fire({
+			title: 'エラー',
+			text: error.message || 'パスワードのリセットに失敗しました',
+			icon: 'error'
+		})
 		console.error('パスワードリセットエラー:', error)
-		errorMessage.value = error.message || 'パスワードのリセットに失敗しました'
 	}
 }
 
-onMounted(async (): Promise<void> => {
-	if (!oobCode) {
-		await Swal.fire({
-			title: 'エラー',
-			text: 'パスワード再設定コードがありません',
-			icon: 'error'
-		})
+// oobCodeが更新されたときにダイアログを開く
+watch(() => route.query.oobCode, (newOobCode) => {
+	if (newOobCode) {
+		oobCode.value = newOobCode as string
+		dialog.value = true
+		// URLからoobCodeパラメータを削除
+		router.replace({ query: {} })
 	}
-})
+}, { immediate: true })
 </script>

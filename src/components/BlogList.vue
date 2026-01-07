@@ -16,6 +16,12 @@
 		@open-login="isLoginDialog = true"
 	/>
 
+	<!-- パスワード再設定ダイアログ -->
+	<ResetPasswordConfirmDialog 
+		v-model:dialog="isResetPasswordConfirmDialog"
+		@open-login="openLoginDialog"
+	/>
+
 	<DialogTemplate
 		ref="dialogTemplateRef"
 		label="パスワード認証"
@@ -338,6 +344,7 @@ interface UserData {
 	[key: string]: any
 }
 
+const route = useRoute()
 const router = useRouter()
 const blogStore = useBlogStore()
 const tweetStore = useTweetStore()
@@ -373,10 +380,10 @@ const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 // パスワード認証関連
 const isPasswordDialog = ref<boolean>(false)
+const isResetPasswordConfirmDialog = ref<boolean>(false)
 const passwordInput = ref<string>('')
 const passwordError = ref<string>('')
 const passwordVerifying = ref<boolean>(false)
-
 
 const initRefs = (): void => {
 	passwordInput.value = ''
@@ -686,6 +693,17 @@ onMounted(async (): Promise<void> => {
 	await fetchMomentList()
 	await checkBirthDateRegistration()
 })
+
+// URLパラメータにoobCodeがある場合、ダイアログを自動表示
+watch(() => route.query.oobCode, (oobCode) => {
+	if (oobCode) {
+		isResetPasswordConfirmDialog.value = true
+		// URLからoobCodeパラメータを削除（ダイアログコンポーネント内でも処理されるが、念のため）
+		const newQuery = { ...route.query }
+		delete newQuery.oobCode
+		router.replace({ query: newQuery })
+	}
+}, { immediate: true })
 </script>
 
 <style scoped>

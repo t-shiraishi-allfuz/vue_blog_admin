@@ -53,17 +53,19 @@ export const useUsersStore = defineStore('users', () => {
 				db_name: "users",
 				searchConditions: {
 					filters: filters,
+					limit: 1
 				}
 			}
 		)
 
-		if (querySnapshot) {
-			const userData = querySnapshot.docs[0].data()
-			const previousHash = userData.passwordHash
-			return await bcryptjs.compare(password, previousHash)
-		} else {
+		if (!querySnapshot || querySnapshot.empty) {
 			return false
 		}
+
+		const userData = querySnapshot.docs[0].data() as UserData
+		const previousHash = userData.passwordHash
+		if (!previousHash) return false
+		return await bcryptjs.compare(password, previousHash)
 	}
 
 	// UIDでユーザーを取得
@@ -72,6 +74,29 @@ export const useUsersStore = defineStore('users', () => {
 			const querySnapshot = await BaseAPI.getData({db_name: "users", item_id: uid})
 			return querySnapshot?.data() as UserData || null
 		} catch (error) {
+			return null
+		}
+	}
+
+	// Emailでユーザーを取得（存在確認用）
+	const getUserByEmail = async (email: string): Promise<(UserData & { uid: string }) | null> => {
+		try {
+			const querySnapshot = await BaseAPI.getDataWithQuery({
+				db_name: "users",
+				searchConditions: {
+					filters: [["email", "==", email]],
+					limit: 1
+				}
+			})
+
+			if (!querySnapshot || querySnapshot.empty) {
+				return null
+			}
+
+			const doc = querySnapshot.docs[0]
+			return { uid: doc.id, ...(doc.data() as UserData) }
+		} catch (error) {
+			console.error('ユーザー取得エラー:', error)
 			return null
 		}
 	}
@@ -165,6 +190,7 @@ export const useUsersStore = defineStore('users', () => {
 		update,
 		checkSame,
 		getUserByUid,
+		getUserByEmail,
 		createGoogleUser,
 		isOwner,
 		setOwner,
