@@ -294,6 +294,7 @@ import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useSearchStore } from '@/stores/searchStore'
 
 // 型定義
 interface BlogItem {
@@ -353,6 +354,7 @@ const likeStore = useLikeStore()
 const bookmarkStore = useBookmarkStore()
 const usersStore = useUsersStore()
 const authStore = useAuthStore()
+const searchStore = useSearchStore()
 const {
 	blogList,
 	selectType
@@ -378,16 +380,22 @@ const momentToPreview = ref<any>(null)
 const isPreviewMomentDialog = ref<boolean>(false)
 const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
+// 検索関連
+const searchQuery = ref<string>("")
+const searchBlogIds = ref<string[]>([])
+const searchTweetIds = ref<string[]>([])
+const searchMomentIds = ref<string[]>([])
+
 // パスワード認証関連
 const isPasswordDialog = ref<boolean>(false)
 const isResetPasswordConfirmDialog = ref<boolean>(false)
-const passwordInput = ref<string>('')
-const passwordError = ref<string>('')
+const passwordInput = ref<string>("")
+const passwordError = ref<string>("")
 const passwordVerifying = ref<boolean>(false)
 
 const initRefs = (): void => {
-	passwordInput.value = ''
-	passwordError.value = ''
+	passwordInput.value = ""
+	passwordError.value = ""
 	momentToPreview.value = null
 }
 
@@ -404,7 +412,7 @@ const extendBlogList = computed((): BlogItem[] => {
 	}
 	
 	// 閲覧制限フィルタリング
-	return blogList.value.filter((blog: BlogItem) => {
+	let filtered = blogList.value.filter((blog: BlogItem) => {
 		// 閲覧制限がないブログは常に表示
 		if (!blog.isAdult) {
 			return true
@@ -419,13 +427,28 @@ const extendBlogList = computed((): BlogItem[] => {
 		// ユーザーの年齢をチェック
 		return isUserAdult.value
 	})
+	
+	// 検索クエリがある場合、検索結果でフィルタリング
+	if (searchQuery.value && searchBlogIds.value.length > 0) {
+		filtered = filtered.filter((blog: BlogItem) => searchBlogIds.value.includes(blog.id))
+	}
+	
+	return filtered
 })
 
 const extendTweetList = computed((): any[] => {
 	if (!tweetList.value) {
 		return []
 	}
-	return tweetList.value
+	
+	let filtered = tweetList.value
+	
+	// 検索クエリがある場合、検索結果でフィルタリング
+	if (searchQuery.value && searchTweetIds.value.length > 0) {
+		filtered = filtered.filter((tweet: any) => searchTweetIds.value.includes(tweet.id))
+	}
+	
+	return filtered
 })
 
 const extendMomentList = computed((): MomentItem[] => {
@@ -434,7 +457,7 @@ const extendMomentList = computed((): MomentItem[] => {
 	}
 	
 	// 閲覧制限フィルタリング
-	return momentList.value.filter((moment: MomentItem) => {
+	let filtered = momentList.value.filter((moment: MomentItem) => {
 		// 閲覧制限がないモーメントは常に表示
 		if (!moment.isAdult) {
 			return true
@@ -449,6 +472,13 @@ const extendMomentList = computed((): MomentItem[] => {
 		// ユーザーの年齢をチェック
 		return isUserAdult.value
 	})
+	
+	// 検索クエリがある場合、検索結果でフィルタリング
+	if (searchQuery.value && searchMomentIds.value.length > 0) {
+		filtered = filtered.filter((moment: MomentItem) => searchMomentIds.value.includes(moment.id))
+	}
+	
+	return filtered
 })
 
 // 一覧取得
@@ -511,8 +541,8 @@ const openPreviewMomentDialog = (moment: any) => {
 
 	if (moment.password) {
 		isPasswordDialog.value = true
-		passwordInput.value = ''
-		passwordError.value = ''
+		passwordInput.value = ""
+		passwordError.value = ""
 	} else {
 		isPreviewMomentDialog.value = true
 	}
@@ -521,26 +551,26 @@ const openPreviewMomentDialog = (moment: any) => {
 // パスワード認証
 const verifyPassword = async () => {
 	if (!passwordInput.value.trim()) {
-		passwordError.value = 'パスワードを入力してください'
+		passwordError.value = "パスワードを入力してください"
 		return
 	}
 
 	passwordVerifying.value = true
-	passwordError.value = ''
+	passwordError.value = ""
 
 	try {
 		const isValid = await momentStore.verifyPassword(momentToPreview.value.id, passwordInput.value)
 		if (isValid) {
 			// 認証成功時したら開く
 			isPasswordDialog.value = false
-			passwordInput.value = ''
+			passwordInput.value = ""
 			isPreviewMomentDialog.value = true
 		} else {
-			passwordError.value = 'パスワードが正しくありません'
+			passwordError.value = "パスワードが正しくありません"
 		}
 	} catch (error) {
-		console.error('パスワード認証エラー:', error)
-		passwordError.value = '認証に失敗しました'
+		console.error("パスワード認証エラー:", error)
+		passwordError.value = "認証に失敗しました"
 		momentToPreview.value = null
 	} finally {
 		passwordVerifying.value = false
@@ -617,7 +647,7 @@ const addMomentLike = async (moment: MomentItem): Promise<void> => {
 		await momentStore.toggleLike(moment)
 		await fetchMomentList()
 	} catch (error) {
-		console.error('モーメントいいねエラー:', error)
+		console.error("モーメントいいねエラー:", error)
 	}
 }
 
@@ -633,15 +663,15 @@ const addMomentBookmark = async (moment: MomentItem): Promise<void> => {
 		await momentStore.toggleBookmark(moment)
 		await fetchMomentList()
 	} catch (error) {
-		console.error('モーメントブックマークエラー:', error)
+		console.error("モーメントブックマークエラー:", error)
 	}
 }
 
 // つぶやき内容を切り詰める関数
 const truncateContent = (content: string): string => {
-	if (!content) return ''
+	if (!content) return ""
 	if (content.length <= 10) return content
-	return content.substring(0, 10) + '...'
+	return content.substring(0, 10) + "..."
 }
 
 watch(() => blogStore.selectType, async (newType: number) => {
@@ -686,12 +716,48 @@ const checkBirthDateRegistration = async (): Promise<void> => {
 	}
 }
 
+// 検索実行
+const executeSearch = async (query: string): Promise<void> => {
+	searchQuery.value = query.trim()
+	
+	if (searchQuery.value) {
+		const result = await searchStore.searchForBlogList(searchQuery.value)
+		searchBlogIds.value = result.blogIds
+		searchTweetIds.value = result.tweetIds
+		searchMomentIds.value = result.momentIds
+	} else {
+		searchBlogIds.value = []
+		searchTweetIds.value = []
+		searchMomentIds.value = []
+	}
+}
+
 // 初回ロード
 onMounted(async (): Promise<void> => {
 	await fetchBlogList(selectType.value)
 	await fetchTweetList()
 	await fetchMomentList()
 	await checkBirthDateRegistration()
+	
+	// ルートクエリパラメータから検索クエリを取得
+	const query = route.query.q as string
+	if (query) {
+		searchQuery.value = query
+		await executeSearch(query)
+	}
+})
+
+// ルートクエリパラメータの変化を監視
+watch(() => route.query.q, async (newQuery) => {
+	if (newQuery) {
+		searchQuery.value = newQuery as string
+		await executeSearch(newQuery as string)
+	} else {
+		searchQuery.value = ''
+		searchBlogIds.value = []
+		searchTweetIds.value = []
+		searchMomentIds.value = []
+	}
 })
 
 // URLパラメータにoobCodeがある場合、ダイアログを自動表示

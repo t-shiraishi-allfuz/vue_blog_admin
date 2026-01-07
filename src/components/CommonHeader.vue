@@ -12,6 +12,8 @@
 				append-inner-icon="mdi-magnify"
 				single-line
 				hide-details
+				@keyup.enter="executeSearch"
+				@click:append-inner="executeSearch"
 			/>
 		</v-app-bar-title>
 		<template v-slot:append>
@@ -234,6 +236,16 @@ const openTweetDialog = (): void => {
 // つぶやき保存後の処理
 const onTweetSaved = (): void => {
 	// TODO 保存後の処理
+}
+
+// 検索実行
+const executeSearch = (): void => {
+	if (search.value.trim()) {
+		router.push({ path: '/', query: { q: search.value.trim() } })
+	} else {
+		// 検索クエリが空の場合はクエリパラメータを削除
+		router.push({ path: '/' })
+	}
 }
 </script>
 
