@@ -8,6 +8,7 @@ interface ImagesFolderData {
 	uid: string
 	name: string
 	image_count: number
+	order: number
 	createdAt: Date
 	updatedAt: Date
 	[key: string]: any
@@ -35,11 +36,17 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 			throw new Error('ユーザー情報が取得できません')
 		}
 		
+		// 既存のフォルダ数を取得してorderを設定
+		const maxOrder = folderList.value.length > 0 
+			? Math.max(...folderList.value.map(f => f.order || 0))
+			: -1
+		
 		await BaseAPI.addData(
 			{db_name: "images_folder"},
 			{
 				uid: userInfo.uid,
 				name: folder.name,
+				order: maxOrder + 1,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			}
@@ -84,6 +91,7 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 				const data: ImagesFolderData = {
 					id: doc.id,
 					image_count: imageCount,
+					order: doc.data().order ?? 0,
 					...doc.data()
 				} as ImagesFolderData
 				
@@ -92,8 +100,13 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 				}
 				result.push(data)
 			}
-			// createdAt の昇順でソート
-			result.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+			// order の昇順でソート（orderが同じ場合はcreatedAtの昇順）
+			result.sort((a, b) => {
+				if (a.order !== b.order) {
+					return (a.order || 0) - (b.order || 0)
+				}
+				return a.createdAt.getTime() - b.createdAt.getTime()
+			})
 
 			folderList.value = result
 		}
@@ -136,11 +149,47 @@ export const useImagesFolderStore = defineStore('images_folder', () => {
 		)
 	}
 
+	// 順序を更新
+	const updateOrder = async (folderIds: string[]): Promise<void> => {
+		const updatePromises = folderIds.map((id, index) => {
+			return BaseAPI.setData(
+				{db_name: "images_folder", item_id: id},
+				{
+					order: index,
+					updatedAt: new Date()
+				}
+			)
+		})
+		await Promise.all(updatePromises)
+		// リストを再取得
+		await getList()
+	}
+
+	// 順序を移動（上下矢印用）
+	const moveOrder = async (folderId: string, direction: 'up' | 'down'): Promise<void> => {
+		const currentIndex = folderList.value.findIndex(f => f.id === folderId)
+		if (currentIndex === -1) return
+
+		const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+		if (newIndex < 0 || newIndex >= folderList.value.length) return
+
+		// 配列内で要素を入れ替え
+		const newList = [...folderList.value]
+		const [movedItem] = newList.splice(currentIndex, 1)
+		newList.splice(newIndex, 0, movedItem)
+
+		// 新しい順序でIDリストを作成
+		const folderIds = newList.map(f => f.id)
+		await updateOrder(folderIds)
+	}
+
 	return {
 		folderList,
 		create,
 		update,
 		getList,
-		deleteItem
+		deleteItem,
+		updateOrder,
+		moveOrder
 	}
 })

@@ -1,39 +1,70 @@
 <template>
 	<v-container>
 		<v-card class="folder-list">
-			<v-data-table
-				class="folder-list"
-				:headers="headers"
-				:items="folderList"
-				:items-per-page="30"
-				no-data-text="画像フォルダがありません"
-			>
-				<template v-slot:top>
-					<v-toolbar flat>
-						<v-toolbar-title>画像フォルダ一覧</v-toolbar-title>
-						<v-divider class="mx-4" inset vertical />
-						<v-spacer></v-spacer>
-						<v-btn color="success" variant="flat" @click="openCreateDialog">新しい画像フォルダを作る</v-btn>
-					</v-toolbar>
+			<v-toolbar flat>
+				<v-toolbar-title>画像フォルダ一覧</v-toolbar-title>
+				<v-divider class="mx-4" inset vertical />
+				<v-spacer></v-spacer>
+				<v-btn color="success" variant="flat" @click="openCreateDialog">新しい画像フォルダを作る</v-btn>
+			</v-toolbar>
+			<v-divider />
+			<v-list v-if="folderList.length > 0">
+				<draggable
+					v-model="sortedFolderList"
+					item-key="id"
+					@end="onDragEnd"
+					tag="div"
+				>
+				<template #item="{ element: item, index }">
+					<div>
+						<v-list-item class="folder-item">
+							<template v-slot:prepend>
+								<v-icon color="grey">mdi-drag</v-icon>
+							</template>
+							<v-list-item-title>
+								<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
+									{{ item.name }}（{{ item.image_count }}）
+								</a>
+							</v-list-item-title>
+							<v-list-item-subtitle>
+								{{ formatDate(item.createdAt) }}
+							</v-list-item-subtitle>
+							<template v-slot:append>
+								<div class="d-flex align-center">
+									<v-btn
+										icon="mdi-chevron-up"
+										variant="text"
+										size="small"
+										:disabled="index === 0"
+										@click="moveUp(item.id)"
+										class="mr-1"
+									/>
+									<v-btn
+										icon="mdi-chevron-down"
+										variant="text"
+										size="small"
+										:disabled="index === sortedFolderList.length - 1"
+										@click="moveDown(item.id)"
+										class="mr-2"
+									/>
+									<v-icon
+										class="delete-icon"
+										icon="mdi-delete"
+										aria-label="削除"
+										role="button"
+										@click="openDeleteDialog(item)"
+									/>
+								</div>
+							</template>
+						</v-list-item>
+						<v-divider v-if="index < folderList.length - 1" />
+					</div>
 				</template>
-				<template v-slot:[`item.name`]="{ item }">
-					<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
-						{{ item.name }}（{{ item.image_count }}）
-					</a>
-				</template>
-				<template v-slot:[`item.createdAt`]="{ item }">
-					{{ formatDate(item.createdAt) }}
-				</template>
-				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon
-						class="delete-icon"
-						icon="mdi-delete"
-						aria-label="削除"
-						role="button"
-						@click="openDeleteDialog(item)"
-					/>
-				</template>
-			</v-data-table>
+			</draggable>
+			</v-list>
+			<v-card-text v-if="folderList.length === 0" class="text-center">
+				画像フォルダがありません
+			</v-card-text>
 		</v-card>
 	</v-container>
 
@@ -84,12 +115,15 @@
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
+import draggable from 'vuedraggable'
+import DialogTemplate from '@/components/DialogTemplate.vue'
 
 // 型定義
 interface FolderData {
 	id: string
 	name: string
 	image_count: number
+	order?: number
 	createdAt: Date
 	updatedAt: Date
 }
@@ -106,16 +140,18 @@ interface UpdateFolderData {
 	updatedAt: Date
 }
 
-interface HeaderItem {
-	title: string
-	value: string
-	sortable: boolean
-}
-
 const imagesFolderStore = useImagesFolderStore()
 const {
 	folderList
 } = storeToRefs(imagesFolderStore)
+
+// 並び替え用のリスト（ドラッグ操作で直接変更可能にするためrefを使用）
+const sortedFolderList = ref<FolderData[]>([])
+
+// folderListが変更されたらsortedFolderListも更新
+watch(folderList, (newList) => {
+	sortedFolderList.value = [...newList]
+}, { immediate: true, deep: true })
 
 const isCreateDialog = ref<boolean>(false)
 const folder = ref<CreateFolderData>({
@@ -127,12 +163,6 @@ const folderToUpdate = ref<FolderData | null>(null)
 const changeName = ref<string>("")
 const folderToDelete = ref<FolderData | null>(null)
 const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
-
-const headers: HeaderItem[] = [
-	{title: "フォルダ名", value: "name", sortable: true },
-	{title: "作成日時", value: "createdAt", sortable: true },
-	{title: "削除", value: "actions", sortable: false },
-]
 
 // 日時フォーマット関数
 const formatDate = (date: any): string => {
@@ -237,6 +267,67 @@ const fetchList = async (): Promise<void> => {
 	await imagesFolderStore.getList()
 }
 
+// ドラッグ&ドロップ終了時の処理
+const onDragEnd = async (): Promise<void> => {
+	// ドラッグ後の新しい順序でIDリストを作成
+	const folderIds = sortedFolderList.value.map(f => f.id)
+	await imagesFolderStore.updateOrder(folderIds)
+	
+	Swal.fire({
+		title: '順序を更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false,
+		confirmButtonColor: '#27C1A3',
+	})
+}
+
+// 上に移動
+const moveUp = async (folderId: string): Promise<void> => {
+	const currentIndex = sortedFolderList.value.findIndex(f => f.id === folderId)
+	if (currentIndex === -1 || currentIndex === 0) return
+
+	// 配列内で要素を入れ替え
+	const newList = [...sortedFolderList.value]
+	const [movedItem] = newList.splice(currentIndex, 1)
+	newList.splice(currentIndex - 1, 0, movedItem)
+	
+	// 新しい順序でIDリストを作成して保存
+	const folderIds = newList.map(f => f.id)
+	await imagesFolderStore.updateOrder(folderIds)
+	
+	Swal.fire({
+		title: '順序を更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false,
+		confirmButtonColor: '#27C1A3',
+	})
+}
+
+// 下に移動
+const moveDown = async (folderId: string): Promise<void> => {
+	const currentIndex = sortedFolderList.value.findIndex(f => f.id === folderId)
+	if (currentIndex === -1 || currentIndex === sortedFolderList.value.length - 1) return
+
+	// 配列内で要素を入れ替え
+	const newList = [...sortedFolderList.value]
+	const [movedItem] = newList.splice(currentIndex, 1)
+	newList.splice(currentIndex + 1, 0, movedItem)
+	
+	// 新しい順序でIDリストを作成して保存
+	const folderIds = newList.map(f => f.id)
+	await imagesFolderStore.updateOrder(folderIds)
+	
+	Swal.fire({
+		title: '順序を更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false,
+		confirmButtonColor: '#27C1A3',
+	})
+}
+
 onMounted(async (): Promise<void> => {
 	await fetchList()
 })
@@ -245,5 +336,19 @@ onMounted(async (): Promise<void> => {
 <style scoped>
 	.delete-icon {
 		color: red;
+		cursor: pointer;
+	}
+	
+	.folder-item {
+		cursor: move;
+	}
+	
+	.folder-title {
+		text-decoration: none;
+		color: inherit;
+	}
+	
+	.folder-title:hover {
+		text-decoration: underline;
 	}
 </style>

@@ -81,7 +81,7 @@ const fetchCommentList = async (): Promise<void> => {
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = (comment: CommentData): void => {
+const openDeleteDialog = async (comment: CommentData): void => {
 	commentToDelete.value = comment
 
 	const result = await Swal.fire({
