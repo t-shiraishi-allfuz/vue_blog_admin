@@ -126,7 +126,6 @@
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
-import TweetList from '@/components/TweetList.vue'
 import MomentList from '@/views/admin/MomentList.vue'
 
 const router = useRouter()

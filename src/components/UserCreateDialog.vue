@@ -1,10 +1,10 @@
 <template>
-	<v-dialog v-model="dialog" max-width="500px">
-		<v-card>
-			<v-card-title class="text-center pa-6">
-				<h4 class="text-h5">ユーザー登録</h4>
-			</v-card-title>
-			
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="ユーザー登録"
+		v-model:dialog="dialog"
+	>
+		<template v-slot:contents>
 			<v-form ref="createForm" @submit.prevent="createUser">
 				<v-card-text class="pa-6">
 					<v-text-field
@@ -83,8 +83,8 @@
 				/>
 				<v-spacer />
 			</v-card-actions>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
@@ -124,6 +124,7 @@ const visibleType = ref<string>('password')
 const isGoogleLoading = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const googleClientId = computed((): string => {
 	return import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -154,11 +155,17 @@ const changeVisible = (): void => {
 	visibleType.value = visibleType.value === 'password' ? 'text' : 'password'
 }
 
-const closeDialog = (): void => {
-	dialog.value = false
+const initRefs = (): void => {
 	email.value = ''
 	password.value = ''
 	errorMessage.value = ''
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
 }
 
 const goToLogin = (): void => {
@@ -168,7 +175,7 @@ const goToLogin = (): void => {
 
 // 新規ユーザー登録成功ダイアログ
 const showRegistrationSuccessDialog = async (): Promise<void> => {
-	dialog.value = false
+	closeDialog()
 
 	try {
 		const result = await Swal.fire({
@@ -194,7 +201,7 @@ const showRegistrationSuccessDialog = async (): Promise<void> => {
 
 // 既存ユーザー用ダイアログ
 const showExistingUserDialog = async (): Promise<void> => {
-	dialog.value = false
+	closeDialog()
 
 	try {
 		const result = await Swal.fire({
@@ -268,20 +275,3 @@ const handleGoogleError = (error: any): void => {
 	errorMessage.value = 'Google認証でエラーが発生しました'
 }
 </script>
-
-<style scoped>
-.v-card {
-	border-radius: 12px;
-}
-
-.v-card-title {
-	background-color: rgb(var(--v-theme-primary));
-	color: white;
-}
-
-.v-card-title h4 {
-	margin: 0;
-	font-weight: 500;
-}
-</style>
-

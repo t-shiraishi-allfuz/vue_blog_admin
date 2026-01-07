@@ -1,160 +1,156 @@
 <template>
-	<v-container>
-		<v-row justify="center">
-			<v-col cols="12" md="8" lg="6">
-				<v-card class="mb-4">
-					<v-card-text class="text-center pa-8">
-						<v-avatar
-							:image="userProfile?.profileUrl"
-							size="120"
-							class="mb-4"
-						/>
-						
-						<h2 class="text-h4 mb-2">{{ userProfile?.title || 'ユーザー' }}</h2>
-						<p class="text-body-1 text-grey mb-4">
-							{{ userProfile?.description || 'プロフィール情報がありません' }}
-						</p>
-						
-						<v-row class="text-center">
-							<v-col cols="4">
-								<div class="text-h6">{{ userStats?.blogCount || 0 }}</div>
-								<div class="text-caption text-grey">記事</div>
-							</v-col>
-							<v-col cols="4">
-								<div 
-									class="text-h6 cursor-pointer hover-text"
-									@click="openFollowersDialog"
+	<v-row justify="center">
+		<v-col cols="12" md="8" lg="6">
+			<v-card class="mb-4">
+				<v-card-text class="text-center pa-8">
+					<v-avatar
+						:image="userProfile?.profileUrl"
+						size="120"
+						class="mb-4"
+					/>
+					
+					<h2 class="text-h4 mb-2">{{ userProfile?.title || 'ユーザー' }}</h2>
+					<p class="text-body-1 text-grey mb-4">
+						{{ userProfile?.description || 'プロフィール情報がありません' }}
+					</p>
+					
+					<v-row class="text-center">
+						<v-col cols="4">
+							<div class="text-h6">{{ userStats?.blogCount || 0 }}</div>
+							<div class="text-caption text-grey">記事</div>
+						</v-col>
+						<v-col cols="4">
+							<div 
+								class="text-h6 cursor-pointer hover-text"
+								@click="openFollowersDialog"
+							>
+								{{ userStats?.followerCount || 0 }}
+							</div>
+							<div class="text-caption text-grey">フォロワー</div>
+						</v-col>
+						<v-col cols="4">
+							<div 
+								class="text-h6 cursor-pointer hover-text"
+								@click="openFollowingDialog"
+							>
+								{{ userStats?.followingCount || 0 }}
+							</div>
+							<div class="text-caption text-grey">フォロー中</div>
+						</v-col>
+					</v-row>
+					<div class="mt-6" v-if="!isOwnProfile">
+						<v-row>
+							<v-col cols="6">
+								<v-btn
+									:color="isFollowing ? 'grey-lighten-4' : 'success'"
+									@click="toggleFollow"
+									:loading="followLoading"
+									:disabled="followLoading"
+									variant="flat"
+									block
 								>
-									{{ userStats?.followerCount || 0 }}
-								</div>
-								<div class="text-caption text-grey">フォロワー</div>
+									<v-icon class="mr-2">
+										{{ isFollowing ? 'mdi-account-minus' : 'mdi-account-plus' }}
+									</v-icon>
+									{{ isFollowing ? 'フォロー解除' : 'フォロー' }}
+								</v-btn>
 							</v-col>
-							<v-col cols="4">
-								<div 
-									class="text-h6 cursor-pointer hover-text"
-									@click="openFollowingDialog"
+							<v-col cols="6">
+								<v-btn
+									color="success"
+									variant="flat"
+									@click="goToDmPage"
+									block
 								>
-									{{ userStats?.followingCount || 0 }}
-								</div>
-								<div class="text-caption text-grey">フォロー中</div>
+									<v-icon class="mr-2">mdi-message-text</v-icon>
+									DM
+								</v-btn>
 							</v-col>
 						</v-row>
-						<div class="mt-6" v-if="!isOwnProfile">
-							<v-row>
-								<v-col cols="6">
-									<v-btn
-										:color="isFollowing ? 'grey-lighten-4' : 'success'"
-										@click="toggleFollow"
-										:loading="followLoading"
-										:disabled="followLoading"
-										variant="flat"
-										block
-									>
-										<v-icon class="mr-2">
-											{{ isFollowing ? 'mdi-account-minus' : 'mdi-account-plus' }}
-										</v-icon>
-										{{ isFollowing ? 'フォロー解除' : 'フォロー' }}
-									</v-btn>
-								</v-col>
-								<v-col cols="6">
-									<v-btn
-										color="success"
-										variant="flat"
-										@click="goToDmPage"
-										block
-									>
-										<v-icon class="mr-2">mdi-message-text</v-icon>
-										DM
-									</v-btn>
-								</v-col>
-							</v-row>
-						</div>
-					</v-card-text>
-				</v-card>
-				
-				<v-card>
-					<v-card-title>
-						<v-icon class="mr-2">mdi-post</v-icon>
-						記事一覧
-					</v-card-title>
-					<v-card-text>
-						<div v-if="userBlogs.length === 0" class="text-center pa-8">
-							<v-icon size="64" color="grey-lighten-1">mdi-post-outline</v-icon>
-							<p class="text-grey mt-4">まだ記事がありません</p>
-						</div>
-						<div v-else>
-							<v-list>
-								<v-list-item
-									v-for="blog in userBlogs"
-									:key="blog.id"
-									@click="goToBlogDetail(blog.id)"
-									class="cursor-pointer"
-								>
-									<template #prepend>
-										<v-avatar
-											:image="blog.thumbUrl || undefined"
-											size="60"
-											class="mr-3"
-											rounded
-										/>
+					</div>
+				</v-card-text>
+			</v-card>
+			
+			<v-card>
+				<v-card-title>
+					<v-icon class="mr-2">mdi-post</v-icon>
+					記事一覧
+				</v-card-title>
+				<v-card-text>
+					<div v-if="userBlogs.length === 0" class="text-center pa-8">
+						<v-icon size="64" color="grey-lighten-1">mdi-post-outline</v-icon>
+						<p class="text-grey mt-4">まだ記事がありません</p>
+					</div>
+					<div v-else>
+						<v-list>
+							<v-list-item
+								v-for="blog in userBlogs"
+								:key="blog.id"
+								@click="goToBlogDetail(blog.id)"
+								class="cursor-pointer"
+							>
+								<template #prepend>
+									<v-avatar
+										:image="blog.thumbUrl || undefined"
+										size="60"
+										class="mr-3"
+										rounded
+									/>
+								</template>
+								<div class="d-flex justify-start">
+									<v-list-item-title class="font-weight-medium">
+										{{ blog.title }}
+									</v-list-item-title>
+								</div>
+								<v-list-item-subtitle class="mt-1">
+									<template v-if="isOwnProfile">
+										<v-chip
+											:color="blog.isPublished ? 'success' : 'warning'"
+											size="x-small"
+											variant="outlined"
+											class="ml-2"
+										>
+											{{ blog.isPublished ? '公開中' : '下書き' }}
+										</v-chip>
 									</template>
-									<div class="d-flex justify-start">
-										<v-list-item-title class="font-weight-medium">
-											{{ blog.title }}
-										</v-list-item-title>
-									</div>
-									<v-list-item-subtitle class="mt-1">
-										<template v-if="isOwnProfile">
-											<v-chip
-												:color="blog.isPublished ? 'success' : 'warning'"
-												size="x-small"
-												variant="outlined"
-												class="ml-2"
-											>
-												{{ blog.isPublished ? '公開中' : '下書き' }}
-											</v-chip>
-										</template>
-									</v-list-item-subtitle>
-										
-									<template #append>
-										<div class="d-flex align-center text-caption text-grey">
-											<div class="d-flex align-center mx-2 stats-item">
-												<v-icon size="16" class="mr-1">mdi-heart</v-icon>
-												<span class="stats-number">{{ blog.like_count || 0 }}</span>
-											</div>
-											<div class="d-flex align-center mx-2 stats-item">
-												<v-icon size="16" class="mr-1">mdi-comment</v-icon>
-												<span class="stats-number">{{ blog.comment_count || 0 }}</span>
-											</div>
-											<template v-if="isOwnProfile">
-												<div class="d-flex align-center mx-2 stats-item">
-													<v-icon size="16" class="mr-1">mdi-eye</v-icon>
-													<span class="stats-number">{{ blog.viewCount || 0 }}</span>
-												</div>
-											</template>
+								</v-list-item-subtitle>
+									
+								<template #append>
+									<div class="d-flex align-center text-caption text-grey">
+										<div class="d-flex align-center mx-2 stats-item">
+											<v-icon size="16" class="mr-1">mdi-heart</v-icon>
+											<span class="stats-number">{{ blog.like_count || 0 }}</span>
 										</div>
-									</template>
-								</v-list-item>
-							</v-list>
-						</div>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
-		
-		<!-- フォロワー・フォローリストダイアログ -->
-		<FollowListDialog
-			v-model="followersDialog"
-			dialog-type="followers"
-			:target-user-id="profileUserId"
-		/>
-		<FollowListDialog
-			v-model="followingDialog"
-			dialog-type="following"
-			:target-user-id="profileUserId"
-		/>
-		
-	</v-container>
+										<div class="d-flex align-center mx-2 stats-item">
+											<v-icon size="16" class="mr-1">mdi-comment</v-icon>
+											<span class="stats-number">{{ blog.comment_count || 0 }}</span>
+										</div>
+										<template v-if="isOwnProfile">
+											<div class="d-flex align-center mx-2 stats-item">
+												<v-icon size="16" class="mr-1">mdi-eye</v-icon>
+												<span class="stats-number">{{ blog.viewCount || 0 }}</span>
+											</div>
+										</template>
+									</div>
+								</template>
+							</v-list-item>
+						</v-list>
+					</div>
+				</v-card-text>
+			</v-card>
+		</v-col>
+	</v-row>
+	
+	<FollowListDialog
+		v-model:dialog="isFollowersDialog"
+		dialog-type="followers"
+		:target-user-id="profileUserId"
+	/>
+	<FollowListDialog
+		v-model:dialog="isFollowingDialog"
+		dialog-type="following"
+		:target-user-id="profileUserId"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -162,7 +158,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import FollowListDialog from '@/components/FollowListDialog.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -207,8 +202,8 @@ const userStats = ref<UserStats | null>(null)
 const userBlogs = ref<BlogData[]>([])
 const isFollowing = ref<boolean>(false)
 const followLoading = ref<boolean>(false)
-const followersDialog = ref<boolean>(false)
-const followingDialog = ref<boolean>(false)
+const isFollowersDialog = ref<boolean>(false)
+const isFollowingDialog = ref<boolean>(false)
 
 // プロフィールのユーザーID
 const profileUserId = computed((): string => route.query.uid as string)
@@ -349,12 +344,12 @@ const goToBlogDetail = (blogId: string): void => {
 
 // フォロワーダイアログを開く
 const openFollowersDialog = (): void => {
-	followersDialog.value = true
+	isFollowersDialog.value = true
 }
 
 // フォロー中ダイアログを開く
 const openFollowingDialog = (): void => {
-	followingDialog.value = true
+	isFollowingDialog.value = true
 }
 
 // DMページに遷移

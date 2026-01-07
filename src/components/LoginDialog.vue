@@ -1,10 +1,10 @@
 <template>
-	<v-dialog v-model="dialog" max-width="500px">
-		<v-card>
-			<v-card-title class="text-center pa-6">
-				<h4 class="text-h5">ログイン</h4>
-			</v-card-title>
-			
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="ログイン"
+		v-model:dialog="dialog"
+	>
+		<template v-slot:contents>
 			<v-form ref="loginForm" @submit.prevent="loginUser">
 				<v-card-text class="pa-6">
 					<v-text-field
@@ -93,12 +93,11 @@
 				/>
 				<v-spacer />
 			</v-card-actions>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
-
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { GoogleLogin } from 'vue3-google-login'
@@ -123,10 +122,10 @@ interface GoogleButtonConfig {
 const dialog = defineModel<boolean>('dialog')
 
 const emit = defineEmits<{
-	openUserCreate: []
+	openUserCreate: [],
+	openResetPassword: []
 }>()
 
-const router = useRouter()
 const authStore = useAuthStore()
 const blogSettingStore = useBlogSettingStore()
 
@@ -137,6 +136,7 @@ const visibleType = ref<string>('password')
 const isGoogleLoading = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const googleClientId = computed((): string => {
 	return import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -167,26 +167,32 @@ const changeVisible = (): void => {
 	visibleType.value = visibleType.value === 'password' ? 'text' : 'password'
 }
 
-const closeDialog = (): void => {
-	dialog.value = false
-
+const initRefs = (): void => {
 	email.value = ''
 	password.value = ''
 	errorMessage.value = ''
 }
 
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+}
+
 const goToResetPassword = (): void => {
 	closeDialog()
-	router.push('/reset_password')
+	initRefs()
+	emit('openResetPassword')
 }
 
 const goToUserCreate = (): void => {
 	closeDialog()
+	initRefs()
 	emit('openUserCreate')
 }
 
 const showLoginSuccessDialog = async (): Promise<void> => {
-	dialog.value = false
+	closeDialog()
 
 	try {
 		// ログイン成功後、ブログ設定を取得
@@ -204,11 +210,11 @@ const showLoginSuccessDialog = async (): Promise<void> => {
 		})
 		
 		if (result.isConfirmed) {
-			closeDialog()
+			initRefs()
 		}
 	} catch (error: any) {
 		console.error('ダイアログエラー:', error)
-		closeDialog()
+		initRefs()
 	}
 }
 
@@ -255,19 +261,3 @@ const handleGoogleError = (error: any): void => {
 	errorMessage.value = 'Google認証でエラーが発生しました'
 }
 </script>
-
-<style scoped>
-.v-card {
-	border-radius: 12px;
-}
-
-.v-card-title {
-	background-color: rgb(var(--v-theme-primary));
-	color: white;
-}
-
-.v-card-title h4 {
-	margin: 0;
-	font-weight: 500;
-}
-</style>

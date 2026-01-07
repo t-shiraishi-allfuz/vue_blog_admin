@@ -48,68 +48,72 @@
 				</template>
 			</v-data-table>
 		</v-card>
-
-		<v-dialog v-model="createDialog" max-width="400px">
-			<v-card>
-				<v-card-title>カテゴリー作成</v-card-title>
-				<v-card-text>
-					<v-text-field
-						type="text"
-						label="カテゴリー名を入力して下さい"
-						v-model="category.name"
-					/>
-				</v-card-text>
-				<v-card-text v-if="categoryList.length > 0">
-					<v-select
-						label="親カテゴリーを設定する場合は選択して下さい"
-						:items="categoryList"
-						item-title="name"
-						item-value="id"
-						v-model="selectedPreCategoryID"
-						hide-details
-					/>
-				</v-card-text>
-				<v-divider />
-				<div class="d-flex justify-end my-2">
-					<v-btn class="mx-2" color="grey-lighten-2" @click="createDialog = false">閉じる</v-btn>
-					<v-btn class="mx-2" color="success" @click="createCategory">作成</v-btn>
-				</div>
-			</v-card>
-		</v-dialog>
-
-		<v-dialog v-model="updateDialog" max-width="400px">
-			<v-card v-if="categoryToUpdate">
-				<v-card-title>カテゴリー編集</v-card-title>
-				<v-card-text>
-					<v-text-field
-						type="text"
-						label="カテゴリー名を入力して下さい"
-						v-model="categoryToUpdate.name"
-					/>
-				</v-card-text>
-				<v-card-text v-if="categoryList.length > 0">
-					<v-select
-						label="親カテゴリーを設定する場合は選択して下さい"
-						:items="categoryList"
-						item-title="name"
-						item-value="id"
-						v-model="categoryToUpdate.pre_category_id"
-						hide-details
-					/>
-				</v-card-text>
-				<v-divider />
-				<div class="d-flex justify-end my-2">
-					<v-btn class="mx-2" color="grey-lighten-2" @click="updateDialog = false">閉じる</v-btn>
-					<v-btn class="mx-2" color="success" @click="updateCategory">更新</v-btn>
-				</div>
-			</v-card>
-		</v-dialog>
 	</v-container>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="カテゴリー作成"
+		v-model:dialog="isCreateDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-text-field
+					type="text"
+					label="カテゴリー名を入力して下さい"
+					v-model="category.name"
+				/>
+			</v-card-text>
+			<v-card-text v-if="categoryList.length > 0">
+				<v-select
+					label="親カテゴリーを設定する場合は選択して下さい"
+					:items="categoryList"
+					item-title="name"
+					item-value="id"
+					v-model="selectedPreCategoryID"
+					hide-details
+				/>
+			</v-card-text>
+			<v-divider />
+			<div class="d-flex justify-end my-2">
+				<v-btn class="mx-2" color="grey-lighten-2" @click="closeDialog">閉じる</v-btn>
+				<v-btn class="mx-2" color="success" @click="createCategory">作成</v-btn>
+			</div>
+		</template>
+	</DialogTemplate>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="カテゴリー編集"
+		v-model:dialog="isEditDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-text-field
+					type="text"
+					label="カテゴリー名を入力して下さい"
+					v-model="categoryToUpdate.name"
+				/>
+			</v-card-text>
+			<v-card-text v-if="categoryList.length > 0">
+				<v-select
+					label="親カテゴリーを設定する場合は選択して下さい"
+					:items="categoryList"
+					item-title="name"
+					item-value="id"
+					v-model="categoryToUpdate.pre_category_id"
+					hide-details
+				/>
+			</v-card-text>
+			<v-divider />
+			<div class="d-flex justify-end my-2">
+				<v-btn class="mx-2" color="grey-lighten-2" @click="closeDialog">閉じる</v-btn>
+				<v-btn class="mx-2" color="success" @click="updateCategory">更新</v-btn>
+			</div>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
@@ -137,6 +141,8 @@ interface HeaderItem {
 	sortable?: boolean
 }
 
+const dialog = defineModel<boolean>('dialog')
+
 const blogCategoryStore = useBlogCategoryStore()
 const {
 	categoryList
@@ -144,17 +150,17 @@ const {
 
 const isLoading = ref<boolean>(true)
 
-const createDialog = ref<boolean>(false)
+const isCreateDialog = ref<boolean>(false)
 const category = ref<CreateCategoryData>({
 	pre_category_id: null,
 	name: ""
 })
 const selectedPreCategoryID = ref<string | null>(null)
 
-const updateDialog = ref<boolean>(false)
+const isEditDialog = ref<boolean>(false)
 const categoryToUpdate = ref<BlogCategoryData | null>(null)
-
 const categoryToDelete = ref<BlogCategoryData | null>(null)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const headers: HeaderItem[] = [
 	{title: "カテゴリー名", value: "name" },
@@ -167,15 +173,27 @@ const formatDate = (date: any): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
+const initRefs = (): void => {
+	isCreateDialog.value = false
+	isEditDialog.value = false
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
+
 // カテゴリー作成確認ダイアログを開く
 const openCreateDialog = (): void => {
-	createDialog.value = true
+	isCreateDialog.value = true
 }
 
 // カテゴリー更新確認ダイアログを開く
 const openUpdateDialog = (category: BlogCategoryData): void => {
 	categoryToUpdate.value = category
-	updateDialog.value = true
+	isEditDialog.value = true
 }
 
 // カテゴリー削除確認ダイアログを開く
@@ -239,7 +257,7 @@ const createCategory = async (): Promise<void> => {
 	}
 
 	try {
-		createDialog.value = false
+		closeDialog()
 		category.value.pre_category_id = selectedPreCategoryID.value
 
 		await blogCategoryStore.create(category.value)
@@ -280,7 +298,7 @@ const updateCategory = async (): Promise<void> => {
 	}
 
 	try {
-		updateDialog.value = false
+		closeDialog()
 
 		// 親と同一IDはNG
 		if (categoryToUpdate.value.pre_category_id == categoryToUpdate.value.id) {

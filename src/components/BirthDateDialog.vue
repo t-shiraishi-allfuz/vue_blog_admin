@@ -1,15 +1,14 @@
 <template>
-	<v-dialog v-model="dialog" persistent max-width="500px">
-		<v-card>
-			<v-card-title class="text-h5">
-				生年月日を登録して下さい
-			</v-card-title>
-			
+	<DialogTemplate
+		label="生年月日を登録して下さい"
+		v-model:dialog="dialog"
+		persistent="true"
+	>
+		<template v-slot:contents>
 			<v-card-text>
 				<p class="mb-4">
 					18歳未満のユーザーは、閲覧制限のあるブログは表示されません。
 				</p>
-				
 				<v-form ref="form" v-model="valid">
 					<v-text-field
 						v-model="birthDate"
@@ -19,10 +18,9 @@
 						required
 						:max="maxDate"
 						:min="minDate"
-					></v-text-field>
+					/>
 				</v-form>
 			</v-card-text>
-			
 			<v-card-actions>
 				<v-spacer></v-spacer>
 				<v-btn
@@ -35,8 +33,8 @@
 					登録
 				</v-btn>
 			</v-card-actions>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
@@ -48,25 +46,14 @@ interface Props {
 	modelValue: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-	modelValue: false
-})
+const dialog = defineModel<boolean>('dialog')
 
-// Emits定義
-interface Emits {
-	'update:modelValue': [value: boolean]
+const emit = defineEmits<{
 	saved: []
-}
-
-const emit = defineEmits<Emits>()
+}>()
 
 const usersStore = useUsersStore()
 const authStore = useAuthStore()
-
-const dialog = computed({
-	get: (): boolean => props.modelValue,
-	set: (value: boolean): void => emit('update:modelValue', value)
-})
 
 const birthDate = ref<string>('')
 const valid = ref<boolean>(false)

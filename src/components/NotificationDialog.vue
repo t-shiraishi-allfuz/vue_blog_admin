@@ -1,6 +1,10 @@
 <template>
-	<v-dialog v-model="isOpen" max-width="600">
-		<v-card>
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="インフォメーション"
+		v-model:dialog="dialog"
+	>
+		<template v-slot:contents>	
 			<v-card-text class="pa-0">
 				<v-tabs v-model="activeTab" color="primary" align-tabs="center">
 					<v-tab value="notifications">
@@ -24,7 +28,6 @@
 						</v-badge>
 					</v-tab>
 				</v-tabs>
-				
 				<v-tabs-window v-model="activeTab">
 					<v-tabs-window-item value="notifications">
 						<div class="notification-content">
@@ -107,12 +110,11 @@
 					</v-tabs-window-item>
 				</v-tabs-window>
 			</v-card-text>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
-
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
@@ -137,35 +139,11 @@ interface AnnouncementData {
 	[key: string]: any
 }
 
-// Props定義
-interface Props {
-	modelValue: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
-	modelValue: false
-})
-
-// Emits定義
-interface Emits {
-	'update:modelValue': [value: boolean]
-}
-
-const emit = defineEmits<Emits>()
+const dialog = defineModel<boolean>('dialog')
 
 const notificationStore = useNotificationStore()
 const announcementStore = useAnnouncementStore()
 const router = useRouter()
-
-const isOpen = computed({
-	get: (): boolean => props.modelValue,
-	set: (value: boolean): void => {
-		if (!value) {
-			notificationStore.closeDialog()
-		}
-		emit('update:modelValue', value)
-	}
-})
 
 const activeTab = computed({
 	get: (): string => notificationStore.activeTab,
@@ -176,9 +154,12 @@ const notifications = computed((): NotificationData[] => notificationStore.notif
 const announcements = computed((): AnnouncementData[] => announcementStore.announcements)
 const unreadNotificationCount = computed((): number => notificationStore.unreadNotificationCount)
 const unreadAnnouncementCount = computed((): number => announcementStore.unreadAnnouncementCount || 0)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const closeDialog = (): void => {
-	emit('update:modelValue', false)
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
 }
 
 // ユーザープロフィールに遷移

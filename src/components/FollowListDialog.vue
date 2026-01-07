@@ -1,17 +1,12 @@
 <template>
-	<v-dialog v-model="dialog" max-width="600" scrollable>
-		<v-card>
-			<v-card-title class="d-flex align-center">
-				<v-icon class="mr-2">
-					{{ dialogType === 'followers' ? 'mdi-account-group' : 'mdi-account-heart' }}
-				</v-icon>
-				{{ dialogType === 'followers' ? 'フォロワー' : 'フォロー中' }}
-				<v-spacer />
-				<v-btn icon="mdi-close" variant="text" @click="closeDialog" />
-			</v-card-title>
-			
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		:label="dialogType === 'followers' ? 'フォロワー' : 'フォロー中'"
+		v-model:dialog="dialog"
+		scrollable="true"
+	>
+		<template v-slot:contents>
 			<v-divider />
-			
 			<v-card-text class="pa-0" style="height: 400px;">
 				<div v-if="loading" class="d-flex justify-center align-center" style="height: 200px;">
 					<v-progress-circular indeterminate color="primary" />
@@ -24,8 +19,7 @@
 					<p class="text-grey mt-4">
 						{{ dialogType === 'followers' ? 'フォロワーがいません' : 'フォロー中のユーザーがいません' }}
 					</p>
-				</div>
-				
+				</div>				
 				<v-list v-else>
 					<v-list-item
 						v-for="user in userList"
@@ -92,8 +86,8 @@
 					</v-list-item>
 				</v-list>
 			</v-card-text>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
@@ -113,18 +107,13 @@ interface UserData {
 }
 
 interface Props {
-	modelValue: boolean
 	dialogType: 'followers' | 'following'
 	targetUserId: string
 }
 
-interface Emits {
-	(e: 'update:modelValue', value: boolean): void
-}
-
 // Props & Emits
 const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const dialog = defineModel<boolean>('dialog')
 
 // Router
 const router = useRouter()
@@ -134,18 +123,15 @@ const authStore = useAuthStore()
 const followUsersStore = useFollowUsersStore()
 const blogSettingStore = useBlogSettingStore()
 
-// 状態管理
-const dialog = computed({
-	get: () => props.modelValue,
-	set: (value) => emit('update:modelValue', value)
-})
-
 const userList = ref<UserData[]>([])
 const loading = ref<boolean>(false)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 // ダイアログを閉じる
 const closeDialog = (): void => {
-	dialog.value = false
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
 }
 
 // ユーザーリストを取得
@@ -299,18 +285,8 @@ const goToDmPage = (uid: string): void => {
 	})
 }
 
-// ダイアログが開かれた時にデータを取得
-watch(() => props.modelValue, (newValue) => {
-	if (newValue) {
-		fetchUserList()
-	}
-})
-
-// ターゲットユーザーIDが変更された時もデータを再取得
-watch(() => props.targetUserId, () => {
-	if (props.modelValue) {
-		fetchUserList()
-	}
+onMounted(async () => {
+	await fetchUserList()
 })
 </script>
 

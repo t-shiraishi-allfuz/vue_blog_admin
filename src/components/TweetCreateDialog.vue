@@ -1,10 +1,16 @@
 <template>
-	<v-dialog v-model="dialog" max-width="600" persistent>
-		<v-card>
-			<v-card-title class="text-h5 d-flex align-center">
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="つぶやき投稿"
+		v-model:dialog="dialog"
+	>
+		<template v-slot:title>
+			<v-card-title class="d-flex align-center">
 				<v-icon class="mr-2">mdi-twitter</v-icon>
-				{{ isEditMode ? 'つぶやき編集' : 'つぶやき投稿' }}
+				<h4 class="text-h5">{{ isEditMode ? 'つぶやき編集' : 'つぶやき投稿' }}</h4>
 			</v-card-title>
+		</template>
+		<template v-slot:contents>
 			<v-card-text>
 				<v-form ref="form">
 					<v-row>
@@ -76,11 +82,10 @@
 				<v-spacer></v-spacer>
 				<v-btn
 					color="grey-lighten-4"
-					:disabled="loading"
 					variant="elevated"
-					@click="cancel"
+					@click="closeDialog"
 				>
-					キャンセル
+					閉じる
 				</v-btn>
 				<v-btn
 					color="success"
@@ -91,13 +96,15 @@
 					{{ isEditMode ? '更新' : (tweet.isPublished ? '投稿' : '下書き保存') }}
 				</v-btn>
 			</v-card-actions>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
 import { useTweetStore } from '@/stores/tweetStore'
 import { useImagesStore } from '@/stores/imagesStore'
+
+const dialog = defineModel<boolean>('dialog')
 
 const tweetStore = useTweetStore()
 const imagesStore = useImagesStore()
@@ -113,22 +120,16 @@ interface TweetData {
 
 // Props定義
 interface Props {
-	modelValue: boolean
 	tweet?: any
 }
 
 const props = defineProps<Props>()
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 // Emits定義
 const emit = defineEmits<{
-	'update:modelValue': [value: boolean]
 	saved: []
 }>()
-
-const dialog = computed({
-	get: (): boolean => props.modelValue,
-	set: (value: boolean): void => emit('update:modelValue', value)
-})
 
 const form = ref<any>(null)
 const loading = ref<boolean>(false)
@@ -155,6 +156,21 @@ const contentRules = [
 const thumbnailRules = [
 	(v: File[]): boolean | string => (v && v.length > 0) || 'サムネイル画像は必須です'
 ]
+
+const initRefs = (): void => {
+	tweet.content = ''
+	tweet.thumbUrl = ''
+	tweet.isPublished = false
+	tweet.viewCount = 0
+	selectedFiles.value = []
+	fileInputValue.value = []
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+}
 
 // ファイル選択時の処理
 const handleFileUpload = async (event: Event) => {
@@ -216,12 +232,10 @@ const saveTweet = async (): Promise<void> => {
 		
 		// 新規作成モードの場合のみフォームをリセット
 		if (!isEditMode.value) {
-			resetForm()
+			initRefs()
 		}
-		
-		// ダイアログを閉じる
-		emit('update:modelValue', false)
-		
+		closeDialog()
+
 		// 親コンポーネントに保存完了を通知
 		emit('saved')
 	} catch (error: any) {
@@ -231,20 +245,6 @@ const saveTweet = async (): Promise<void> => {
 	} finally {
 		loading.value = false
 	}
-}
-
-const cancel = (): void => {
-	// キャンセル時はフォームをリセットせず、ダイアログのみ閉じる
-	emit('update:modelValue', false)
-}
-
-const resetForm = (): void => {
-	tweet.content = ''
-	tweet.thumbUrl = ''
-	tweet.isPublished = false
-	tweet.viewCount = 0
-	selectedFiles.value = []
-	fileInputValue.value = []
 }
 
 // props.tweetが変更されたときにtweetを初期化
@@ -258,25 +258,4 @@ watch(() => props.tweet, (newTweet) => {
 		tweet.viewCount = newTweet.viewCount || 0
 	}
 }, { immediate: true })
-
-// ダイアログが閉じられたときの処理
-watch(dialog, (newValue) => {
-	if (!newValue) {
-		// ダイアログが閉じられたとき、新規作成モードの場合のみフォームをリセット
-		if (!isEditMode.value) {
-			resetForm()
-		}
-	}
-})
 </script>
-
-<style scoped>
-.v-card {
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.v-card-title {
-	background-color: #f5f5f5;
-	border-bottom: 1px solid #e0e0e0;
-}
-</style>

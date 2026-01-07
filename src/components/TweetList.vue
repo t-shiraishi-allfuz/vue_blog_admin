@@ -107,8 +107,6 @@
 import { useTweetStore } from '@/stores/tweetStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
-import TweetCreateDialog from '@/components/TweetCreateDialog.vue'
-import TweetCard from '@/components/TweetCard.vue'
 
 const router = useRouter()
 const tweetStore = useTweetStore()

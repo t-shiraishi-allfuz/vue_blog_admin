@@ -3,18 +3,55 @@
 		v-model:dialog="isLoginDialog"
 		@open-user-create="isUserCreateDialog = true"
 	/>
-	<!-- ユーザー登録ダイアログ -->
+
 	<UserCreateDialog 
 		v-model:dialog="isUserCreateDialog"
 		@open-login="isLoginDialog = true"
 	/>
 
-	<v-dialog v-model="passwordDialog" persistent max-width="400">
-		<v-card>
-			<v-card-title class="text-h5">
-				<v-icon class="mr-2">mdi-lock</v-icon>
-				パスワード認証
-			</v-card-title>
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="コメント"
+		v-model:dialog="isCommentDialog"
+	>
+		<template v-slot:contents>
+			<v-list>
+				<v-list-item>
+					<v-textarea
+						label="コメント"
+						type="string"
+						v-model="comment.body"
+						solo
+					/>
+				</v-list-item>
+				<v-divider />
+				<div class="d-flex justify-end my-2">
+					<v-btn
+						class="mx-2"
+						color="grey-lighten-2"
+						@click="closeDialog"
+					>
+						閉じる
+					</v-btn>
+					<v-btn
+						class="mx-2"
+						color="success"
+						@click="executeComment"
+					>
+						コメント
+					</v-btn>
+				</div>
+			</v-list>
+		</template>
+	</DialogTemplate>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="パスワード認証"
+		persistent="true"
+		v-model:dialog="isPasswordDialog"
+	>
+		<template v-slot:contents>
 			<v-card-text>
 				<p class="text-body-1 mb-4">このブログはパスワードで保護されています。</p>
 				<v-text-field
@@ -45,7 +82,34 @@
 					認証
 				</v-btn>
 			</v-card-actions>
-		</v-card>
+		</template>
+	</DialogTemplate>
+
+	<v-dialog v-model="isShareDialog" max-width="500px">
+		<v-list>
+			<v-list-item
+				prepend-icon="mdi-link-variant"
+				title="リンクをコピー"
+				value="copy"
+				@click="copyUrl"
+			/>
+			<v-divider />
+			<v-list-item
+				prepend-icon="mdi-note-edit"
+				title="リブログ"
+				@click="reblog"
+			/>
+			<v-divider />
+			<div class="d-flex justify-end my-2">
+				<v-btn
+					class="mx-2"
+					color="grey-lighten-2"
+					@click="isShareDialog = false"
+				>
+					閉じる
+				</v-btn>
+			</div>
+		</v-list>
 	</v-dialog>
 
 	<v-sheet
@@ -224,61 +288,6 @@
 	<v-sheet v-if="!isLoading" class="pa-6 mx-auto text-center">
 		<v-progress-circular indeterminate />
 	</v-sheet>
-	<v-dialog v-model="shareDialog" max-width="400px">
-		<v-list>
-			<v-list-item
-				prepend-icon="mdi-link-variant"
-				title="リンクをコピー"
-				value="copy"
-				@click="copyUrl"
-			/>
-			<v-divider />
-			<v-list-item
-				prepend-icon="mdi-note-edit"
-				title="リブログ"
-				@click="reblog"
-			/>
-			<v-divider />
-			<div class="d-flex justify-end my-2">
-				<v-btn
-					class="mx-2"
-					color="grey-lighten-2"
-					@click="shareDialog = false"
-				>
-					閉じる
-				</v-btn>
-			</div>
-		</v-list>
-	</v-dialog>
-	<v-dialog v-model="commentDialog" max-width="400px">
-		<v-list>
-			<v-list-item>
-				<v-textarea
-					label="コメント"
-					type="string"
-					v-model="comment.body"
-					solo
-				/>
-			</v-list-item>
-			<v-divider />
-			<div class="d-flex justify-end my-2">
-				<v-btn
-					class="mx-2"
-					color="success"
-					@click="executeComment"
-				>
-					コメント
-				</v-btn>
-				<v-btn
-					class="mx-2"
-					color="grey-lighten-2"
-					@click="commentDialog = false"
-				>
-					閉じる
-				</v-btn>
-			</div>
-		</v-list>
-	</v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -334,12 +343,14 @@ const {
 } = storeToRefs(commentStore)
 
 const isLoading = ref<boolean>(false)
-const shareDialog = ref<boolean>(false)
 const isLoginDialog = ref<boolean>(false)
 const isUserCreateDialog = ref<boolean>(false)
+const isCommentDialog = ref<boolean>(false)
+const isPasswordDialog = ref<boolean>(false)
+const isShareDialog = ref<boolean>(false)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const reply_id = ref<string | null>(null)
-const commentDialog = ref<boolean>(false)
 const comment = ref<Partial<CommentData>>({
 	uid: '',
 	body: '',
@@ -350,7 +361,6 @@ const comment = ref<Partial<CommentData>>({
 })
 
 // パスワード認証関連
-const passwordDialog = ref<boolean>(false)
 const passwordInput = ref<string>('')
 const passwordError = ref<string>('')
 const passwordVerifying = ref<boolean>(false)
@@ -390,6 +400,21 @@ const colorIconPrimary = computed((): string => {
 	return blogDetail.value.is_bookmark ? "blue" : "black"
 })
 
+const initRefs = (): void => {
+	isCommentDialog.value = false
+	isPasswordDialog.value = false
+	isShareDialog.value = false
+	passwordInput.value = ''
+	passwordError.value = ''
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
+
 // いいね
 const addLike = async (): Promise<void> => {
 	// ログインチェック
@@ -420,12 +445,12 @@ const addShare = (): void => {
 		isUserCreateDialog.value = true
 		return
 	}
-	shareDialog.value = true
+	initRefs()
 }
 
 // リンクをコピー
 const copyUrl = async (): Promise<void> => {
-	shareDialog.value = false
+	initRefs()
 
 	try {
 		await navigator.clipboard.writeText(window.location.href)
@@ -467,7 +492,7 @@ const addComment = (): void => {
 		isUserCreateDialog.value = true
 		return
 	}
-	commentDialog.value = true
+	isCommentDialog.value = true
 }
 
 const replyComment = (comment: CommentData): void => {
@@ -477,7 +502,7 @@ const replyComment = (comment: CommentData): void => {
 		return
 	}
 	reply_id.value = comment.id
-	commentDialog.value = true
+	isCommentDialog.value = true
 }
 
 const deleteComment = async (comment: CommentData): Promise<void> => {
@@ -512,7 +537,7 @@ const executeComment = async (): Promise<void> => {
 	await fetchCommentList()
 	blogDetail.value.comment_count++
 
-	commentDialog.value = false
+	isCommentDialog.value = false
 }
 
 const fetchCommentList = async (): Promise<void> => {
@@ -575,16 +600,13 @@ const verifyPassword = async (): Promise<void> => {
 		passwordError.value = 'パスワードを入力してください'
 		return
 	}
-
 	passwordVerifying.value = true
-	passwordError.value = ''
 
 	try {
 		const isValid = await blogStore.verifyPassword(blog_id, passwordInput.value)
 		if (isValid) {
+			initRefs()
 			isPasswordVerified.value = true
-			passwordDialog.value = false
-			passwordInput.value = ''
 
 			isLoading.value = true
 			await fetchCommentList()
@@ -601,9 +623,8 @@ const verifyPassword = async (): Promise<void> => {
 
 // パスワード認証をキャンセル
 const cancelPasswordAuth = (): void => {
-	passwordDialog.value = false
-	passwordInput.value = ''
-	passwordError.value = ''
+	closeDialog()
+
 	router.push({ path: '/' })
 }
 
@@ -611,7 +632,7 @@ const cancelPasswordAuth = (): void => {
 const checkPasswordRequired = (): boolean => {
 	// パスワードが設定されており、かつ空文字列でない場合のみ認証が必要
 	if (blogDetail.value.password && blogDetail.value.password.trim() !== '' && !isPasswordVerified.value) {
-		passwordDialog.value = true
+		isPasswordDialog.value = true
 		return false
 	}
 	return true

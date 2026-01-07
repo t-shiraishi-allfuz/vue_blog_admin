@@ -121,7 +121,6 @@
 import { useMomentStore } from '@/stores/momentStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
-import MomentCard from '@/components/MomentCard.vue'
 
 const router = useRouter()
 const momentStore = useMomentStore()

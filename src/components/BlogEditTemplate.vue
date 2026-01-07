@@ -1,4 +1,47 @@
 <template>
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="アップロード済みの画像を選択"
+		v-model:dialog="isImageSelectDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-toolbar flat>
+					<v-spacer></v-spacer>
+					<v-select
+						v-if="extendedFolderList.length > 0"
+						label="画像フォルダ選択"
+						:items="extendedFolderList"
+						item-title="name"
+						item-value="id"
+						v-model="selectedFolderId"
+						hide-details
+					/>
+				</v-toolbar>
+				<div class="fileBox">
+					<ul class="image-list" v-if="extendedImageList.length > 0">
+						<li class="thumbnail" v-for="(image, index) in extendedImageList" :key="index">
+							<div class="image-gallery">
+								<span class="image-item">
+									<img :src="image.url" @click="selectImage(image.url)" alt="Image" />
+								</span>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</v-card-text>
+			<v-card-actions>
+				<v-btn
+					color="grey-lighten-4"
+					variant="elevated"
+					@click="closeDialog"
+				>
+					閉じる
+				</v-btn>
+			</v-card-actions>
+		</template>
+	</DialogTemplate>
+
 	<v-container>
 		<v-form ref="blogForm" @submit.prevent="submitPost">
 			<v-card class="post-create">
@@ -70,45 +113,6 @@
 			</v-card>
 		</v-form>
 	</v-container>
-	<v-dialog v-model="imageSelectDialog" max-width="600px">
-		<v-card>
-			<v-card-title>アップロード済みの画像を選択</v-card-title>
-			<v-card-text>
-				<v-toolbar flat>
-					<v-spacer></v-spacer>
-					<v-select
-						v-if="extendedFolderList.length > 0"
-						label="画像フォルダ選択"
-						:items="extendedFolderList"
-						item-title="name"
-						item-value="id"
-						v-model="selectedFolderId"
-						hide-details
-					/>
-				</v-toolbar>
-				<div class="fileBox">
-					<ul class="image-list" v-if="extendedImageList.length > 0">
-						<li class="thumbnail" v-for="(image, index) in extendedImageList" :key="index">
-							<div class="image-gallery">
-								<span class="image-item">
-									<img :src="image.url" @click="selectImage(image.url)" alt="Image" />
-								</span>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</v-card-text>
-			<v-card-actions>
-				<v-btn
-					color="grey-lighten-4"
-					variant="elevated"
-					@click="imageSelectDialog = false"
-				>
-					閉じる
-				</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -118,7 +122,6 @@ import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { useCoinStore } from '@/stores/coinStore'
 import { VueEditor } from "vue3-editor"
-import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
 
 // 型定義
@@ -174,10 +177,11 @@ const {
 	categoryList
 } = storeToRefs(blogCategoryStore)
 
-const imageSelectDialog = ref<boolean>(false)
+const isImageSelectDialog = ref<boolean>(false)
 const selectType = ref<string>('content')
 const defaultSelect = ref<{id: string | null, name: string}>({id: null, name: '指定なし'})
 const selectedFolderId = ref<string | null>(null)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 let quillEditor: any = null
 let cursorPosition: number | null = null
@@ -217,15 +221,21 @@ const extendedImageList = computed(() => {
 	return imageList.value || []
 })
 
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+}
+
 // 画像選択ダイアログ表示
 const openImageDialog = (type: string): void => {
 	selectType.value = type
-	imageSelectDialog.value = true
+	isImageSelectDialog.value = true
 }
 
 // 画像を選択
 const selectImage = (imageUrl: string): void => {
-	imageSelectDialog.value = false
+	closeDialog()
 
 	if (selectType.value == 'content') {
 		if (quillEditor && cursorPosition !== null) {
@@ -336,7 +346,6 @@ const submitPost = async () => {
 const fetchImageList = async () => {
 	await imagesStore.getList(selectedFolderId.value)
 }
-
 
 onMounted(async() => {
 	await blogCategoryStore.getList()

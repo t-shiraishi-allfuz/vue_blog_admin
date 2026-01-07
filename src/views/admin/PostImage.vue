@@ -107,43 +107,46 @@
 				</div>
 			</v-card-text>
 		</v-card>
-
-		<v-dialog
-			class="openImageViewer"
-			v-model="imageViewerDialog"
-			max-width="800px"
-			overlay-color="rgba(0, 0, 0, 0.5)"
-			scrollable
-		>
-			<v-card>
-				<v-card-text>
-					<img :src="currentImage" alt="Preview" style="width:100%; height:auto;" @click="imageViewerDialog = false" />
-				</v-card-text>
-			</v-card>
-		</v-dialog>
-
-		<v-dialog v-model="moveDialog" max-width="400px">
-			<v-card>
-				<v-card-title>画像移動</v-card-title>
-				<v-card-text>
-					<v-select
-						v-if="extendedFolderList && extendedFolderList.length > 0"
-						label="移動先のフォルダを選択してください"
-						:items="extendedFolderList"
-						item-title="name"
-						item-value="id"
-						v-model="selectedMoveFolderId"
-						hide-details
-					/>
-				</v-card-text>
-				<v-divider />
-				<div class="d-flex justify-end my-2">
-					<v-btn class="mx-2" color="grey-lighten-2" @click="moveDialog = false">閉じる</v-btn>
-					<v-btn class="mx-2" color="success" @click="moveImage">移動</v-btn>
-				</div>
-			</v-card>
-		</v-dialog>
 	</v-container>
+
+	<v-dialog
+		class="openImageViewer"
+		v-model="isImageViewerDialog"
+		max-width="800px"
+		overlay-color="rgba(0, 0, 0, 0.5)"
+		scrollable
+	>
+		<v-card>
+			<v-card-text>
+				<img :src="currentImage" alt="Preview" style="width:100%; height:auto;" @click="isImageViewerDialog = false" />
+			</v-card-text>
+		</v-card>
+	</v-dialog>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="画像移動"
+		v-model:dialog="isMoveDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-select
+					v-if="extendedFolderList && extendedFolderList.length > 0"
+					label="移動先のフォルダを選択してください"
+					:items="extendedFolderList"
+					item-title="name"
+					item-value="id"
+					v-model="selectedMoveFolderId"
+					hide-details
+				/>
+			</v-card-text>
+			<v-divider />
+			<div class="d-flex justify-end my-2">
+				<v-btn class="mx-2" color="grey-lighten-2" @click="closeDialog">閉じる</v-btn>
+				<v-btn class="mx-2" color="success" @click="moveImage">移動</v-btn>
+			</div>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
@@ -181,6 +184,7 @@ const emit = defineEmits<{
 }>()
 
 const extendedFolderList = defineModel<FolderData[]>("folderList")
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 // 画像取得
 const imagesStore = useImagesStore()
@@ -189,13 +193,13 @@ const {
 } = storeToRefs(imagesStore)
 
 // モーダル用データ
-const imageViewerDialog = ref<boolean>(false)
+const isImageViewerDialog = ref<boolean>(false)
 const currentImage = ref<string>("")
 
 const selectedCardIds = ref<ImageData[]>([])
 
 const selectedMoveFolderId = ref<string | null>(null)
-const moveDialog = ref<boolean>(false)
+const isMoveDialog = ref<boolean>(false)
 const imageToMove = ref<ImageData | null>(null)
 
 const selectedForDelete = ref<ImageData[]>([]) // 削除用の選択画像リスト
@@ -229,15 +233,27 @@ const isImageUsedAsThumbnail = (image: ImageData): boolean => {
 	return image.isUsedAsThumbnail === true
 }
 
+const initRefs = (): void => {
+	isImageViewerDialog.value = true
+	isMoveDialog.value = false
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
+
 const openImageViewer = (imageUrl: string): void => {
 	currentImage.value = imageUrl
-	imageViewerDialog.value = true
+	isImageViewerDialog.value = true
 }
 
 // 移動確認ダイアログを開く
 const openMoveDialog = (image: ImageData): void => {
 	imageToMove.value = image
-	moveDialog.value = true
+	isMoveDialog.value = true
 }
 
 // 画像移動
@@ -247,7 +263,7 @@ const moveImage = async (): Promise<void> => {
 		return
 	}
 	
-	moveDialog.value = false
+	isMoveDialog.value = false
 
 	await imagesStore.update(imageToMove.value, selectedMoveFolderId.value)
 	emit('changeFolderList', selectedFolderId.value)

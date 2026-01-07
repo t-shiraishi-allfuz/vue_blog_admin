@@ -12,7 +12,6 @@
 
 <script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
-import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 
 const route = useRoute()
 const router = useRouter()

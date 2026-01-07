@@ -66,20 +66,18 @@
 		</v-card>
 	</v-container>
 	
-	<!-- 作成ダイアログ -->
 	<AnnouncementCreateDialog
-		v-model="createDialogOpen"
+		v-model:dialog="isCreateDialog"
 		@saved="onAnnouncementSaved"
 	/>
 	
-	<!-- 編集ダイアログ -->
 	<AnnouncementEditDialog
-		v-model="editDialogOpen"
+		v-model:dialog="isEditDialog"
 		:announcement-data="selectedAnnouncement as any"
 		@updated="onAnnouncementUpdated"
 	/>
 	
-	<v-dialog v-model="deleteDialog" max-width="400">
+	<v-dialog v-model="isDeleteDialog" max-width="400">
 		<v-card>
 			<v-card-title>削除確認</v-card-title>
 			<v-card-text>
@@ -90,7 +88,7 @@
 				<v-btn
 					color="grey-lighten-4"
 					variant="text"
-					@click="deleteDialog = false"
+					@click="isDeleteDialog = false"
 				>
 					キャンセル
 				</v-btn>
@@ -109,8 +107,6 @@
 
 <script setup lang="ts">
 import { useAnnouncementStore } from '@/stores/announcementStore'
-import AnnouncementCreateDialog from '@/components/AnnouncementCreateDialog.vue'
-import AnnouncementEditDialog from '@/components/AnnouncementEditDialog.vue'
 
 // 型定義
 interface AnnouncementData {
@@ -136,9 +132,9 @@ const {
 } = storeToRefs(announcementStore)
 
 const loading = ref<boolean>(false)
-const createDialogOpen = ref<boolean>(false)
-const editDialogOpen = ref<boolean>(false)
-const deleteDialog = ref<boolean>(false)
+const isCreateDialog = ref<boolean>(false)
+const isEditDialog = ref<boolean>(false)
+const isDeleteDialog = ref<boolean>(false)
 const deleting = ref<boolean>(false)
 const selectedAnnouncement = ref<AnnouncementData | null>(null)
 
@@ -190,12 +186,12 @@ const loadAnnouncements = async (): Promise<void> => {
 }
 
 const openCreateDialog = (): void => {
-	createDialogOpen.value = true
+	isCreateDialog.value = true
 }
 
 const openEditDialog = (announcement: AnnouncementData): void => {
 	selectedAnnouncement.value = announcement
-	editDialogOpen.value = true
+	isEditDialog.value = true
 }
 
 const onAnnouncementSaved = async (): Promise<void> => {
@@ -208,7 +204,7 @@ const onAnnouncementUpdated = async (): Promise<void> => {
 
 const deleteAnnouncement = (announcement: AnnouncementData): void => {
 	selectedAnnouncement.value = announcement
-	deleteDialog.value = true
+	isDeleteDialog.value = true
 }
 
 const confirmDelete = async (): Promise<void> => {
@@ -224,7 +220,7 @@ const confirmDelete = async (): Promise<void> => {
 		alert('お知らせの削除に失敗しました')
 	} finally {
 		deleting.value = false
-		deleteDialog.value = false
+		isDeleteDialog.value = false
 		selectedAnnouncement.value = null
 	}
 }

@@ -35,41 +35,49 @@
 				</template>
 			</v-data-table>
 		</v-card>
-		<v-dialog v-model="createDialog" max-width="400px">
-			<v-card>
-				<v-card-title>画像フォルダ作成</v-card-title>
-				<v-card-text>
-					<v-text-field
-						type="text"
-						label="フォルダ名を入力して下さい"
-						v-model="folder.name"
-					/>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="createDialog = false">閉じる</v-btn>
-					<v-btn color="success" variant="flat" @click="createFolder">作成</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
-		<v-dialog v-model="updateDialog" max-width="400px">
-			<v-card>
-				<v-card-title>画像フォルダ編集</v-card-title>
-				<v-card-text>
-					<v-text-field
-						type="text"
-						label="フォルダ名を入力して下さい"
-						v-model="changeName"
-					/>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="updateDialog = false">閉じる</v-btn>
-					<v-btn color="success" variant="flat" @click="updateFolder">更新</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
 	</v-container>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="画像フォルダ作成"
+		v-model:dialog="isCreateDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-text-field
+					type="text"
+					label="フォルダ名を入力して下さい"
+					v-model="folder.name"
+				/>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer></v-spacer>
+				<v-btn color="grey-lighten-2" variant="flat" @click="closeDialog">閉じる</v-btn>
+				<v-btn color="success" variant="flat" @click="createFolder">作成</v-btn>
+			</v-card-actions>
+		</template>
+	</DialogTemplate>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="画像フォルダ編集"
+		v-model:dialog="isEditDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-text-field
+					type="text"
+					label="フォルダ名を入力して下さい"
+					v-model="changeName"
+				/>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer></v-spacer>
+				<v-btn color="grey-lighten-2" variant="flat" @click="closeDialog">閉じる</v-btn>
+				<v-btn color="success" variant="flat" @click="updateFolder">更新</v-btn>
+			</v-card-actions>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
@@ -109,16 +117,16 @@ const {
 	folderList
 } = storeToRefs(imagesFolderStore)
 
-const createDialog = ref<boolean>(false)
+const isCreateDialog = ref<boolean>(false)
 const folder = ref<CreateFolderData>({
 	name: ""
 })
 
-const updateDialog = ref<boolean>(false)
+const isEditDialog = ref<boolean>(false)
 const folderToUpdate = ref<FolderData | null>(null)
 const changeName = ref<string>("")
-
 const folderToDelete = ref<FolderData | null>(null)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const headers: HeaderItem[] = [
 	{title: "フォルダ名", value: "name", sortable: true },
@@ -131,16 +139,28 @@ const formatDate = (date: any): string => {
 	return format(new Date(date), 'yyyy/MM/dd HH:mm:ss')
 }
 
+const initRefs = (): void => {
+	isCreateDialog.value = false
+	isEditDialog.value = false
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
+
 // フォルダ作成確認ダイアログを開く
 const openCreateDialog = (): void => {
-	createDialog.value = true
+	isCreateDialog.value = true
 }
 
 // フォルダ更新確認ダイアログを開く
 const openUpdateDialog = (folder: FolderData): void => {
 	folderToUpdate.value = folder
 	changeName.value = folder.name
-	updateDialog.value = true
+	isEditDialog.value = true
 }
 
 // フォルダ削除確認ダイアログを開く
@@ -189,7 +209,7 @@ const openDeleteDialog = async (folder: FolderData): Promise<void> => {
 
 // 新規フォルダ作成
 const createFolder = async (): Promise<void> => {
-	createDialog.value = false
+	closeDialog()
 
 	await imagesFolderStore.create(folder.value)
 	await fetchList()
@@ -203,7 +223,7 @@ const updateFolder = async (): Promise<void> => {
 		return
 	}
 
-	updateDialog.value = false
+	closeDialog()
 
 	// フォルダ名を更新
 	folderToUpdate.value.name = changeName.value

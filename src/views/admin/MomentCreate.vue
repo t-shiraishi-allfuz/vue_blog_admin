@@ -7,8 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import MomentForm from '@/components/MomentForm.vue'
-
 const route = useRoute()
 const router = useRouter()
 

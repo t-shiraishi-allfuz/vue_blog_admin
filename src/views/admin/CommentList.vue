@@ -24,23 +24,13 @@
 				</template>
 			</v-data-table>
 		</v-card>
-		<v-dialog v-model="deleteDialog" max-width="400px">
-			<v-card>
-				<v-card-title>削除確認</v-card-title>
-				<v-card-text>このコメントを本当に削除しますか？</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="grey-lighten-2" variant="flat" @click="deleteDialog = false">閉じる</v-btn>
-					<v-btn color="primary" variant="flat" @click="deleteComment">削除</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
 	</v-container>
 </template>
 
 <script setup lang="ts">
 import { useCommentStore } from '@/stores/commentStore'
 import { format } from 'date-fns'
+import Swal from 'sweetalert2'
 
 // 型定義
 interface CommentData {
@@ -71,7 +61,6 @@ const {
 	commentList
 } = storeToRefs(commentStore)
 
-const deleteDialog = ref<boolean>(false)
 const commentToDelete = ref<CommentData | null>(null)
 
 const headers: HeaderItem[] = [
@@ -94,20 +83,49 @@ const fetchCommentList = async (): Promise<void> => {
 // 個別削除確認ダイアログを開く
 const openDeleteDialog = (comment: CommentData): void => {
 	commentToDelete.value = comment
-	deleteDialog.value = true
-}
 
-// 個別削除を確定する
-const deleteComment = async (): Promise<void> => {
-	if (!commentToDelete.value) {
-		console.error('削除するコメントが選択されていません')
-		return
+	const result = await Swal.fire({
+		title: '削除確認',
+		text: 'このコメントを本当に削除しますか？',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		cancelButtonColor: '#9e9e9e',
+		confirmButtonText: '削除',
+		cancelButtonText: 'キャンセル',
+		reverseButtons: true,
+		buttonsStyling: true,
+		customClass: {
+			confirmButton: 'swal2-confirm-fixed-width',
+			cancelButton: 'swal2-cancel-fixed-width'
+		},
+		didOpen: () => {
+			// ダイアログが開いた後にボタンのスタイルを適用
+			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
+			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
+			if (confirmBtn) {
+				confirmBtn.style.minWidth = '150px'
+				confirmBtn.style.width = '150px'
+			}
+			if (cancelBtn) {
+				cancelBtn.style.minWidth = '150px'
+				cancelBtn.style.width = '150px'
+			}
+		}
+	})
+
+	if (result.isConfirmed && commentToDelete.value) {
+		await commentStore.deleteItem(commentToDelete.value)
+		await fetchCommentList()
+		
+		// 削除完了メッセージ
+		Swal.fire({
+			title: '削除完了',
+			text: 'コメントを削除しました',
+			icon: 'success',
+			timer: 1500,
+			confirmButtonColor: '#27C1A3',
+		})
 	}
-	
-	await commentStore.deleteItem(commentToDelete.value.id)
-	commentList.value = commentList.value.filter(comment => comment.id !== commentToDelete.value!.id)
-
-	deleteDialog.value = false
 }
 
 // 日時フォーマット関数

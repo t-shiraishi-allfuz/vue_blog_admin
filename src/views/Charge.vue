@@ -1,81 +1,75 @@
 <template>
-	<v-container class="py-8">
-		<v-row justify="center">
-			<v-col cols="12" md="8" lg="6">
-				<v-card>
-					<v-card-title class="d-flex align-center">
-						<img
-							src="@/assets/images/img_coin.png"
-							alt="コイン"
-							class="mr-2 img-coin"
-						/>
-						コインチャージ
-					</v-card-title>
-					<v-divider />
-					<v-card-text class="pa-6">
-						<div class="text-center mb-6">
-							<div class="text-h4 mb-2">現在の所持コイン</div>
-							<div class="text-h3 text-amber-darken-2 font-weight-bold">
-								{{ (coins || 0).toLocaleString() }}
-							</div>
-							<div class="text-caption text-grey mt-2">
-								上限: {{ (MAX_COINS || 999999).toLocaleString() }} コイン
-							</div>
-						</div>
+	<v-card>
+		<v-card-title class="d-flex align-center">
+			<img
+				src="@/assets/images/img_coin.png"
+				alt="コイン"
+				class="mr-2 img-coin"
+			/>
+			コインチャージ
+		</v-card-title>
+		<v-divider />
+		<v-card-text class="pa-6">
+			<div class="text-center mb-6">
+				<div class="text-h4 mb-2">現在の所持コイン</div>
+				<div class="text-h3 text-amber-darken-2 font-weight-bold">
+					{{ (coins || 0).toLocaleString() }}
+				</div>
+				<div class="text-caption text-grey mt-2">
+					上限: {{ (MAX_COINS || 999999).toLocaleString() }} コイン
+				</div>
+			</div>
 
-						<v-divider class="my-6" />
+			<v-divider class="my-6" />
 
-						<div class="text-subtitle-1 mb-4">チャージ金額を選択</div>
-						<v-row>
-							<v-col
-								v-for="amount in chargeAmounts"
-								:key="amount"
-								cols="6"
-								md="4"
-							>
-								<v-card
-									:class="{ 'border-primary': selectedAmount === amount }"
-									class="charge-card cursor-pointer"
-									variant="outlined"
-									@click="selectAmount(amount)"
-								>
-									<v-card-text class="text-center">
-										<div class="text-h6">{{ amount.toLocaleString() }}</div>
-										<div class="text-caption text-grey">コイン</div>
-									</v-card-text>
-								</v-card>
-							</v-col>
-						</v-row>
-					</v-card-text>
-					<v-divider />
-					<v-card-actions>
-						<v-spacer />
-						<v-btn
-							color="grey-lighten-4"
-							variant="flat"
-							@click="goBack"
-						>
-							キャンセル
-						</v-btn>
-						<v-btn
-							color="success"
-							variant="flat"
-							:loading="loading"
-							:disabled="!selectedAmount || selectedAmount <= 0"
-							@click="chargeCoins"
-						>
-							<img
-								src="@/assets/images/img_coin.png"
-								alt="コイン"
-								class="mr-2 img-coin"
-							/>
-							チャージ
-						</v-btn>
-					</v-card-actions>
-				</v-card>
-			</v-col>
-		</v-row>
-	</v-container>
+			<div class="text-subtitle-1 mb-4">チャージ金額を選択</div>
+			<v-row>
+				<v-col
+					v-for="amount in chargeAmounts"
+					:key="amount"
+					cols="6"
+					md="4"
+				>
+					<v-card
+						:class="{ 'border-primary': selectedAmount === amount }"
+						class="charge-card cursor-pointer"
+						variant="outlined"
+						@click="selectAmount(amount)"
+					>
+						<v-card-text class="text-center">
+							<div class="text-h6">{{ amount.toLocaleString() }}</div>
+							<div class="text-caption text-grey">コイン</div>
+						</v-card-text>
+					</v-card>
+				</v-col>
+			</v-row>
+		</v-card-text>
+		<v-divider />
+		<v-card-actions>
+			<v-spacer />
+			<v-btn
+				color="grey-lighten-4"
+				variant="flat"
+				@click="goBack"
+			>
+				キャンセル
+			</v-btn>
+			<v-btn
+				color="success"
+				variant="flat"
+				:loading="loading"
+				:disabled="!selectedAmount || selectedAmount <= 0"
+				@click="chargeCoins"
+			>
+				<img
+					src="@/assets/images/img_coin.png"
+					alt="コイン"
+					class="mr-2 img-coin"
+				/>
+				チャージ
+			</v-btn>
+		</v-card-actions>
+	</v-card>
 </template>
 
 <script setup lang="ts">

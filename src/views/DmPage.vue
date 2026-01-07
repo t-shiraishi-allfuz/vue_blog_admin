@@ -1,402 +1,384 @@
 <template>
-	<v-container>
-		<v-row>
-			<v-col cols="12" md="4">
-				<!-- 会話一覧 -->
-				<v-card class="mb-4">
-					<v-card-title class="d-flex align-center">
-						<v-icon class="mr-2">mdi-message-text</v-icon>
-						メッセージ
-						<v-spacer />
-						<v-btn
-							icon="mdi-refresh"
-							variant="text"
-							@click="refreshConversations"
-							:loading="loading"
-						/>
-					</v-card-title>
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="GIF検索"
+		v-model:dialog="isGifDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<v-text-field
+					v-model="gifSearchQuery"
+					label="GIFを検索..."
+					prepend-inner-icon="mdi-magnify"
+					@keyup.enter="searchGifs"
+					class="mb-4"
+				/>
+				<div v-if="gifLoading" class="d-flex justify-center pa-4">
+					<v-progress-circular indeterminate color="primary" />
+				</div>
+				<div v-else-if="gifResults.length > 0" class="gif-grid">
+					<div
+						v-for="gif in gifResults"
+						:key="gif.id"
+						class="gif-item cursor-pointer"
+						@click="selectGif(gif)"
+					>
+						<img :src="gif.images.fixed_width.url" :alt="gif.title" />
+					</div>
+				</div>
+				<div v-else-if="gifSearchQuery" class="text-center pa-4">
+					<p class="text-grey">GIFが見つかりませんでした</p>
+				</div>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer></v-spacer>
+				<v-btn
+					color="grey-lighten-4"
+					variant="elevated"
+					@click="closeDialog"
+				>
+					閉じる
+				</v-btn>
+			</v-card-actions>
+		</template>
+	</DialogTemplate>
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="絵文字を選択"
+		v-model:dialog="isEmojiDialog"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<div class="emoji-grid">
+					<div
+						v-for="emoji in emojiList"
+						:key="emoji"
+						class="emoji-item cursor-pointer"
+						@click="selectEmoji(emoji)"
+					>
+						{{ emoji }}
+					</div>
+				</div>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer></v-spacer>
+				<v-btn
+					color="grey-lighten-4"
+					variant="elevated"
+					@click="closeDialog"
+				>
+					閉じる
+				</v-btn>
+			</v-card-actions>
+		</template>
+	</DialogTemplate>
+
+	<v-dialog 
+		v-model="isPreviewDialog" 
+		max-width="800"
+		class="image-preview-dialog"
+		@click:outside="isPreviewDialog = false"
+	>
+		<div class="image-preview-container" @click="isPreviewDialog = false">
+			<img
+				:src="previewImageUrl"
+				alt="プレビュー画像"
+				class="preview-image"
+				@click.stop
+			/>
+		</div>
+	</v-dialog>
+
+	<v-row>
+		<v-col cols="12" md="4">
+			<v-card class="mb-4">
+				<v-card-title class="d-flex align-center">
+					<v-icon class="mr-2">mdi-message-text</v-icon>
+					メッセージ
+					<v-spacer />
+					<v-btn
+						icon="mdi-refresh"
+						variant="text"
+						@click="refreshConversations"
+						:loading="loading"
+					/>
+				</v-card-title>
+				
+				<v-divider />
+				
+				<v-card-text class="pa-0" style="height: 500px; overflow-y: auto;">
+					<div v-if="loading && conversations.length === 0" class="d-flex justify-center align-center pa-8">
+						<v-progress-circular indeterminate color="success" />
+					</div>
 					
-					<v-divider />
+					<div v-else-if="conversations.length === 0" class="text-center pa-8">
+						<v-icon size="64" color="grey-lighten-1">mdi-message-text-outline</v-icon>
+						<p class="text-grey mt-4">メッセージがありません</p>
+					</div>
 					
-					<v-card-text class="pa-0" style="height: 500px; overflow-y: auto;">
-						<div v-if="loading && conversations.length === 0" class="d-flex justify-center align-center pa-8">
-							<v-progress-circular indeterminate color="success" />
-						</div>
-						
-						<div v-else-if="conversations.length === 0" class="text-center pa-8">
-							<v-icon size="64" color="grey-lighten-1">mdi-message-text-outline</v-icon>
-							<p class="text-grey mt-4">メッセージがありません</p>
-						</div>
-						
-						<v-list v-else>
-							<v-list-item
-								v-for="conversation in conversations"
-								:key="conversation.conversation.id"
-								@click="selectConversation(conversation.conversation.id)"
-								:class="{ 'bg-grey-lighten-4': selectedConversationId === conversation.conversation.id }"
-								class="cursor-pointer"
-							>
-								<template #prepend>
-									<v-avatar
-										:image="conversation.otherUser.profileUrl"
-										size="50"
-										class="mr-3"
-									/>
-								</template>
-								
-								<v-list-item-title class="font-weight-medium">
-									{{ conversation.otherUser.title }}
-								</v-list-item-title>
-								
-								<v-list-item-subtitle v-if="conversation.conversation.lastMessage" class="text-caption">
-									{{ conversation.conversation.lastMessage.content.substring(0, 30) }}
-									{{ conversation.conversation.lastMessage.content.length > 30 ? '...' : '' }}
-								</v-list-item-subtitle>
-								
-								<template #append>
-									<div class="text-right">
-										<div class="text-caption text-grey">
-											{{ formatDate(conversation.conversation.lastMessageAt) }}
-										</div>
-										<v-chip
-											v-if="conversation.conversation.unreadCount > 0"
-											color="primary"
-											size="small"
-											variant="flat"
-											class="mt-1"
-										>
-											{{ conversation.conversation.unreadCount }}
-										</v-chip>
+					<v-list v-else>
+						<v-list-item
+							v-for="conversation in conversations"
+							:key="conversation.conversation.id"
+							@click="selectConversation(conversation.conversation.id)"
+							:class="{ 'bg-grey-lighten-4': selectedConversationId === conversation.conversation.id }"
+							class="cursor-pointer"
+						>
+							<template #prepend>
+								<v-avatar
+									:image="conversation.otherUser.profileUrl"
+									size="50"
+									class="mr-3"
+								/>
+							</template>
+							
+							<v-list-item-title class="font-weight-medium">
+								{{ conversation.otherUser.title }}
+							</v-list-item-title>
+							
+							<v-list-item-subtitle v-if="conversation.conversation.lastMessage" class="text-caption">
+								{{ conversation.conversation.lastMessage.content.substring(0, 30) }}
+								{{ conversation.conversation.lastMessage.content.length > 30 ? '...' : '' }}
+							</v-list-item-subtitle>
+							
+							<template #append>
+								<div class="text-right">
+									<div class="text-caption text-grey">
+										{{ formatDate(conversation.conversation.lastMessageAt) }}
 									</div>
-								</template>
-							</v-list-item>
-						</v-list>
-					</v-card-text>
-				</v-card>
-			</v-col>
-			
-			<v-col cols="12" md="8">
-				<!-- メッセージ表示エリア -->
-				<v-card v-if="selectedConversationId" style="height: 500px; display: flex; flex-direction: column;">
-					<v-card-title class="d-flex align-center">
-						<v-avatar
-							:image="currentOtherUser?.profileUrl"
-							size="40"
-							class="mr-3"
-						/>
-						{{ currentOtherUser?.title }}
-					</v-card-title>
-					
-					<v-divider />
-					
-					<!-- メッセージ一覧 -->
-					<v-card-text class="flex-grow-1 pa-4" style="overflow-y: auto;">
-						<div v-if="messages.length === 0" class="text-center pa-8">
-							<v-icon size="48" color="grey-lighten-1">mdi-message-outline</v-icon>
-							<p class="text-grey mt-4">メッセージがありません</p>
-						</div>
-						
-						<div v-else>
-							<div
-								v-for="message in messages"
-								:key="message.id"
-								class="mb-3"
-								:class="message.senderId === authStore.userInfo?.uid ? 'text-right' : 'text-left'"
-							>
-								<!-- 返信メッセージの表示 -->
-								<div v-if="message.replyTo" class="mb-2">
-									<div class="reply-preview pa-2 rounded" :class="message.senderId === authStore.userInfo?.uid ? 'bg-primary-lighten-4' : 'bg-grey-lighten-5'">
-										<div class="text-caption text-grey mb-1">
-											<v-icon size="12" class="mr-1">mdi-reply</v-icon>
-											返信先:
-										</div>
-										<div class="text-body-2 text-truncate">
-											{{ getReplyPreview(message.replyTo) }}
-										</div>
-									</div>
+									<v-chip
+										v-if="conversation.conversation.unreadCount > 0"
+										color="primary"
+										size="small"
+										variant="flat"
+										class="mt-1"
+									>
+										{{ conversation.conversation.unreadCount }}
+									</v-chip>
 								</div>
-								
-								<div
-									class="d-inline-block pa-3 rounded-lg max-width-70 message-container"
-									:class="message.senderId === authStore.userInfo?.uid ? 'bg-primary text-white' : 'bg-grey-lighten-4'"
-								>
-									<!-- テキストメッセージ -->
-									<div v-if="message.content" class="text-body-2">{{ message.content }}</div>
-									
-									<!-- 画像メッセージ -->
-									<div v-if="message.imageUrl" class="mt-2">
-										<img
-											:src="message.imageUrl"
-											alt="送信された画像"
-											style="max-width: 200px; max-height: 200px; border-radius: 8px;"
-											@click="openImagePreview(message.imageUrl)"
-											class="cursor-pointer"
-										/>
+							</template>
+						</v-list-item>
+					</v-list>
+				</v-card-text>
+			</v-card>
+		</v-col>
+		
+		<v-col cols="12" md="8">
+			<v-card v-if="selectedConversationId" style="height: 500px; display: flex; flex-direction: column;">
+				<v-card-title class="d-flex align-center">
+					<v-avatar
+						:image="currentOtherUser?.profileUrl"
+						size="40"
+						class="mr-3"
+					/>
+					{{ currentOtherUser?.title }}
+				</v-card-title>
+				
+				<v-divider />
+				
+				<v-card-text class="flex-grow-1 pa-4" style="overflow-y: auto;">
+					<div v-if="messages.length === 0" class="text-center pa-8">
+						<v-icon size="48" color="grey-lighten-1">mdi-message-outline</v-icon>
+						<p class="text-grey mt-4">メッセージがありません</p>
+					</div>
+					
+					<div v-else>
+						<div
+							v-for="message in messages"
+							:key="message.id"
+							class="mb-3"
+							:class="message.senderId === authStore.userInfo?.uid ? 'text-right' : 'text-left'"
+						>
+							<div v-if="message.replyTo" class="mb-2">
+								<div class="reply-preview pa-2 rounded" :class="message.senderId === authStore.userInfo?.uid ? 'bg-primary-lighten-4' : 'bg-grey-lighten-5'">
+									<div class="text-caption text-grey mb-1">
+										<v-icon size="12" class="mr-1">mdi-reply</v-icon>
+										返信先:
 									</div>
-									
-									<!-- GIFメッセージ -->
-									<div v-if="message.gifUrl" class="mt-2">
-										<img
-											:src="message.gifUrl"
-											alt="送信されたGIF"
-											style="max-width: 200px; max-height: 200px; border-radius: 8px;"
-											@click="openImagePreview(message.gifUrl)"
-											class="cursor-pointer"
-										/>
-									</div>
-									
-									<!-- 絵文字メッセージ -->
-									<div v-if="message.emoji" class="mt-2">
-										<span class="text-h4">{{ message.emoji }}</span>
-									</div>
-									
-									<div class="d-flex align-center justify-space-between mt-2">
-										<div class="text-caption opacity-70">
-											{{ formatDateTime(message.createdAt) }}
-										</div>
-										<!-- 返信ボタン（自分以外のメッセージのみ） -->
-										<v-btn
-											v-if="message.senderId !== authStore.userInfo?.uid"
-											icon="mdi-reply"
-											size="x-small"
-											variant="text"
-											@click="startReply(message)"
-											class="ml-2"
-										>
-											<v-icon size="14">mdi-reply</v-icon>
-										</v-btn>
+									<div class="text-body-2 text-truncate">
+										{{ getReplyPreview(message.replyTo) }}
 									</div>
 								</div>
 							</div>
-						</div>
-					</v-card-text>
-					
-					<v-divider />
-					
-					<!-- メッセージ送信フォーム -->
-					<v-card-text class="pa-4">
-						<!-- 返信状態の表示 -->
-						<div v-if="replyingTo" class="mb-3">
-							<v-card variant="outlined" class="pa-3">
-								<div class="d-flex align-center justify-space-between">
-									<div class="d-flex align-center">
-										<v-icon size="16" class="mr-2">mdi-reply</v-icon>
-										<span class="text-caption text-grey">返信先:</span>
+							
+							<div
+								class="d-inline-block pa-3 rounded-lg max-width-70 message-container"
+								:class="message.senderId === authStore.userInfo?.uid ? 'bg-primary text-white' : 'bg-grey-lighten-4'"
+							>
+								<div v-if="message.content" class="text-body-2">{{ message.content }}</div>
+								
+								<div v-if="message.imageUrl" class="mt-2">
+									<img
+										:src="message.imageUrl"
+										alt="送信された画像"
+										style="max-width: 200px; max-height: 200px; border-radius: 8px;"
+										@click="openImagePreview(message.imageUrl)"
+										class="cursor-pointer"
+									/>
+								</div>
+								
+								<div v-if="message.gifUrl" class="mt-2">
+									<img
+										:src="message.gifUrl"
+										alt="送信されたGIF"
+										style="max-width: 200px; max-height: 200px; border-radius: 8px;"
+										@click="openImagePreview(message.gifUrl)"
+										class="cursor-pointer"
+									/>
+								</div>
+								
+								<div v-if="message.emoji" class="mt-2">
+									<span class="text-h4">{{ message.emoji }}</span>
+								</div>
+								
+								<div class="d-flex align-center justify-space-between mt-2">
+									<div class="text-caption opacity-70">
+										{{ formatDateTime(message.createdAt) }}
 									</div>
 									<v-btn
-										icon="mdi-close"
-										size="small"
+										v-if="message.senderId !== authStore.userInfo?.uid"
+										icon="mdi-reply"
+										size="x-small"
 										variant="text"
-										@click="cancelReply"
-									/>
+										@click="startReply(message)"
+										class="ml-2"
+									>
+										<v-icon size="14">mdi-reply</v-icon>
+									</v-btn>
 								</div>
-								<div class="mt-2 text-body-2 text-truncate">
-									{{ getReplyPreview(replyingTo) }}
-								</div>
-							</v-card>
+							</div>
 						</div>
-						
-						<!-- プレビューエリア -->
-						<div v-if="messagePreview" class="mb-3">
-							<v-card variant="outlined" class="pa-3">
-								<div class="d-flex align-center justify-space-between">
-									<span class="text-caption text-grey">プレビュー</span>
-									<v-btn
-										icon="mdi-close"
-										size="small"
-										variant="text"
-										@click="clearPreview"
-									/>
-								</div>
-								<div class="mt-2">
-									<!-- 画像プレビュー -->
-									<img
-										v-if="messagePreview.type === 'image'"
-										:src="messagePreview.url"
-										alt="画像プレビュー"
-										style="max-width: 200px; max-height: 200px; border-radius: 8px;"
-									/>
-									<!-- GIFプレビュー -->
-									<img
-										v-else-if="messagePreview.type === 'gif'"
-										:src="messagePreview.url"
-										alt="GIFプレビュー"
-										style="max-width: 200px; max-height: 200px; border-radius: 8px;"
-									/>
-									<!-- 絵文字プレビュー -->
-									<div v-else-if="messagePreview.type === 'emoji'" class="text-h4">
-										{{ messagePreview.content }}
-									</div>
-								</div>
-							</v-card>
-						</div>
-
-						<v-form @submit.prevent="sendNewMessage">
-							<v-row>
-								<v-col cols="8">
-									<v-textarea
-										v-model="newMessage"
-										placeholder="メッセージを入力..."
-										rows="2"
-										auto-grow
-										variant="outlined"
-										density="compact"
-										:disabled="sendingMessage"
-									/>
-								</v-col>
-								<v-col cols="4" class="d-flex align-end gap-2">
-									<!-- 画像アップロードボタン -->
-									<v-btn
-										icon="mdi-image"
-										variant="outlined"
-										size="small"
-										@click="triggerImageUpload"
-										:disabled="sendingMessage"
-									>
-										<v-icon>mdi-image</v-icon>
-									</v-btn>
-									
-									<!-- GIF検索ボタン -->
-									<v-btn
-										icon="mdi-file-gif-box"
-										variant="outlined"
-										size="small"
-										@click="openGifDialog"
-										:disabled="sendingMessage"
-									>
-										<v-icon>mdi-file-gif-box</v-icon>
-									</v-btn>
-									
-									<!-- 絵文字ピッカーボタン -->
-									<v-btn
-										icon="mdi-emoticon-happy"
-										variant="outlined"
-										size="small"
-										@click="openEmojiDialog"
-										:disabled="sendingMessage"
-									>
-										<v-icon>mdi-emoticon-happy</v-icon>
-									</v-btn>
-									
-									<!-- 送信ボタン -->
-									<v-btn
-										type="submit"
-										color="success"
-										:loading="sendingMessage"
-										:disabled="(!newMessage.trim() && !messagePreview) || sendingMessage"
-										size="small"
-										variant="flat"
-									>
-										<v-icon>mdi-send</v-icon>
-									</v-btn>
-								</v-col>
-							</v-row>
-						</v-form>
-						
-						<!-- 隠しファイル入力 -->
-						<input
-							ref="imageInput"
-							type="file"
-							accept="image/*"
-							style="display: none"
-							@change="handleImageUpload"
-						/>
-					</v-card-text>
-				</v-card>
+					</div>
+				</v-card-text>
 				
-				<!-- 会話が選択されていない場合 -->
-				<v-card v-else style="height: 500px;" class="d-flex align-center justify-center">
-					<div class="text-center">
-						<v-icon size="64" color="grey-lighten-1">mdi-message-text-outline</v-icon>
-						<p class="text-grey mt-4">会話を選択してください</p>
-					</div>
-				</v-card>
-			</v-col>
-		</v-row>
-		
-		<!-- GIF検索ダイアログ -->
-		<v-dialog v-model="gifDialog" max-width="600">
-			<v-card>
-				<v-card-title class="d-flex align-center">
-					<v-icon class="mr-2">mdi-gif</v-icon>
-					GIF検索
-					<v-spacer />
-					<v-btn icon="mdi-close" variant="text" @click="gifDialog = false" />
-				</v-card-title>
 				<v-divider />
-				<v-card-text>
-					<v-text-field
-						v-model="gifSearchQuery"
-						label="GIFを検索..."
-						prepend-inner-icon="mdi-magnify"
-						@keyup.enter="searchGifs"
-						class="mb-4"
+				
+				<v-card-text class="pa-4">
+					<div v-if="replyingTo" class="mb-3">
+						<v-card variant="outlined" class="pa-3">
+							<div class="d-flex align-center justify-space-between">
+								<div class="d-flex align-center">
+									<v-icon size="16" class="mr-2">mdi-reply</v-icon>
+									<span class="text-caption text-grey">返信先:</span>
+								</div>
+								<v-btn
+									icon="mdi-close"
+									size="small"
+									variant="text"
+									@click="cancelReply"
+								/>
+							</div>
+							<div class="mt-2 text-body-2 text-truncate">
+								{{ getReplyPreview(replyingTo) }}
+							</div>
+						</v-card>
+					</div>
+					
+					<div v-if="messagePreview" class="mb-3">
+						<v-card variant="outlined" class="pa-3">
+							<div class="d-flex align-center justify-space-between">
+								<span class="text-caption text-grey">プレビュー</span>
+								<v-btn
+									icon="mdi-close"
+									size="small"
+									variant="text"
+									@click="clearPreview"
+								/>
+							</div>
+							<div class="mt-2">
+								<img
+									v-if="messagePreview.type === 'image'"
+									:src="messagePreview.url"
+									alt="画像プレビュー"
+									style="max-width: 200px; max-height: 200px; border-radius: 8px;"
+								/>
+								<img
+									v-else-if="messagePreview.type === 'gif'"
+									:src="messagePreview.url"
+									alt="GIFプレビュー"
+									style="max-width: 200px; max-height: 200px; border-radius: 8px;"
+								/>
+								<div v-else-if="messagePreview.type === 'emoji'" class="text-h4">
+									{{ messagePreview.content }}
+								</div>
+							</div>
+						</v-card>
+					</div>
+
+					<v-form @submit.prevent="sendNewMessage">
+						<v-row>
+							<v-col cols="8">
+								<v-textarea
+									v-model="newMessage"
+									placeholder="メッセージを入力..."
+									rows="2"
+									auto-grow
+									variant="outlined"
+									density="compact"
+									:disabled="sendingMessage"
+								/>
+							</v-col>
+							<v-col cols="4" class="d-flex align-end gap-2">
+								<v-btn
+									icon="mdi-image"
+									variant="outlined"
+									size="small"
+									@click="triggerImageUpload"
+									:disabled="sendingMessage"
+								>
+									<v-icon>mdi-image</v-icon>
+								</v-btn>
+								<v-btn
+									icon="mdi-file-gif-box"
+									variant="outlined"
+									size="small"
+									@click="openGifDialog"
+									:disabled="sendingMessage"
+								>
+									<v-icon>mdi-file-gif-box</v-icon>
+								</v-btn>
+								<v-btn
+									icon="mdi-emoticon-happy"
+									variant="outlined"
+									size="small"
+									@click="openEmojiDialog"
+									:disabled="sendingMessage"
+								>
+									<v-icon>mdi-emoticon-happy</v-icon>
+								</v-btn>
+								<v-btn
+									type="submit"
+									color="success"
+									:loading="sendingMessage"
+									:disabled="(!newMessage.trim() && !messagePreview) || sendingMessage"
+									size="small"
+									variant="flat"
+								>
+									<v-icon>mdi-send</v-icon>
+								</v-btn>
+							</v-col>
+						</v-row>
+					</v-form>
+
+					<input
+						ref="imageInput"
+						type="file"
+						accept="image/*"
+						style="display: none"
+						@change="handleImageUpload"
 					/>
-					<div v-if="gifLoading" class="d-flex justify-center pa-4">
-						<v-progress-circular indeterminate color="primary" />
-					</div>
-					<div v-else-if="gifResults.length > 0" class="gif-grid">
-						<div
-							v-for="gif in gifResults"
-							:key="gif.id"
-							class="gif-item cursor-pointer"
-							@click="selectGif(gif)"
-						>
-							<img :src="gif.images.fixed_width.url" :alt="gif.title" />
-						</div>
-					</div>
-					<div v-else-if="gifSearchQuery" class="text-center pa-4">
-						<p class="text-grey">GIFが見つかりませんでした</p>
-					</div>
 				</v-card-text>
 			</v-card>
-		</v-dialog>
-		
-		<!-- 絵文字ピッカーダイアログ -->
-		<v-dialog v-model="emojiDialog" max-width="400">
-			<v-card>
-				<v-card-title class="d-flex align-center">
-					<v-icon class="mr-2">mdi-emoticon-happy</v-icon>
-					絵文字を選択
-					<v-spacer />
-					<v-btn icon="mdi-close" variant="text" @click="emojiDialog = false" />
-				</v-card-title>
-				<v-divider />
-				<v-card-text>
-					<div class="emoji-grid">
-						<div
-							v-for="emoji in emojiList"
-							:key="emoji"
-							class="emoji-item cursor-pointer"
-							@click="selectEmoji(emoji)"
-						>
-							{{ emoji }}
-						</div>
-					</div>
-				</v-card-text>
+			
+			<v-card v-else style="height: 500px;" class="d-flex align-center justify-center">
+				<div class="text-center">
+					<v-icon size="64" color="grey-lighten-1">mdi-message-text-outline</v-icon>
+					<p class="text-grey mt-4">会話を選択してください</p>
+				</div>
 			</v-card>
-		</v-dialog>
-		
-		<!-- 画像プレビューダイアログ -->
-		<v-dialog v-model="imagePreviewDialog" max-width="800">
-			<v-card>
-				<v-card-title class="d-flex align-center">
-					<v-icon class="mr-2">mdi-image</v-icon>
-					画像プレビュー
-					<v-spacer />
-					<v-btn icon="mdi-close" variant="text" @click="imagePreviewDialog = false" />
-				</v-card-title>
-				<v-divider />
-				<v-card-text class="text-center">
-					<img
-						:src="previewImageUrl"
-						alt="プレビュー画像"
-						style="max-width: 100%; max-height: 500px; border-radius: 8px;"
-					/>
-				</v-card-text>
-			</v-card>
-		</v-dialog>
-	</v-container>
+		</v-col>
+	</v-row>
 </template>
 
 <script setup lang="ts">
@@ -426,13 +408,14 @@ const sendingMessage = ref<boolean>(false)
 // リッチコンテンツ関連
 const messagePreview = ref<any>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
-const gifDialog = ref<boolean>(false)
+const isGifDialog = ref<boolean>(false)
+const isEmojiDialog = ref<boolean>(false)
+const isPreviewDialog = ref<boolean>(false)
 const gifSearchQuery = ref<string>('')
 const gifResults = ref<any[]>([])
 const gifLoading = ref<boolean>(false)
-const emojiDialog = ref<boolean>(false)
-const imagePreviewDialog = ref<boolean>(false)
 const previewImageUrl = ref<string>('')
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 // 返信機能関連
 const replyingTo = ref<any>(null)
@@ -455,6 +438,19 @@ const emojiList = ref<string[]>([
 const conversations = computed(() => dmStore.conversations)
 const messages = computed(() => dmStore.messages)
 const loading = computed(() => dmStore.loading)
+
+const initRefs = (): void => {
+	isGifDialog.value = false
+	isEmojiDialog.value = false
+	isPreviewDialog.value = false
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
 
 const currentOtherUser = computed((): OtherUser | null => {
 	if (!selectedConversationId.value) return null
@@ -620,7 +616,7 @@ const handleImageUpload = (event: Event): void => {
 
 // GIF検索ダイアログを開く
 const openGifDialog = (): void => {
-	gifDialog.value = true
+	isGifDialog.value = true
 	gifSearchQuery.value = ''
 	gifResults.value = []
 }
@@ -634,9 +630,9 @@ const searchGifs = async (): Promise<void> => {
 		
 		// GIPHY APIを使用してGIFを検索（無料APIキーを使用）
 		const response = await fetch(
-			`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(gifSearchQuery.value)}&limit=20`
+			`https://api.giphy.com/v2/emoji?api_key=${import.meta.env.VITE_GIPHY_KEY}&limit=20&offset=0`
 		)
-		
+
 		if (response.ok) {
 			const data = await response.json()
 			gifResults.value = data.data || []
@@ -658,12 +654,12 @@ const selectGif = (gif: any): void => {
 		type: 'gif',
 		url: gif.images.fixed_width.url
 	}
-	gifDialog.value = false
+	initRefs()
 }
 
 // 絵文字ピッカーダイアログを開く
 const openEmojiDialog = (): void => {
-	emojiDialog.value = true
+	isEmojiDialog.value = true
 }
 
 // 絵文字選択
@@ -672,7 +668,7 @@ const selectEmoji = (emoji: string): void => {
 		type: 'emoji',
 		content: emoji
 	}
-	emojiDialog.value = false
+	initRefs()
 }
 
 // プレビューをクリア
@@ -683,7 +679,7 @@ const clearPreview = (): void => {
 // 画像プレビューを開く
 const openImagePreview = (imageUrl: string): void => {
 	previewImageUrl.value = imageUrl
-	imagePreviewDialog.value = true
+	isPreviewDialog.value = true
 }
 
 // 返信機能
@@ -893,5 +889,29 @@ const selectConversationByUserId = async (userId: string): Promise<void> => {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+/* 画像プレビューダイアログ */
+:deep(.image-preview-dialog .v-overlay__content) {
+	background: transparent !important;
+	box-shadow: none !important;
+}
+
+.image-preview-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	padding: 20px;
+}
+
+.preview-image {
+	max-width: 100%;
+	max-height: 90vh;
+	object-fit: contain;
+	border-radius: 8px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	cursor: pointer;
 }
 </style>

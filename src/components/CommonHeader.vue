@@ -19,7 +19,7 @@
 				<v-chip
 					color="amber"
 					variant="flat"
-					class="mr-2"
+					class="mx-2"
 					prepend-icon="mdi-coin"
 				>
 					{{ coins }}
@@ -28,7 +28,7 @@
 					icon="mdi-bell"
 					variant="text"
 					@click="openNotificationDialog"
-					class="mr-2"
+					class="mx-2"
 				>
 					<v-badge
 						:content="totalUnreadCount"
@@ -49,7 +49,7 @@
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
 			<div v-else-if="isLogin && !blogSetting">
-				<v-progress-circular indeterminate size="24" class="mr-2" />
+				<v-progress-circular indeterminate size="24" class="mx-2" />
 				<v-btn text @click="logout">ログアウト</v-btn>
 			</div>
 			<div v-else>
@@ -62,13 +62,18 @@
 	<LoginDialog 
 		v-model:dialog="isLoginDialog"
 		@open-user-create="isUserCreateDialog = true"
+		@open-reset-password="isResetPasswordDialog = true"
 	/>
 	<UserCreateDialog 
 		v-model:dialog="isUserCreateDialog"
 		@open-login="isLoginDialog = true"
 	/>
-	<NotificationDialog v-model="isNotificationDialogOpen" />
-	<TweetCreateDialog v-model="isTweetDialogOpen" @saved="onTweetSaved" />
+	<ResetPasswordDialog 
+		v-model:dialog="isResetPasswordDialog"
+		@open-login="isLoginDialog = true"
+	/>
+	<NotificationDialog v-model:dialog="isNotificationDialogOpen" />
+	<TweetCreateDialog v-model:dialog="isTweetDialogOpen" @saved="onTweetSaved" />
 </template>
 
 <script setup lang="ts">
@@ -81,9 +86,6 @@ import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import { useDmStore } from '@/stores/dmStore'
 import { useCoinStore } from '@/stores/coinStore'
-import CommonUsermenu from '@/components/CommonUsermenu.vue'
-import NotificationDialog from '@/components/NotificationDialog.vue'
-import TweetCreateDialog from '@/components/TweetCreateDialog.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -117,6 +119,7 @@ const totalUnreadCount = computed((): number =>
 const search = ref<string>('')
 const isLoginDialog = ref<boolean>(false)
 const isUserCreateDialog = ref<boolean>(false)
+const isResetPasswordDialog = ref<boolean>(false)
 const isNotificationDialogOpen = ref<boolean>(false)
 const isTweetDialogOpen = ref<boolean>(false)
 

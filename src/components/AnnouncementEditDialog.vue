@@ -1,11 +1,16 @@
 <template>
-	<v-dialog v-model="isOpen" max-width="800" persistent>
-		<v-card>
-			<v-card-title class="text-h5 d-flex align-center">
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="お知らせ編集"
+		v-model:dialog="dialog"
+	>
+		<template v-slot:title>
+			<v-card-title class="d-flex justify-content-center pa-4">
 				<v-icon class="mr-2">mdi-bullhorn</v-icon>
-				お知らせ編集
+				<h4 class="text-h5">お知らせ編集</h4>
 			</v-card-title>
-			
+		</template>
+		<template v-slot:contents>
 			<v-card-text>
 				<v-form ref="form" v-model="valid">
 					<v-row>
@@ -83,15 +88,15 @@
 				<v-spacer></v-spacer>
 				<v-btn
 					color="grey-lighten-4"
-					variant="text"
-					@click="cancel"
+					variant="elevated"
+					@click="closeDialog"
 					:disabled="loading"
 				>
 					キャンセル
 				</v-btn>
 				<v-btn
 					color="primary"
-					variant="elevated"
+					variant="flat"
 					@click="updateAnnouncement"
 					:loading="loading"
 					:disabled="!valid"
@@ -99,33 +104,43 @@
 					更新
 				</v-btn>
 			</v-card-actions>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
+interface AnnouncementData {
+	id: string
+	title: string
+	content: string
+	isPublished: boolean
+	createdAt: string
+	updatedAt: string
+}
+
+const dialog = defineModel<boolean>('dialog')
+
+const emit = defineEmits<{
+	update: []
+}>()
+
 const announcementStore = useAnnouncementStore()
 
 const props = defineProps({
-	modelValue: {
-		type: Boolean,
-		default: false
-	},
 	announcementData: {
 		type: Object,
 		default: () => ({})
 	}
 })
 
-const emit = defineEmits(['update:modelValue', 'updated'])
-
 const form = ref<any>(null)
 const valid = ref(false)
 const loading = ref(false)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
-const announcement = reactive({
+const announcement = reactive<AnnouncementData & { priority: string }>({
 	id: '',
 	title: '',
 	content: '',
@@ -152,10 +167,11 @@ const contentRules = [
 	(v: string) => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
 ]
 
-const isOpen = computed({
-	get: () => props.modelValue,
-	set: (value) => emit('update:modelValue', value)
-})
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+}
 
 const formatDate = (date: any): string => {
 	if (!date) return ''
@@ -180,7 +196,7 @@ const updateAnnouncement = async () => {
 		alert('お知らせを更新しました')
 		
 		// ダイアログを閉じる
-		emit('update:modelValue', false)
+		closeDialog()
 		
 		// 親コンポーネントに更新完了を通知
 		emit('updated')
@@ -193,15 +209,9 @@ const updateAnnouncement = async () => {
 	}
 }
 
-const cancel = () => {
-	emit('update:modelValue', false)
-}
-
 // ダイアログが開かれた時にデータを設定
-watch(() => props.modelValue, (newValue) => {
-	if (newValue && props.announcementData) {
-		Object.assign(announcement, props.announcementData)
-	}
+onMounted(() => {
+	Object.assign(announcement, props.announcementData)
 })
 
 // データが変更された時にフォームに反映
@@ -211,14 +221,3 @@ watch(() => props.announcementData, (newData) => {
 	}
 }, { deep: true })
 </script>
-
-<style scoped>
-.v-card {
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.v-card-title {
-	background-color: #f5f5f5;
-	border-bottom: 1px solid #e0e0e0;
-}
-</style>

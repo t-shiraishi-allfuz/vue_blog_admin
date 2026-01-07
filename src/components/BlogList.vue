@@ -1,7 +1,7 @@
 <template>
 	<!-- 生年月日入力ダイアログ -->
 	<BirthDateDialog 
-		v-model="showBirthDateDialog" 
+		v-model="isBirthDateDialog" 
 		@saved="onBirthDateSaved"
 	/>
 
@@ -15,7 +15,47 @@
 		v-model:dialog="isUserCreateDialog"
 		@open-login="isLoginDialog = true"
 	/>
-	
+
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="パスワード認証"
+		v-model:dialog="isPasswordDialog"
+		persistent="true"
+	>
+		<template v-slot:contents>
+			<v-card-text>
+				<p class="text-body-1 mb-4">このモーメントはパスワードで保護されています。</p>
+				<v-text-field
+					v-model="passwordInput"
+					label="パスワード"
+					type="password"
+					variant="outlined"
+					:error-messages="passwordError"
+					@keyup.enter="verifyPassword"
+					autofocus
+				/>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer />
+				<v-btn
+					color="grey-lighten-4"
+					variant="flat"
+					@click="closeDialog"
+				>
+					閉じる
+				</v-btn>
+				<v-btn
+					color="success"
+					variant="flat"
+					@click="verifyPassword"
+					:loading="passwordVerifying"
+				>
+					認証
+				</v-btn>
+			</v-card-actions>
+		</template>
+	</DialogTemplate>
+
 	<!-- タブ切り替え -->
 	<v-tabs v-model="activeTab" color="success" class="mb-4">
 		<v-tab value="blogs">
@@ -160,7 +200,7 @@
 			</v-row>
 			<TweetCard
 				v-if="tweetToPreview"
-				v-model="isPreviewTweetDialogOpen"
+				v-model="isPreviewTweetDialog"
 				:tweet="tweetToPreview"
 				:setting="tweetToPreview.setting"
 			/>
@@ -233,49 +273,11 @@
 			</v-row>
 			<MomentCard
 				v-if="momentToPreview"
-				v-model="isPreviewMomentDialogOpen"
+				v-model="isPreviewMomentDialog"
 				:moment="momentToPreview"
 			/>
 		</v-window-item>
 	</v-window>
-	<v-dialog v-model="passwordDialog" persistent max-width="400">
-		<v-card>
-			<v-card-title class="text-h5">
-				<v-icon class="mr-2">mdi-lock</v-icon>
-				パスワード認証
-			</v-card-title>
-			<v-card-text>
-				<p class="text-body-1 mb-4">このモーメントはパスワードで保護されています。</p>
-				<v-text-field
-					v-model="passwordInput"
-					label="パスワード"
-					type="password"
-					variant="outlined"
-					:error-messages="passwordError"
-					@keyup.enter="verifyPassword"
-					autofocus
-				/>
-			</v-card-text>
-			<v-card-actions>
-				<v-spacer />
-				<v-btn
-					color="grey-lighten-4"
-					variant="flat"
-					@click="cancelPasswordAuth"
-				>
-					閉じる
-				</v-btn>
-				<v-btn
-					color="success"
-					variant="flat"
-					@click="verifyPassword"
-					:loading="passwordVerifying"
-				>
-					認証
-				</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -286,9 +288,6 @@ import { useLikeStore } from '@/stores/likeStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
-import BirthDateDialog from '@/components/BirthDateDialog.vue'
-import TweetCard from '@/components/TweetCard.vue'
-import MomentCard from '@/components/MomentCard.vue'
 
 // 型定義
 interface BlogItem {
@@ -361,21 +360,36 @@ const {
 } = storeToRefs(momentStore)
 
 const activeTab = ref('blogs')
-const showBirthDateDialog = ref<boolean>(false)
+const isBirthDateDialog = ref<boolean>(false)
 const isLoginDialog = ref<boolean>(false)
 const isUserCreateDialog = ref<boolean>(false)
 const userData = ref<UserData | null>(null)
 const isUserAdult = ref<boolean>(false)
 const tweetToPreview = ref<any>(null)
-const isPreviewTweetDialogOpen = ref<boolean>(false)
+const isPreviewTweetDialog = ref<boolean>(false)
 const momentToPreview = ref<any>(null)
-const isPreviewMomentDialogOpen = ref<boolean>(false)
+const isPreviewMomentDialog = ref<boolean>(false)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 // パスワード認証関連
-const passwordDialog = ref<boolean>(false)
+const isPasswordDialog = ref<boolean>(false)
 const passwordInput = ref<string>('')
 const passwordError = ref<string>('')
 const passwordVerifying = ref<boolean>(false)
+
+
+const initRefs = (): void => {
+	passwordInput.value = ''
+	passwordError.value = ''
+	momentToPreview.value = null
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
 
 const extendBlogList = computed((): BlogItem[] => {
 	if (!blogList.value) {
@@ -482,18 +496,18 @@ const goToBlogDetail = (blog: BlogItem): void => {
 // プレビューダイアログを開く
 const openPreviewTweetDialog = (tweet: any) => {
 	tweetToPreview.value = tweet
-	isPreviewTweetDialogOpen.value = true
+	isPreviewTweetDialog.value = true
 }
 
 const openPreviewMomentDialog = (moment: any) => {
 	momentToPreview.value = moment
 
 	if (moment.password) {
-		passwordDialog.value = true
+		isPasswordDialog.value = true
 		passwordInput.value = ''
 		passwordError.value = ''
 	} else {
-		isPreviewMomentDialogOpen.value = true
+		isPreviewMomentDialog.value = true
 	}
 }
 
@@ -511,9 +525,9 @@ const verifyPassword = async () => {
 		const isValid = await momentStore.verifyPassword(momentToPreview.value.id, passwordInput.value)
 		if (isValid) {
 			// 認証成功時したら開く
-			passwordDialog.value = false
+			isPasswordDialog.value = false
 			passwordInput.value = ''
-			isPreviewMomentDialogOpen.value = true
+			isPreviewMomentDialog.value = true
 		} else {
 			passwordError.value = 'パスワードが正しくありません'
 		}
@@ -524,14 +538,6 @@ const verifyPassword = async () => {
 	} finally {
 		passwordVerifying.value = false
 	}
-}
-
-// パスワード認証キャンセル
-const cancelPasswordAuth = () => {
-	passwordDialog.value = false
-	passwordInput.value = ''
-	passwordError.value = ''
-	momentToPreview.value = null
 }
 
 // いいね
@@ -669,7 +675,7 @@ const checkBirthDateRegistration = async (): Promise<void> => {
 	await loadUserData()
 	
 	if (!userData.value || !userData.value.birthDate) {
-		showBirthDateDialog.value = true
+		isBirthDateDialog.value = true
 	}
 }
 

@@ -1,10 +1,16 @@
 <template>
-	<v-dialog v-model="isOpen" max-width="800" persistent>
-		<v-card>
-			<v-card-title class="text-h5 d-flex align-center">
-				お知らせ作成
+	<DialogTemplate
+		ref="dialogTemplateRef"
+		label="お知らせ作成"
+		v-model:dialog="dialog"
+	>
+		<template v-slot:title>
+			<v-card-title class="d-flex justify-content-center pa-4">
+				<v-icon class="mr-2">mdi-bullhorn</v-icon>
+				<h4 class="text-h5">お知らせ作成</h4>
 			</v-card-title>
-			
+		</template>
+		<template v-slot:contents>
 			<v-card-text>
 				<v-form ref="form" v-model="valid">
 					<v-row>
@@ -70,7 +76,7 @@
 					color="grey-lighten-4"
 					:disabled="loading"
 					variant="elevated"
-					@click="cancel"
+					@click="closeDialog"
 				>
 					閉じる
 				</v-btn>
@@ -84,8 +90,8 @@
 					保存
 				</v-btn>
 			</v-card-actions>
-		</v-card>
-	</v-dialog>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">
@@ -99,22 +105,11 @@ interface AnnouncementData {
 	isPublished: boolean
 }
 
-// Props定義
-interface Props {
-	modelValue: boolean
-}
+const dialog = defineModel<boolean>('dialog')
 
-const props = withDefaults(defineProps<Props>(), {
-	modelValue: false
-})
-
-// Emits定義
-interface Emits {
-	'update:modelValue': [value: boolean]
+const emit = defineEmits<{
 	saved: []
-}
-
-const emit = defineEmits<Emits>()
+}>()
 
 const announcementStore = useAnnouncementStore()
 const authStore = useAuthStore()
@@ -122,6 +117,7 @@ const authStore = useAuthStore()
 const form = ref<any>(null)
 const valid = ref<boolean>(false)
 const loading = ref<boolean>(false)
+const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const announcement = reactive<AnnouncementData & { priority: string }>({
 	title: '',
@@ -147,10 +143,20 @@ const contentRules = [
 	(v: string): boolean | string => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
 ]
 
-const isOpen = computed({
-	get: (): boolean => props.modelValue,
-	set: (value: boolean): void => emit('update:modelValue', value)
-})
+const initRefs = (): void => {
+	announcement.title = ''
+	announcement.content = ''
+	announcement.priority = 'normal'
+	announcement.isPublished = false
+	form.value?.resetValidation()
+}
+
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+	initRefs()
+}
 
 const saveAnnouncement = async (): Promise<void> => {
 	if (!form.value.validate()) return
@@ -169,11 +175,8 @@ const saveAnnouncement = async (): Promise<void> => {
 		alert('お知らせを作成しました')
 		
 		// フォームをリセット
-		resetForm()
-		
-		// ダイアログを閉じる
-		emit('update:modelValue', false)
-		
+		closeDialog()
+
 		// 親コンポーネントに保存完了を通知
 		emit('saved')
 		
@@ -185,34 +188,8 @@ const saveAnnouncement = async (): Promise<void> => {
 	}
 }
 
-const cancel = (): void => {
-	resetForm()
-	emit('update:modelValue', false)
-}
-
-const resetForm = (): void => {
-	announcement.title = ''
-	announcement.content = ''
-	announcement.priority = 'normal'
-	announcement.isPublished = false
-	form.value?.resetValidation()
-}
-
 // ダイアログが開かれた時にフォームをリセット
-watch(() => props.modelValue, (newValue: boolean): void => {
-	if (newValue) {
-		resetForm()
-	}
+onMounted(() => {
+	initRefs()
 })
 </script>
-
-<style scoped>
-.v-card {
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.v-card-title {
-	background-color: #f5f5f5;
-	border-bottom: 1px solid #e0e0e0;
-}
-</style>

@@ -1,83 +1,81 @@
 <template>
-	<v-container>
-		<v-row v-if="loading">
-			<v-col cols="12" class="text-center">
-				<v-progress-circular
-					indeterminate
-					color="success"
-					size="64"
-				/>
-				<p class="mt-4 text-body-1">お知らせを読み込み中...</p>
-			</v-col>
-		</v-row>
+	<v-row v-if="loading">
+		<v-col cols="12" class="text-center">
+			<v-progress-circular
+				indeterminate
+				color="success"
+				size="64"
+			/>
+			<p class="mt-4 text-body-1">お知らせを読み込み中...</p>
+		</v-col>
+	</v-row>
 
-		<v-row v-else-if="!announcement">
-			<v-col cols="12">
-				<v-card>
-					<v-card-text class="text-center py-8">
-						<v-icon size="64" color="error">mdi-alert-circle</v-icon>
-						<p class="text-h6 mt-4 text-grey">お知らせが見つかりません</p>
-						<p class="text-body-2 text-grey">指定されたお知らせは存在しないか、削除された可能性があります。</p>
-					</v-card-text>
-				</v-card>
-			</v-col>
-		</v-row>
+	<v-row v-else-if="!announcement">
+		<v-col cols="12">
+			<v-card>
+				<v-card-text class="text-center py-8">
+					<v-icon size="64" color="error">mdi-alert-circle</v-icon>
+					<p class="text-h6 mt-4 text-grey">お知らせが見つかりません</p>
+					<p class="text-body-2 text-grey">指定されたお知らせは存在しないか、削除された可能性があります。</p>
+				</v-card-text>
+			</v-card>
+		</v-col>
+	</v-row>
 
-		<v-row v-else>
-			<v-col cols="12" md="8" offset-md="2">
-				<v-card>
-					<v-card-title class="d-flex align-center">
-						<v-chip
-							:color="getPriorityColor(announcement.priority)"
-							size="small"
-							variant="tonal"
-							class="mr-3"
-						>
-							{{ getPriorityText(announcement.priority) }}
-						</v-chip>
-						<span class="text-h4">{{ announcement.title }}</span>
-					</v-card-title>
+	<v-row v-else>
+		<v-col cols="12" md="8" offset-md="2">
+			<v-card>
+				<v-card-title class="d-flex align-center">
+					<v-chip
+						:color="getPriorityColor(announcement.priority)"
+						size="small"
+						variant="tonal"
+						class="mr-3"
+					>
+						{{ getPriorityText(announcement.priority) }}
+					</v-chip>
+					<span class="text-h4">{{ announcement.title }}</span>
+				</v-card-title>
 
-					<v-card-subtitle class="d-flex align-center">
-						<v-icon size="16" class="mr-1">mdi-calendar</v-icon>
-						{{ formatDate(announcement.createdAt) }}
-						<v-spacer />
-						<v-chip
-							v-if="!announcement.isRead"
-							size="small"
-							color="red"
-							variant="tonal"
-						>
-							<v-icon size="12" class="mr-1">mdi-circle</v-icon>
-							未読
-						</v-chip>
-					</v-card-subtitle>
+				<v-card-subtitle class="d-flex align-center">
+					<v-icon size="16" class="mr-1">mdi-calendar</v-icon>
+					{{ formatDate(announcement.createdAt) }}
+					<v-spacer />
+					<v-chip
+						v-if="!announcement.isRead"
+						size="small"
+						color="red"
+						variant="tonal"
+					>
+						<v-icon size="12" class="mr-1">mdi-circle</v-icon>
+						未読
+					</v-chip>
+				</v-card-subtitle>
 
-					<v-divider />
+				<v-divider />
 
-					<v-card-text class="py-6">
-						<div class="announcement-content">
-							{{ announcement.content }}
-						</div>
-					</v-card-text>
+				<v-card-text class="py-6">
+					<div class="announcement-content">
+						{{ announcement.content }}
+					</div>
+				</v-card-text>
 
-					<v-card-actions>
-						<v-spacer />
-						<v-btn
-							v-if="!announcement.isRead"
-							color="success"
-							variant="elevated"
-							prepend-icon="mdi-check"
-							@click="markAsRead"
-							:loading="markingAsRead"
-						>
-							既読にする
-						</v-btn>
-					</v-card-actions>
-				</v-card>
-			</v-col>
-		</v-row>
-	</v-container>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn
+						v-if="!announcement.isRead"
+						color="success"
+						variant="elevated"
+						prepend-icon="mdi-check"
+						@click="markAsRead"
+						:loading="markingAsRead"
+					>
+						既読にする
+					</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-col>
+	</v-row>
 </template>
 
 <script setup lang="ts">

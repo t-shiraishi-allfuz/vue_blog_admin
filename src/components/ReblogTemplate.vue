@@ -15,7 +15,6 @@
 
 <script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
-import BlogEditTemplate from '@/components/BlogEditTemplate.vue'
 
 // 型定義
 interface BlogData {
