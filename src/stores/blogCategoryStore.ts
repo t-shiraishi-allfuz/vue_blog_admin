@@ -9,6 +9,7 @@ interface BlogCategoryData {
 	pre_category_id: string | null
 	name: string
 	blog_count: number
+	order?: number
 	createdAt: Date
 	updatedAt: Date
 	[key: string]: any
@@ -53,10 +54,21 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 			throw new Error('ユーザー情報が取得できません')
 		}
 		
+		// 子カテゴリーの場合、同じ親カテゴリー内の子カテゴリーの最大orderを取得
+		let order = 0
+		if (category.pre_category_id) {
+			const childCategories = categoryList.value.filter(c => c.pre_category_id === category.pre_category_id)
+			const maxOrder = childCategories.length > 0 
+				? Math.max(...childCategories.map(c => c.order || 0))
+				: -1
+			order = maxOrder + 1
+		}
+		
 		const payload = {
 			uid: userInfo.uid,
 			pre_category_id: category.pre_category_id || null,
 			name: category.name,
+			order: order,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		}
@@ -196,7 +208,13 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 					sortedCategories.push(parentCategory)
 					allCategories
 						.filter(category => category.pre_category_id === parentCategory.id)
-						.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+						.sort((a, b) => {
+							// order の昇順でソート（orderが同じ場合はcreatedAtの昇順）
+							if (a.order !== b.order) {
+								return (a.order || 0) - (b.order || 0)
+							}
+							return a.createdAt.getTime() - b.createdAt.getTime()
+						})
 						.forEach(childCategory => {
 							sortedCategories.push(childCategory)
 						})
@@ -207,12 +225,54 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 		}
 	}
 
+	// 順序を更新（子カテゴリーのみ、同じ親カテゴリー内）
+	const updateOrder = async (categoryIds: string[], parentCategoryId: string): Promise<void> => {
+		const updatePromises = categoryIds.map((id, index) => {
+			return BaseAPI.setData(
+				{db_name: "blog_category", item_id: id},
+				{
+					order: index,
+					updatedAt: new Date()
+				}
+			)
+		})
+		await Promise.all(updatePromises)
+		// リストを再取得
+		await getList()
+	}
+
+	// 順序を移動（上下矢印用、子カテゴリーのみ）
+	const moveOrder = async (categoryId: string, direction: 'up' | 'down'): Promise<void> => {
+		// 対象カテゴリーを取得
+		const targetCategory = categoryList.value.find(c => c.id === categoryId)
+		if (!targetCategory || !targetCategory.pre_category_id) return
+
+		// 同じ親カテゴリー内の子カテゴリーのみを取得
+		const childCategories = categoryList.value.filter(c => c.pre_category_id === targetCategory.pre_category_id)
+		const currentIndex = childCategories.findIndex(c => c.id === categoryId)
+		if (currentIndex === -1) return
+
+		const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+		if (newIndex < 0 || newIndex >= childCategories.length) return
+
+		// 配列内で要素を入れ替え
+		const newList = [...childCategories]
+		const [movedItem] = newList.splice(currentIndex, 1)
+		newList.splice(newIndex, 0, movedItem)
+
+		// 新しい順序でIDリストを作成
+		const categoryIds = newList.map(c => c.id)
+		await updateOrder(categoryIds, targetCategory.pre_category_id)
+	}
+
 	return {
 		categoryList,
 		create,
 		update,
 		getList,
 		getDetail,
-		deleteItem
+		deleteItem,
+		updateOrder,
+		moveOrder
 	}
 })

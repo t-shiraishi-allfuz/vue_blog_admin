@@ -116,7 +116,6 @@ import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
 import draggable from 'vuedraggable'
-import DialogTemplate from '@/components/DialogTemplate.vue'
 
 // 型定義
 interface FolderData {

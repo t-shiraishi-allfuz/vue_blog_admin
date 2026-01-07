@@ -1,52 +1,112 @@
 <template>
 	<v-container>
 		<v-card class="category-list">
-			<v-data-table
-				v-if="!isLoading"
-				class="category-list"
-				:headers="headers"
-				:items="categoryList"
-				items-per-page="30"
-				no-data-text="カテゴリーがありません"
-			>
-				<template v-slot:top>
-					<v-toolbar flat>
-						<v-toolbar-title>カテゴリー一覧</v-toolbar-title>
-						<v-divider class="mx-4" inset vertical />
-						<v-spacer></v-spacer>
-						<v-btn
-							class="mx-2"
-							color="success"
-							variant="flat"
-							@click="openCreateDialog"
+			<v-toolbar flat>
+				<v-toolbar-title>カテゴリー一覧</v-toolbar-title>
+				<v-divider class="mx-4" inset vertical />
+				<v-spacer></v-spacer>
+				<v-btn
+					class="mx-2"
+					color="success"
+					variant="flat"
+					@click="openCreateDialog"
+				>
+					新しいカテゴリーを作る
+				</v-btn>
+			</v-toolbar>
+			<v-divider />
+			<template v-if="!isLoading && sortedCategoryList.length > 0">
+				<template v-for="(parentCategory, parentIndex) in parentCategories" :key="parentCategory.id">
+					<v-list-item class="parent-category-item">
+						<template v-slot:prepend>
+							<v-icon color="primary">mdi-folder</v-icon>
+						</template>
+						<v-list-item-title>
+							<a @click.prevent="openUpdateDialog(parentCategory)" class="folder-title" href="#">
+								{{ parentCategory.name }}（{{ parentCategory.blog_count }}）
+							</a>
+						</v-list-item-title>
+						<v-list-item-subtitle>
+							{{ formatDate(parentCategory.createdAt) }}
+						</v-list-item-subtitle>
+						<template v-slot:append>
+							<v-icon
+								class="delete-icon"
+								icon="mdi-delete"
+								aria-label="削除"
+								role="button"
+								@click="openDeleteDialog(parentCategory)"
+							/>
+						</template>
+					</v-list-item>
+					<v-divider />
+					<v-list v-if="getChildCategories(parentCategory.id).length > 0">
+						<draggable
+							v-model="childCategoriesMap[parentCategory.id]"
+							item-key="id"
+							@end="() => onDragEnd(parentCategory.id)"
+							tag="div"
 						>
-							新しいカテゴリーを作る
-						</v-btn>
-					</v-toolbar>
+							<template #item="{ element: item, index }">
+								<div>
+									<v-list-item class="category-item child-category">
+										<template v-slot:prepend>
+											<v-icon color="grey">mdi-drag</v-icon>
+											<v-icon
+												icon="mdi-subdirectory-arrow-right"
+												style="margin-left: 8px"
+											/>
+										</template>
+										<v-list-item-title>
+											<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
+												{{ item.name }}（{{ item.blog_count }}）
+											</a>
+										</v-list-item-title>
+										<v-list-item-subtitle>
+											{{ formatDate(item.createdAt) }}
+										</v-list-item-subtitle>
+										<template v-slot:append>
+											<div class="d-flex align-center">
+												<v-btn
+													icon="mdi-chevron-up"
+													variant="text"
+													size="small"
+													:disabled="index === 0"
+													@click="moveUp(item.id)"
+													class="mr-1"
+												/>
+												<v-btn
+													icon="mdi-chevron-down"
+													variant="text"
+													size="small"
+													:disabled="index === childCategoriesMap[parentCategory.id].length - 1"
+													@click="moveDown(item.id)"
+													class="mr-2"
+												/>
+												<v-icon
+													class="delete-icon"
+													icon="mdi-delete"
+													aria-label="削除"
+													role="button"
+													@click="openDeleteDialog(item)"
+												/>
+											</div>
+										</template>
+									</v-list-item>
+									<v-divider v-if="index < childCategoriesMap[parentCategory.id].length - 1" />
+								</div>
+							</template>
+						</draggable>
+					</v-list>
+					<v-divider v-if="parentIndex < parentCategories.length - 1" class="my-2" />
 				</template>
-				<template v-slot:[`item.name`]="{ item }">
-					<v-icon
-						v-if="item.pre_category_id"
-						icon="mdi-subdirectory-arrow-right"
-						style="margin-left: 20px"
-					/>
-					<a @click.prevent="openUpdateDialog(item)" class="folder-title" href="#">
-						{{ item.name }}（{{ item.blog_count }}）
-					</a>
-				</template>
-				<template v-slot:[`item.createdAt`]="{ item }">
-					{{ formatDate(item.createdAt) }}
-				</template>
-				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon
-						class="delete-icon"
-						icon="mdi-delete"
-						aria-label="削除"
-						role="button"
-						@click="openDeleteDialog(item)"
-					/>
-				</template>
-			</v-data-table>
+			</template>
+			<v-card-text v-if="!isLoading && sortedCategoryList.length === 0" class="text-center">
+				カテゴリーがありません
+			</v-card-text>
+			<v-card-text v-if="isLoading" class="text-center">
+				<v-progress-circular indeterminate />
+			</v-card-text>
 		</v-card>
 	</v-container>
 
@@ -87,14 +147,14 @@
 		v-model:dialog="isEditDialog"
 	>
 		<template v-slot:contents>
-			<v-card-text>
+			<v-card-text v-if="categoryToUpdate">
 				<v-text-field
 					type="text"
 					label="カテゴリー名を入力して下さい"
 					v-model="categoryToUpdate.name"
 				/>
 			</v-card-text>
-			<v-card-text v-if="categoryList.length > 0">
+			<v-card-text v-if="categoryList.length > 0 && categoryToUpdate">
 				<v-select
 					label="親カテゴリーを設定する場合は選択して下さい"
 					:items="categoryList"
@@ -117,6 +177,7 @@
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
+import draggable from 'vuedraggable'
 
 // 型定義
 interface BlogCategoryData {
@@ -125,6 +186,7 @@ interface BlogCategoryData {
 	pre_category_id: string | null
 	name: string
 	blog_count: number
+	order?: number
 	createdAt: Date
 	updatedAt: Date
 	[key: string]: any
@@ -135,18 +197,38 @@ interface CreateCategoryData {
 	name: string
 }
 
-interface HeaderItem {
-	title: string
-	value: string
-	sortable?: boolean
-}
-
-const dialog = defineModel<boolean>('dialog')
-
 const blogCategoryStore = useBlogCategoryStore()
 const {
 	categoryList
 } = storeToRefs(blogCategoryStore)
+
+// 並び替え用のリスト（ドラッグ操作で直接変更可能にするためrefを使用）
+const sortedCategoryList = ref<BlogCategoryData[]>([])
+
+// 親カテゴリーごとの子カテゴリーリストを管理
+const childCategoriesMap = ref<Record<string, BlogCategoryData[]>>({})
+
+// 親カテゴリーのみを取得
+const parentCategories = computed(() => {
+	return sortedCategoryList.value.filter(c => !c.pre_category_id)
+})
+
+// 子カテゴリーを取得（親カテゴリーIDでフィルタ）
+const getChildCategories = (parentId: string): BlogCategoryData[] => {
+	return sortedCategoryList.value.filter(c => c.pre_category_id === parentId)
+}
+
+// categoryListが変更されたらsortedCategoryListとchildCategoriesMapも更新
+watch(categoryList, (newList) => {
+	sortedCategoryList.value = [...newList]
+	
+	// 親カテゴリーごとに子カテゴリーリストを更新
+	const newMap: Record<string, BlogCategoryData[]> = {}
+	parentCategories.value.forEach(parent => {
+		newMap[parent.id] = getChildCategories(parent.id)
+	})
+	childCategoriesMap.value = newMap
+}, { immediate: true, deep: true })
 
 const isLoading = ref<boolean>(true)
 
@@ -162,11 +244,6 @@ const categoryToUpdate = ref<BlogCategoryData | null>(null)
 const categoryToDelete = ref<BlogCategoryData | null>(null)
 const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
-const headers: HeaderItem[] = [
-	{title: "カテゴリー名", value: "name" },
-	{title: "作成日時", value: "createdAt" },
-	{title: "削除", value: "actions", sortable: false },
-]
 
 // 日時フォーマット関数
 const formatDate = (date: any): string => {
@@ -230,7 +307,7 @@ const openDeleteDialog = async (category: BlogCategoryData): Promise<void> => {
 	})
 
 	if (result.isConfirmed && categoryToDelete.value) {
-		await blogCategoryStore.deleteItem(categoryToDelete.value)
+		await blogCategoryStore.deleteItem(categoryToDelete.value as BlogCategoryData)
 		await fetchCategoryList()
 		
 		// 削除完了メッセージ
@@ -311,6 +388,7 @@ const updateCategory = async (): Promise<void> => {
 			return
 		}
 
+		if (!categoryToUpdate.value) return
 		await blogCategoryStore.update(categoryToUpdate.value)
 		await fetchCategoryList()
 
@@ -348,6 +426,67 @@ const fetchCategoryList = async (): Promise<void> => {
 	}
 }
 
+// ドラッグ&ドロップ終了時の処理
+const onDragEnd = async (parentCategoryId: string): Promise<void> => {
+	// ドラッグ後の新しい順序で、同じ親カテゴリー内の子カテゴリーのIDリストを作成
+	const childCategories = childCategoriesMap.value[parentCategoryId] || []
+	const childCategoryIds = childCategories.map(c => c.id)
+	
+	// sortedCategoryListも更新
+	const otherCategories = sortedCategoryList.value.filter(c => 
+		c.pre_category_id !== parentCategoryId && !c.pre_category_id
+	)
+	const parentCategory = sortedCategoryList.value.find(c => c.id === parentCategoryId)
+	if (parentCategory) {
+		// 親カテゴリーとその子カテゴリーを正しい順序で配置
+		const newList: BlogCategoryData[] = []
+		otherCategories.forEach(parent => {
+			newList.push(parent)
+			const children = sortedCategoryList.value.filter(c => c.pre_category_id === parent.id)
+			newList.push(...children)
+		})
+		newList.push(parentCategory)
+		newList.push(...childCategories)
+		sortedCategoryList.value = newList
+	}
+	
+	await blogCategoryStore.updateOrder(childCategoryIds, parentCategoryId)
+	
+	Swal.fire({
+		title: '順序を更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false,
+		confirmButtonColor: '#27C1A3',
+	})
+}
+
+// 上に移動
+const moveUp = async (categoryId: string): Promise<void> => {
+	await blogCategoryStore.moveOrder(categoryId, 'up')
+	
+	Swal.fire({
+		title: '順序を更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false,
+		confirmButtonColor: '#27C1A3',
+	})
+}
+
+// 下に移動
+const moveDown = async (categoryId: string): Promise<void> => {
+	await blogCategoryStore.moveOrder(categoryId, 'down')
+	
+	Swal.fire({
+		title: '順序を更新しました',
+		icon: 'success',
+		timer: 1500,
+		showConfirmButton: false,
+		confirmButtonColor: '#27C1A3',
+	})
+}
+
 onMounted(async (): Promise<void> => {
 	try {
 		await fetchCategoryList()
@@ -362,6 +501,24 @@ onMounted(async (): Promise<void> => {
 <style scoped>
 	.delete-icon {
 		color: red;
+		cursor: pointer;
+	}
+	
+	.category-item {
+		cursor: move;
+	}
+	
+	.child-category {
+		cursor: default;
+	}
+	
+	.folder-title {
+		text-decoration: none;
+		color: inherit;
+	}
+	
+	.folder-title:hover {
+		text-decoration: underline;
 	}
 
 	/* SweetAlert2ボタンの固定幅スタイル */
