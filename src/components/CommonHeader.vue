@@ -7,6 +7,7 @@
 		</template>
 		<v-app-bar-title>
 			<v-text-field
+				v-if="!isAdminPage"
 				label="キーワードやクリエイターで検索"
 				v-model="search"
 				append-inner-icon="mdi-magnify"
@@ -91,6 +92,7 @@ import { useCoinStore } from '@/stores/coinStore'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
+const route = useRoute()
 
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
@@ -112,6 +114,11 @@ const {
 const {
 	coins
 } = storeToRefs(coinStore)
+
+// 管理画面かどうかを判定
+const isAdminPage = computed((): boolean => {
+	return route.path.startsWith('/admin')
+})
 
 // 未読通知数とお知らせ数とDM未読数を取得
 const totalUnreadCount = computed((): number => 
