@@ -2,6 +2,7 @@
 	<v-card
 		class="blog-card"
 		outlined
+		@contextmenu.prevent="copyBlogUrl"
 	>
 		<div class="header-image">
 			<v-img
@@ -93,6 +94,35 @@ const colorIconPink = (flag: boolean): string => {
 const addLike = (blog: BlogData): void => {
 	// TODO: いいね機能の実装
 	console.log('いいね機能:', blog.id)
+}
+
+// ブログURLをコピー
+const copyBlogUrl = async (): Promise<void> => {
+	try {
+		const blogUrl = `${window.location.origin}/blog_detail?blog_id=${props.blog.id}`
+		await navigator.clipboard.writeText(blogUrl)
+		
+		// 成功メッセージを表示（簡易的な方法）
+		const toast = document.createElement('div')
+		toast.textContent = 'URLをコピーしました'
+		toast.style.cssText = `
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			background-color: #4caf50;
+			color: white;
+			padding: 12px 24px;
+			border-radius: 4px;
+			z-index: 10000;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+		`
+		document.body.appendChild(toast)
+		setTimeout(() => {
+			document.body.removeChild(toast)
+		}, 2000)
+	} catch (error) {
+		console.error('URLコピーエラー:', error)
+	}
 }
 </script>
 

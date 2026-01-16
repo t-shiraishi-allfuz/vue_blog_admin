@@ -19,6 +19,7 @@
 			</template>
 		</v-list-item>
 		<v-list-item prepend-icon="mdi-robot" title="AIトーク" value="ai_talk" @click="goToAiTalk" />
+		<v-list-item prepend-icon="mdi-bulletin-board" title="掲示板" value="board" @click="goToBoard" />
 		<v-list-item title="チャージ" value="charge" @click="goToCharge">
 			<template #prepend>
 				<img
@@ -94,6 +95,10 @@ const goToAiTalk = (): void => {
 
 const goToCharge = (): void => {
 	router.push({ path: '/charge' })
+}
+
+const goToBoard = (): void => {
+	router.push({ path: '/board' })
 }
 </script>
 

@@ -24,12 +24,14 @@ import 'vuetify/dist/vuetify.min.css'
 import { createPinia } from 'pinia'
 import { createPersistedState } from "pinia-plugin-persistedstate"
 import { logError } from '@/utils/logger'
+import Vue3TouchEvents from "vue3-touch-events"
 
 const pinia = createPinia()
 pinia.use(createPersistedState())
 const app = createApp(App)
   .use(pinia)
   .use(VueSweetalert2)
+  .use(Vue3TouchEvents)
 
 app.component('VueMultiselect', Multiselect)
 app.component('VueDatePicker', VueDatePicker)
@@ -37,10 +39,24 @@ app.component('VueDatePicker', VueDatePicker)
 // グローバルエラーハンドラー
 app.config.errorHandler = (err, instance, info) => {
 	console.error('Vueエラー:', err, info)
-	if (err instanceof Error) {
-		logError(err, `Vueコンポーネントエラー: ${info}`).catch(() => {
-			// ログ保存エラーは無視
-		})
+	try {
+		if (err instanceof Error) {
+			logError(err, `Vueコンポーネントエラー: ${info || '不明'}`).catch(() => {
+				// ログ保存エラーは無視
+			})
+		} else if (err) {
+			// Errorインスタンスでない場合でもログに記録
+			const error = new Error(String(err))
+			if (typeof err === 'object' && err !== null) {
+				Object.assign(error, err)
+			}
+			logError(error, `Vueコンポーネントエラー: ${info || '不明'}`).catch(() => {
+				// ログ保存エラーは無視
+			})
+		}
+	} catch (handlerError) {
+		// エラーハンドラー自体でエラーが発生した場合はコンソールに出力のみ
+		console.error('エラーハンドラーエラー:', handlerError)
 	}
 }
 

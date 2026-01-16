@@ -64,50 +64,58 @@ const getLogFilePath = (type: LogType): { year: string; month: string; day: stri
 const formatLogEntry = (data: AccessLogData | PurchaseLogData | ErrorLogData, type: LogType): string => {
 	const timestamp = new Date().toISOString()
 	
+	// dataがnullまたはundefinedの場合は空オブジェクトを使用
+	if (!data || typeof data !== 'object') {
+		return JSON.stringify({ timestamp, error: 'Invalid log data' }) + '\n'
+	}
+	
 	switch (type) {
 		case 'access':
 			const accessData = data as AccessLogData
+			const accessEntries = accessData && typeof accessData === 'object' 
+				? Object.entries(accessData).filter(([key]) => 
+					!['blogId', 'tweetId', 'accessedAt', 'userAgent', 'referrer'].includes(key)
+				)
+				: []
 			return JSON.stringify({
 				timestamp,
-				blogId: accessData.blogId || null,
-				tweetId: accessData.tweetId || null,
-				accessedAt: accessData.accessedAt.toISOString(),
-				userAgent: accessData.userAgent,
-				referrer: accessData.referrer,
-				...Object.fromEntries(
-					Object.entries(accessData).filter(([key]) => 
-						!['blogId', 'tweetId', 'accessedAt', 'userAgent', 'referrer'].includes(key)
-					)
-				)
+				blogId: accessData?.blogId || null,
+				tweetId: accessData?.tweetId || null,
+				accessedAt: accessData?.accessedAt ? new Date(accessData.accessedAt).toISOString() : null,
+				userAgent: accessData?.userAgent || '',
+				referrer: accessData?.referrer || null,
+				...Object.fromEntries(accessEntries)
 			}) + '\n'
 		
 		case 'purchase':
 			const purchaseData = data as PurchaseLogData
+			const purchaseEntries = purchaseData && typeof purchaseData === 'object'
+				? Object.entries(purchaseData).filter(([key]) => 
+					!['userId', 'amount', 'operation', 'remainingCoins', 'timestamp'].includes(key)
+				)
+				: []
 			return JSON.stringify({
 				timestamp,
-				userId: purchaseData.userId,
-				amount: purchaseData.amount,
-				operation: purchaseData.operation,
-				remainingCoins: purchaseData.remainingCoins,
-				...Object.fromEntries(
-					Object.entries(purchaseData).filter(([key]) => 
-						!['userId', 'amount', 'operation', 'remainingCoins', 'timestamp'].includes(key)
-					)
-				)
+				userId: purchaseData?.userId || '',
+				amount: purchaseData?.amount || 0,
+				operation: purchaseData?.operation || 'unknown',
+				remainingCoins: purchaseData?.remainingCoins || 0,
+				...Object.fromEntries(purchaseEntries)
 			}) + '\n'
 		
 		case 'error':
 			const errorData = data as ErrorLogData
+			const errorEntries = errorData && typeof errorData === 'object'
+				? Object.entries(errorData).filter(([key]) => 
+					!['message', 'stack', 'context', 'timestamp'].includes(key)
+				)
+				: []
 			return JSON.stringify({
 				timestamp,
-				message: errorData.message,
-				stack: errorData.stack || null,
-				context: errorData.context || null,
-				...Object.fromEntries(
-					Object.entries(errorData).filter(([key]) => 
-						!['message', 'stack', 'context', 'timestamp'].includes(key)
-					)
-				)
+				message: errorData?.message || 'Unknown error',
+				stack: errorData?.stack || null,
+				context: errorData?.context || null,
+				...Object.fromEntries(errorEntries)
 			}) + '\n'
 	}
 }
