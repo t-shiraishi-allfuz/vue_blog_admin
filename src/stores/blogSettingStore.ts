@@ -11,6 +11,9 @@ interface BlogSettingData {
 	description: string
 	name: string
 	profileUrl: string | null
+	xUrl: string | null
+	youtubeUrl: string | null
+	instagramUrl: string | null
 	is_follower: boolean
 	is_following: boolean
 	createdAt: Date | null
@@ -23,6 +26,9 @@ interface TempSettingData {
 	description: string
 	name: string
 	profileUrl: string | null
+	xUrl: string | null
+	youtubeUrl: string | null
+	instagramUrl: string | null
 	is_follower: boolean
 	is_following: boolean
 	createdAt: Date | null
@@ -34,6 +40,9 @@ interface UpdateData {
 	description: string
 	name: string
 	profileUrl?: string
+	xUrl?: string | null
+	youtubeUrl?: string | null
+	instagramUrl?: string | null
 	[key: string]: any
 }
 
@@ -43,6 +52,9 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 		description: "仮説明",
 		name: "名無しさん",
 		profileUrl: null,
+		xUrl: null,
+		youtubeUrl: null,
+		instagramUrl: null,
 		is_follower: false,
 		is_following: false,
 		createdAt: null,
@@ -230,6 +242,9 @@ export const useBlogSettingStore = defineStore('blogSetting', () => {
 			description: "仮説明",
 			name: "名無しさん",
 			profileUrl: null,
+			xUrl: null,
+			youtubeUrl: null,
+			instagramUrl: null,
 			is_follower: false,
 			is_following: false,
 			createdAt: null,

@@ -14,6 +14,46 @@
 						{{ userProfile?.description || 'プロフィール情報がありません' }}
 					</p>
 					
+					<!-- ソーシャルリンク -->
+					<div 
+						v-if="userProfile && (userProfile.xUrl || userProfile.youtubeUrl || userProfile.instagramUrl)"
+						class="d-flex justify-center align-center mb-4 social-links"
+					>
+						<v-btn
+							v-if="userProfile.xUrl"
+							@click="openSocialLink('X', userProfile.xUrl)"
+							icon="mdi-twitter"
+							variant="text"
+							color="grey-darken-1"
+							size="large"
+							class="mx-2"
+						>
+							<v-icon>mdi-twitter</v-icon>
+						</v-btn>
+						<v-btn
+							v-if="userProfile.youtubeUrl"
+							@click="openSocialLink('YouTube', userProfile.youtubeUrl)"
+							icon="mdi-youtube"
+							variant="text"
+							color="red-darken-1"
+							size="large"
+							class="mx-2"
+						>
+							<v-icon>mdi-youtube</v-icon>
+						</v-btn>
+						<v-btn
+							v-if="userProfile.instagramUrl"
+							@click="openSocialLink('Instagram', userProfile.instagramUrl)"
+							icon="mdi-instagram"
+							variant="text"
+							color="pink-darken-1"
+							size="large"
+							class="mx-2"
+						>
+							<v-icon>mdi-instagram</v-icon>
+						</v-btn>
+					</div>
+					
 					<v-row class="text-center">
 						<v-col cols="4">
 							<div class="text-h6">{{ userStats?.blogCount || 0 }}</div>
@@ -166,6 +206,9 @@ interface UserProfile {
 	title: string
 	description: string
 	profileUrl: string
+	xUrl?: string | null
+	youtubeUrl?: string | null
+	instagramUrl?: string | null
 	[key: string]: any
 }
 
@@ -360,6 +403,24 @@ const goToDmPage = (): void => {
 			targetUserId: profileUserId.value
 		} 
 	})
+}
+
+// ソーシャルリンクを開く
+const openSocialLink = async (platform: string, url: string): Promise<void> => {
+	const result = await Swal.fire({
+		title: '外部サイトに遷移します',
+		html: `${platform}のページへ移動しますか？<br><small class="text-grey">${url}</small>`,
+		icon: 'info',
+		showCancelButton: true,
+		confirmButtonColor: '#27C1A3',
+		confirmButtonText: '遷移する',
+		cancelButtonText: '閉じる',
+		reverseButtons: true
+	})
+
+	if (result.isConfirmed) {
+		window.open(url, '_blank', 'noopener,noreferrer')
+	}
 }
 
 // コンポーネントマウント時にデータを取得

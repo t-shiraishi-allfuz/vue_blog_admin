@@ -38,6 +38,32 @@
 						counter="140"
 						maxlength="140"
 					/>
+					<v-divider class="my-4" />
+					<div class="text-subtitle-1 mb-2">ソーシャルリンク</div>
+					<v-text-field
+						label="X（Twitter）"
+						v-model="(blogSetting as any).xUrl"
+						:rules="validationRules.url"
+						placeholder="https://twitter.com/your_username"
+						prepend-inner-icon="mdi-twitter"
+						clearable
+					/>
+					<v-text-field
+						label="YouTube"
+						v-model="(blogSetting as any).youtubeUrl"
+						:rules="validationRules.url"
+						placeholder="https://www.youtube.com/@your_channel"
+						prepend-inner-icon="mdi-youtube"
+						clearable
+					/>
+					<v-text-field
+						label="Instagram"
+						v-model="(blogSetting as any).instagramUrl"
+						:rules="validationRules.url"
+						placeholder="https://www.instagram.com/your_username"
+						prepend-inner-icon="mdi-instagram"
+						clearable
+					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-btn
@@ -81,6 +107,13 @@ const validationRules = {
 	description: [
 		(v: string) => !!v || 'ブログ説明は必須です',
 		(v: string) => (v && v.length <= 140) || 'ブログ説明は140文字以内で入力してください'
+	],
+	url: [
+		(v: string | null | undefined) => {
+			if (!v || v.trim() === '') return true // 空の場合は有効
+			const urlPattern = /^https?:\/\/.+\..+/
+			return urlPattern.test(v) || '正しいURL形式で入力してください（http://またはhttps://で始まる必要があります）'
+		}
 	]
 }
 
@@ -134,7 +167,8 @@ const updateSetting = async (): Promise<void> => {
 		await Swal.fire({
 			title: '成功',
 			text: 'プロフィールが更新されました',
-			icon: 'success'
+			icon: 'success',
+			confirmButtonColor: '#27C1A3'
 		})
 	} catch (error) {
 		console.error('プロフィール更新エラー:', error)
