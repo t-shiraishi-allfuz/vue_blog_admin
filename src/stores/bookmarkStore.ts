@@ -44,6 +44,26 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	}
 
 	// モーメント用ブックマーク作成
+	const addTweetBookmark = async (tweet_id: string): Promise<void> => {
+		const userInfo = authStore.userInfo
+		
+		// ユーザー情報がnullの場合はエラーを投げる
+		if (!userInfo || !userInfo.uid) {
+			throw new Error('ユーザー情報が取得できません')
+		}
+		
+		await BaseAPI.addData(
+			{db_name: "bookmark"},
+			{
+				uid: userInfo.uid,
+				tweet_id: tweet_id,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			}
+		)
+	}
+
+	// モーメント用ブックマーク作成
 	const addMomentBookmark = async (moment_id: string): Promise<void> => {
 		const userInfo = authStore.userInfo
 		
@@ -186,6 +206,31 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 		return querySnapshot ? querySnapshot.size : 0
 	}
 
+	// 指定のつぶやきをブックマークしてるかどうか
+	const isTweetBookmark = async (tweet_id: string): Promise<number> => {
+		const userInfo = authStore.getUserInfo()
+		
+		// ユーザー情報がnullの場合は0を返す
+		if (!userInfo || !userInfo.uid) {
+			return 0
+		}
+		
+		const filters = [
+			["tweet_id", "==", tweet_id],
+			["uid", "==", userInfo.uid]
+		]
+
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "bookmark",
+				searchConditions: {
+					filters: filters,
+				}
+			}
+		)
+		return querySnapshot ? querySnapshot.size : 0
+	}
+
 	// 指定のモーメントをブックマークしてるかどうか
 	const isMomentBookmark = async (moment_id: string): Promise<number> => {
 		const userInfo = authStore.getUserInfo()
@@ -312,12 +357,14 @@ export const useBookmarkStore = defineStore('bookmark', () => {
 	return {
 		create,
 		addBookmark,
+		addTweetBookmark,
 		addMomentBookmark,
 		getBlogIds,
 		getTweetIds,
 		getMomentIds,
 		isBookmarks,
 		isBookmark,
+		isTweetBookmark,
 		isMomentBookmark,
 		deleteItem,
 		deleteBookmark,

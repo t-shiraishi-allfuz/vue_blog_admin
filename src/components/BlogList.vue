@@ -195,6 +195,14 @@
 										/>
 										<div class="text-truncate">{{ item.like_count }}</div>
 									</div>
+									<div class="d-flex align-center text-caption text-medium-emphasis me-1">
+										<v-btn
+											:icon="formatBookmark(item)"
+											:color="colorIconPrimary(item)"
+											variant="text"
+											@click.stop="addMomentBookmark(item)"
+										/>
+									</div>
 								</div>
 							</v-card-actions>
 						</v-card>

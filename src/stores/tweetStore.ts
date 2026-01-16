@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useLikeStore } from '@/stores/likeStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useAccessLogStore } from '@/stores/accessLogStore'
+import { useBookmarkStore } from '@/stores/bookmarkStore'
 
 // 型定義
 interface TweetData {
@@ -16,6 +17,7 @@ interface TweetData {
 	updatedAt: Date | null
 	like_count: number
 	is_like: boolean
+	is_bookmark: boolean
 	setting: any
 }
 
@@ -37,6 +39,7 @@ interface UserInfo {
 export const useTweetStore = defineStore('tweet', () => {
 	const authStore = useAuthStore()
 	const likeStore = useLikeStore()
+	const bookmarkStore = useBookmarkStore()
 	const blogSettingStore = useBlogSettingStore()
 	const accessLogStore = useAccessLogStore()
 
@@ -61,6 +64,7 @@ export const useTweetStore = defineStore('tweet', () => {
 	const setTweetData = async (doc: any): Promise<TweetData> => {
 		const likeCount = await likeStore.getLikeCount(doc.id)
 		const isLike = await likeStore.isLike(doc.id)
+		const isBookmark = await bookmarkStore.isMomentBookmark(doc.id)
 		const viewCount = doc.data().viewCount || 0
 
 		const docData = doc.data()
@@ -78,6 +82,7 @@ export const useTweetStore = defineStore('tweet', () => {
 			updatedAt: cleanDocData.updatedAt,
 			like_count: likeCount,
 			is_like: isLike,
+			is_bookmark: !!isBookmark,
 			setting: null
 		}
 		try {

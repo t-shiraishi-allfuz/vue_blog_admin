@@ -23,9 +23,16 @@
 						:icon="formatLike(props.tweet)"
 						:color="colorIconPink(props.tweet)"
 						variant="text"
-						@click="addMomentLike(props.tweet)"
+						@click="addTweetLike(props.tweet)"
 					/>
 					<span class="text-caption ml-1">{{ props.tweet.like_count || 0 }}</span>
+					<v-btn
+						:icon="formatBookmark(props.tweet)"
+						:color="colorIconPrimary(props.tweet)"
+						variant="text"
+						class="ml-3"
+						@click="addTweetBookmark(props.tweet)"
+					/>
 				</div>
 			</v-card-actions>
 		</v-card>
@@ -34,6 +41,7 @@
 
 <script setup lang="ts">
 import { useLikeStore } from '@/stores/likeStore'
+import { useBookmarkStore } from '@/stores/bookmarkStore'
 
 // 型定義
 interface TweetData {
@@ -42,6 +50,7 @@ interface TweetData {
 	thumbUrl: string
 	createdAt: Date
 	is_like: boolean
+	is_bookmark: boolean
 	like_count: number
 	viewCount: number
 	[key: string]: any
@@ -62,18 +71,28 @@ interface Props {
 const props = defineProps<Props>()
 
 const likeStore = useLikeStore()
+const bookmarkStore = useBookmarkStore()
 
 // アイコン設定
 const formatLike = (item: any): string => {
 	return item.is_like ? "mdi-heart" : "mdi-heart-outline"
 }
+
+const formatBookmark = (item: any): string => {
+	return item.is_bookmark ? "mdi-bookmark-plus" : "mdi-bookmark-plus-outline"
+}
+
 // アイコン設定（カラー）
 const colorIconPink = (item: any): string => {
 	return item.is_like ? "pink" : "black"
 }
 
+const colorIconPrimary = (item: any): string => {
+	return item.is_bookmark ? "blue" : "black"
+}
+
 // ツイートのいいね
-const addMomentLike = async (tweet: any): Promise<void> => {
+const addTweetLike = async (tweet: any): Promise<void> => {
 	try {
 		if (tweet.is_like) {
 			await likeStore.deleteItem(tweet.id)
@@ -86,6 +105,20 @@ const addMomentLike = async (tweet: any): Promise<void> => {
 		}
 	} catch (error) {
 		console.error('いいねエラー:', error)
+	}
+}
+
+const addTweetBookmark = async (tweet: any): Promise<void> => {
+	try {
+		if (tweet.is_bookmark) {
+			await bookmarkStore.deleteItem(tweet.id)
+			tweet.is_bookmark = false
+		} else {
+			await bookmarkStore.create(tweet.id)
+			tweet.is_bookmark = true
+		}
+	} catch (error) {
+		console.error('ブックマークエラー:', error)
 	}
 }
 </script>

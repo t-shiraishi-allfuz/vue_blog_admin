@@ -41,7 +41,6 @@
 						@click="addMomentLike(props.moment)"
 					/>
 					<span class="text-caption ml-1">{{ props.moment.like_count || 0 }}</span>
-					
 					<v-btn
 						:icon="formatBookmark(props.moment)"
 						:color="colorIconPrimary(props.moment)"
