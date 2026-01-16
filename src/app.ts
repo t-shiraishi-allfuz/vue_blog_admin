@@ -23,6 +23,7 @@ import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css'
 import 'vuetify/dist/vuetify.min.css'
 import { createPinia } from 'pinia'
 import { createPersistedState } from "pinia-plugin-persistedstate"
+import { logError } from '@/utils/logger'
 
 const pinia = createPinia()
 pinia.use(createPersistedState())
@@ -32,6 +33,26 @@ const app = createApp(App)
 
 app.component('VueMultiselect', Multiselect)
 app.component('VueDatePicker', VueDatePicker)
+
+// グローバルエラーハンドラー
+app.config.errorHandler = (err, instance, info) => {
+	console.error('Vueエラー:', err, info)
+	if (err instanceof Error) {
+		logError(err, `Vueコンポーネントエラー: ${info}`).catch(() => {
+			// ログ保存エラーは無視
+		})
+	}
+}
+
+// 未処理のPromise拒否をキャッチ
+window.addEventListener('unhandledrejection', (event) => {
+	console.error('未処理のPromise拒否:', event.reason)
+	if (event.reason instanceof Error) {
+		logError(event.reason, '未処理のPromise拒否').catch(() => {
+			// ログ保存エラーは無視
+		})
+	}
+})
 
 registerPlugins(app)
 app.mount('#app')

@@ -8,6 +8,7 @@ import {ElementPlusResolver} from 'unplugin-vue-components/resolvers'
 import path from 'path'
 import { Buffer } from 'buffer'
 import process from 'process'
+import fs from 'fs'
 
 const resolvers = [ElementPlusResolver()]
 
@@ -84,6 +85,56 @@ export default defineConfig(({ mode }) => {
 					server.middlewares.use('/process', (_req, res) => {
 						res.setHeader('Content-Type', 'application/javascript');
 						res.end('export { default } from "process/browser";');
+					});
+				}
+			},
+			// ログ保存APIエンドポイント
+			{
+				name: 'log-api',
+				configureServer(server) {
+					server.middlewares.use('/api/logs', (req, res) => {
+						if (req.method !== 'POST') {
+							res.writeHead(405, { 'Content-Type': 'application/json' });
+							res.end(JSON.stringify({ error: 'Method not allowed' }));
+							return;
+						}
+
+						let body = '';
+						req.on('data', (chunk) => {
+							body += chunk.toString();
+						});
+
+						req.on('end', () => {
+							try {
+								const { type, year, month, filename, logEntry } = JSON.parse(body);
+
+								// ログディレクトリを確保
+								const logsBaseDir = path.resolve(process.cwd(), 'src', 'logs');
+								const yearDir = path.join(logsBaseDir, year);
+								const monthDir = path.join(yearDir, month);
+
+								// ディレクトリが存在しない場合は作成
+								if (!fs.existsSync(yearDir)) {
+									fs.mkdirSync(yearDir, { recursive: true });
+								}
+								if (!fs.existsSync(monthDir)) {
+									fs.mkdirSync(monthDir, { recursive: true });
+								}
+
+								// ファイルパスを構築
+								const logFilePath = path.join(monthDir, filename);
+
+								// ファイルが存在する場合は末尾に追加、存在しない場合は作成
+								fs.appendFileSync(logFilePath, logEntry, 'utf8');
+
+								res.writeHead(200, { 'Content-Type': 'application/json' });
+								res.end(JSON.stringify({ success: true }));
+							} catch (error: any) {
+								console.error('ログ保存エラー:', error);
+								res.writeHead(500, { 'Content-Type': 'application/json' });
+								res.end(JSON.stringify({ error: error.message }));
+							}
+						});
 					});
 				}
 			}

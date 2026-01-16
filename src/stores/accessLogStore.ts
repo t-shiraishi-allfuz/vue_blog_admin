@@ -1,4 +1,5 @@
 import BaseAPI from '@/api/base'
+import { logAccess, type AccessLogData } from '@/utils/logger'
 
 export const useAccessLogStore = defineStore('accessLog', () => {
 	// アクセスログを記録（詳細な分析用）
@@ -15,6 +16,15 @@ export const useAccessLogStore = defineStore('accessLog', () => {
 				{ db_name: "blog_access_log" },
 				accessLog
 			)
+
+			// ファイルログにも保存
+			const logData: AccessLogData = {
+				blogId: blogId,
+				accessedAt: new Date(),
+				userAgent: navigator.userAgent,
+				referrer: document.referrer || null,
+			}
+			await logAccess(logData)
 		} catch (error) {
 			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}
@@ -34,6 +44,15 @@ export const useAccessLogStore = defineStore('accessLog', () => {
 				{ db_name: "tweet_access_log" },
 				accessLog
 			)
+
+			// ファイルログにも保存
+			const logData: AccessLogData = {
+				tweetId: tweetId,
+				accessedAt: new Date(),
+				userAgent: navigator.userAgent,
+				referrer: document.referrer || null,
+			}
+			await logAccess(logData)
 		} catch (error) {
 			throw new Error(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
 		}

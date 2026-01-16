@@ -1,6 +1,7 @@
 import BaseAPI from '@/api/base'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
+import { logPurchase, type PurchaseLogData } from '@/utils/logger'
 
 // 型定義
 interface CoinData {
@@ -79,6 +80,21 @@ export const useCoinStore = defineStore('coin', () => {
 			)
 
 			coins.value = newCoins
+
+			// ファイルログにも保存
+			try {
+				const logData: PurchaseLogData = {
+					userId: userInfo.uid,
+					amount: amount,
+					operation: 'add',
+					timestamp: now,
+					remainingCoins: newCoins
+				}
+				await logPurchase(logData)
+			} catch (logError) {
+				// ログ保存エラーは無視
+				console.error('課金ログ保存エラー:', logError)
+			}
 		} catch (error: any) {
 			console.error('コイン追加エラー:', error)
 			throw new Error(`コインの追加に失敗しました: ${error.message}`)
@@ -125,6 +141,17 @@ export const useCoinStore = defineStore('coin', () => {
 			)
 
 			coins.value = newCoins
+
+			// ファイルログにも保存
+			const logData: PurchaseLogData = {
+				userId: userInfo.uid,
+				amount: amount,
+				operation: 'consume',
+				timestamp: now,
+				remainingCoins: newCoins
+			}
+			await logPurchase(logData)
+
 			return true
 		} catch (error: any) {
 			console.error('コイン消費エラー:', error)
