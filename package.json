@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "serve": "vite --host --mode localhost",
-    "build": "vue-tsc --noEmit && vite build --mode"
+    "build-develop": "vue-tsc --noEmit && vite build --mode develop",
+    "build": "vue-tsc --noEmit && vite build"
   },
   "dependencies": {
     "@mdi/font": "7.0.96",
