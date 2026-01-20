@@ -6,15 +6,20 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import {ElementPlusResolver} from 'unplugin-vue-components/resolvers'
 import path from 'path'
-import { Buffer } from 'buffer'
 import process from 'process'
 import fs from 'fs'
 
 const resolvers = [ElementPlusResolver()]
 
 export default defineConfig(({ mode }) => {
-	// 環境変数を読み込む
-	const env = loadEnv(mode, process.cwd(), '')
+	// 環境変数を読み込む（エラー時は空オブジェクトを使用）
+	let env: Record<string, string> = {}
+	try {
+		env = loadEnv(mode, process.cwd(), '')
+	} catch (error) {
+		// .env.localへのアクセス権限がない場合など、エラーが発生してもビルドを続行
+		console.warn('環境変数の読み込みに失敗しました:', error)
+	}
 	const APP_TITLE = env.VITE_APP_TITLE || 'ブログ管理システム'
 
 	// HTMLタイトルを設定するカスタムプラグイン
@@ -145,8 +150,6 @@ export default defineConfig(({ mode }) => {
 		define: { 
 			'process.env': {},
 			global: 'globalThis',
-			process: process,
-			Buffer: Buffer,
 		},
 		resolve: {
 			alias: {

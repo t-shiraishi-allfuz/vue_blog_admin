@@ -7,7 +7,6 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    AnnouncementCard: typeof import('./components/AnnouncementCard.vue')['default']
     AnnouncementCreateDialog: typeof import('./components/AnnouncementCreateDialog.vue')['default']
     AnnouncementEditDialog: typeof import('./components/AnnouncementEditDialog.vue')['default']
     BirthDateDialog: typeof import('./components/BirthDateDialog.vue')['default']
@@ -21,26 +20,19 @@ declare module 'vue' {
     CommonTemplate: typeof import('./components/CommonTemplate.vue')['default']
     CommonUsermenu: typeof import('./components/CommonUsermenu.vue')['default']
     DialogTemplate: typeof import('./components/DialogTemplate.vue')['default']
-    DmDialog: typeof import('./components/DmDialog.vue')['default']
     FollowListDialog: typeof import('./components/FollowListDialog.vue')['default']
     LoginDialog: typeof import('./components/LoginDialog.vue')['default']
-    'LoginDialogのコピー': typeof import('./components/LoginDialogのコピー.vue')['default']
     MomentCard: typeof import('./components/MomentCard.vue')['default']
-    MomentCreateDialog: typeof import('./components/MomentCreateDialog.vue')['default']
     MomentForm: typeof import('./components/MomentForm.vue')['default']
-    MomentViewer: typeof import('./components/MomentViewer.vue')['default']
     NotificationDialog: typeof import('./components/NotificationDialog.vue')['default']
     ReblogTemplate: typeof import('./components/ReblogTemplate.vue')['default']
-    ResetPasswordConfirm: typeof import('./components/ResetPasswordConfirm.vue')['default']
     ResetPasswordConfirmDialog: typeof import('./components/ResetPasswordConfirmDialog.vue')['default']
     ResetPasswordDialog: typeof import('./components/ResetPasswordDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TweetCard: typeof import('./components/TweetCard.vue')['default']
     TweetCreateDialog: typeof import('./components/TweetCreateDialog.vue')['default']
-    TweetEditDialog: typeof import('./components/TweetEditDialog.vue')['default']
     TweetList: typeof import('./components/TweetList.vue')['default']
-    TweetPreviewDialog: typeof import('./components/TweetPreviewDialog.vue')['default']
     UserCreateDialog: typeof import('./components/UserCreateDialog.vue')['default']
   }
 }
