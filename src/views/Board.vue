@@ -1,271 +1,269 @@
 <template>
-	<v-container>
-		<v-card>
-			<v-card-title class="d-flex align-center">
-				<v-icon class="mr-2">mdi-bulletin-board</v-icon>
-				掲示板
-			</v-card-title>
-			<v-divider />
-			<v-tabs v-model="activeTab" bg-color="primary">
-				<v-tab value="article">
-					<v-icon class="mr-2">mdi-post</v-icon>
-					記事紹介
-				</v-tab>
-				<v-tab value="chat">
-					<v-icon class="mr-2">mdi-chat</v-icon>
-					雑談
-				</v-tab>
-			</v-tabs>
-			<v-divider />
-			<v-window v-model="activeTab">
-				<!-- 記事紹介タブ -->
-				<v-window-item value="article">
-					<v-card-text>
-						<!-- 投稿ボタン -->
-						<div v-if="authStore.isLogin" class="mb-4 text-right">
-							<v-btn
-								color="primary"
-								variant="flat"
-								@click="isArticleDialog = true"
-							>
-								<v-icon start>mdi-plus</v-icon>
-								記事を紹介する
-							</v-btn>
-						</div>
+	<v-card>
+		<v-card-title class="d-flex align-center">
+			<v-icon class="mr-2">mdi-bulletin-board</v-icon>
+			掲示板
+		</v-card-title>
+		<v-divider />
+		<v-tabs v-model="activeTab" bg-color="primary">
+			<v-tab value="article">
+				<v-icon class="mr-2">mdi-post</v-icon>
+				記事紹介
+			</v-tab>
+			<v-tab value="chat">
+				<v-icon class="mr-2">mdi-chat</v-icon>
+				雑談
+			</v-tab>
+		</v-tabs>
+		<v-divider />
+		<v-window v-model="activeTab">
+			<!-- 記事紹介タブ -->
+			<v-window-item value="article">
+				<v-card-text>
+					<!-- 投稿ボタン -->
+					<div v-if="authStore.isLogin" class="mb-4 text-right">
+						<v-btn
+							color="primary"
+							variant="flat"
+							@click="isArticleDialog = true"
+						>
+							<v-icon start>mdi-plus</v-icon>
+							記事を紹介する
+						</v-btn>
+					</div>
 
-						<!-- 投稿一覧 -->
-						<div v-if="boardStore.isLoading" class="text-center pa-8">
-							<v-progress-circular indeterminate />
-						</div>
-						<div v-else-if="boardStore.articlePosts.length === 0" class="text-center pa-8">
-							<v-icon size="64" color="grey-lighten-1">mdi-post-outline</v-icon>
-							<p class="text-grey mt-4">まだ投稿がありません</p>
-						</div>
-						<div v-else class="pa-4">
-							<v-card
-								v-for="post in boardStore.articlePosts"
-								:key="post.id"
-								class="mb-6"
-								variant="outlined"
-							>
-								<v-card-text>
-									<!-- タイトル -->
-									<h3 class="text-h6 font-weight-bold mb-3">{{ post.title }}</h3>
-									
-									<!-- 紹介文 -->
-									<div class="text-body-1 mb-4">{{ post.content }}</div>
-									
-									<!-- URLに該当するブログカードまたはモーメントカード -->
-									<div v-if="post.blogUrl" class="mb-4">
-										<BlogCard
-											v-if="getBlogDataForPost(post.blogUrl) && getBlogSettingForPost(post.blogUrl)"
-											:blog="getBlogDataForPost(post.blogUrl)!"
-											:setting="getBlogSettingForPost(post.blogUrl)!"
-										/>
-										<MomentCard
-											v-else-if="getMomentDataForPost(post.blogUrl)"
-											:moment="getMomentDataForPost(post.blogUrl)!"
-										/>
-										<div v-else class="text-caption text-grey">
-											記事データを読み込み中...
-										</div>
+					<!-- 投稿一覧 -->
+					<div v-if="boardStore.isLoading" class="text-center pa-8">
+						<v-progress-circular indeterminate />
+					</div>
+					<div v-else-if="boardStore.articlePosts.length === 0" class="text-center pa-8">
+						<v-icon size="64" color="grey-lighten-1">mdi-post-outline</v-icon>
+						<p class="text-grey mt-4">まだ投稿がありません</p>
+					</div>
+					<div v-else class="pa-4">
+						<v-card
+							v-for="post in boardStore.articlePosts"
+							:key="post.id"
+							class="mb-6"
+							variant="outlined"
+						>
+							<v-card-text>
+								<!-- タイトル -->
+								<h3 class="text-h6 font-weight-bold mb-3">{{ post.title }}</h3>
+								
+								<!-- 紹介文 -->
+								<div class="text-body-1 mb-4">{{ post.content }}</div>
+								
+								<!-- URLに該当するブログカードまたはモーメントカード -->
+								<div v-if="post.blogUrl" class="mb-4">
+									<BlogCard
+										v-if="getBlogDataForPost(post.blogUrl) && getBlogSettingForPost(post.blogUrl)"
+										:blog="getBlogDataForPost(post.blogUrl)!"
+										:setting="getBlogSettingForPost(post.blogUrl)!"
+									/>
+									<MomentCard
+										v-else-if="getMomentDataForPost(post.blogUrl)"
+										:moment="getMomentDataForPost(post.blogUrl)!"
+									/>
+									<div v-else class="text-caption text-grey">
+										記事データを読み込み中...
 									</div>
-									
-									<!-- 改行 -->
-									<v-divider class="my-4" />
-									
-									<!-- 掲示板投稿日時 -->
-									<div class="text-caption text-grey mb-2">
-										<v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
-										{{ formatDate(post.createdAt) }}
-									</div>
-									
-									<!-- 投稿者のアカウント情報 -->
-									<div class="d-flex align-center">
-										<v-avatar
-											:image="post.userProfileUrl || undefined"
-											size="40"
-											class="mr-3"
-											end
-										/>
-										<div class="text-body-2 font-weight-medium">
-											{{ post.userName }}
-										</div>
-										<v-spacer />
-										<v-btn
-											v-if="authStore.userInfo?.uid === post.uid"
-											@click="deleteArticlePost(post.id!)"
-											size="small"
-											variant="text"
-											color="error"
-										>
-											<v-icon size="small" class="mr-1">mdi-delete</v-icon>
-											削除
-										</v-btn>
-									</div>
-								</v-card-text>
-							</v-card>
-						</div>
-					</v-card-text>
-				</v-window-item>
-
-				<!-- 雑談タブ -->
-				<v-window-item value="chat">
-					<v-card-text>
-						<!-- 投稿ボタン -->
-						<div v-if="authStore.isLogin" class="mb-4 text-right">
-							<v-btn
-								color="success"
-								variant="flat"
-								@click="isChatDialog = true"
-							>
-								<v-icon start>mdi-plus</v-icon>
-								雑談を投稿する
-							</v-btn>
-						</div>
-
-						<!-- 投稿一覧 -->
-						<div v-if="boardStore.isLoading" class="text-center pa-8">
-							<v-progress-circular indeterminate />
-						</div>
-						<div v-else-if="boardStore.chatPosts.length === 0" class="text-center pa-8">
-							<v-icon size="64" color="grey-lighten-1">mdi-chat-outline</v-icon>
-							<p class="text-grey mt-4">まだ投稿がありません</p>
-						</div>
-						<v-list v-else>
-							<v-list-item
-								v-for="post in boardStore.chatPosts"
-								:key="post.id"
-								class="mb-2"
-							>
-								<template #prepend>
+								</div>
+								
+								<!-- 改行 -->
+								<v-divider class="my-4" />
+								
+								<!-- 掲示板投稿日時 -->
+								<div class="text-caption text-grey mb-2">
+									<v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
+									{{ formatDate(post.createdAt) }}
+								</div>
+								
+								<!-- 投稿者のアカウント情報 -->
+								<div class="d-flex align-center">
 									<v-avatar
 										:image="post.userProfileUrl || undefined"
 										size="40"
 										class="mr-3"
+										end
 									/>
-								</template>
-								<v-list-item-subtitle class="mb-2">
-									{{ post.content }}
-								</v-list-item-subtitle>
-								<v-list-item-subtitle class="text-caption text-grey">
-									{{ post.userName }} • {{ formatDate(post.createdAt) }}
+									<div class="text-body-2 font-weight-medium">
+										{{ post.userName }}
+									</div>
+									<v-spacer />
 									<v-btn
 										v-if="authStore.userInfo?.uid === post.uid"
-										@click="deleteChatPost(post.id!)"
-										size="x-small"
+										@click="deleteArticlePost(post.id!)"
+										size="small"
 										variant="text"
 										color="error"
-										class="ml-2"
 									>
+										<v-icon size="small" class="mr-1">mdi-delete</v-icon>
 										削除
 									</v-btn>
-								</v-list-item-subtitle>
-							</v-list-item>
-						</v-list>
-					</v-card-text>
-				</v-window-item>
-			</v-window>
-		</v-card>
+								</div>
+							</v-card-text>
+						</v-card>
+					</div>
+				</v-card-text>
+			</v-window-item>
 
-		<!-- 記事紹介投稿ダイアログ -->
-		<DialogTemplate
-			ref="articleDialogRef"
-			label="記事を紹介する"
-			v-model:dialog="isArticleDialog"
-		>
-			<template v-slot:contents>
-				<v-form ref="articleFormRef" @submit.prevent="submitArticlePost">
-					<v-card-text class="pa-6">
-						<v-text-field
-							v-model="articleForm.title"
-							label="タイトル"
-							:rules="articleRules.title"
-							required
-							class="mb-4"
-						/>
-						<v-textarea
-							v-model="articleForm.content"
-							label="紹介文"
-							:rules="articleRules.content"
-							required
-							rows="3"
-							class="mb-4"
-						/>
-						<v-text-field
-							v-model="articleForm.blogUrl"
-							label="記事URL（任意）"
-							:rules="articleRules.url"
-							placeholder="https://..."
-							class="mb-4"
-						/>
-					</v-card-text>
-					<v-card-actions class="pa-6 pt-0">
-						<v-spacer />
-						<v-btn
-							color="grey-lighten-4"
-							variant="elevated"
-							@click="closeArticleDialog"
-						>
-							閉じる
-						</v-btn>
+			<!-- 雑談タブ -->
+			<v-window-item value="chat">
+				<v-card-text>
+					<!-- 投稿ボタン -->
+					<div v-if="authStore.isLogin" class="mb-4 text-right">
 						<v-btn
 							color="success"
-							variant="elevated"
-							type="submit"
-							:loading="isSubmitting"
-							:disabled="isSubmitting"
+							variant="flat"
+							@click="isChatDialog = true"
 						>
-							投稿する
+							<v-icon start>mdi-plus</v-icon>
+							雑談を投稿する
 						</v-btn>
-						<v-spacer />
-					</v-card-actions>
-				</v-form>
-			</template>
-		</DialogTemplate>
+					</div>
 
-		<!-- 雑談投稿ダイアログ -->
-		<DialogTemplate
-			ref="chatDialogRef"
-			label="雑談を投稿する"
-			v-model:dialog="isChatDialog"
-		>
-			<template v-slot:contents>
-				<v-form ref="chatFormRef" @submit.prevent="submitChatPost">
-					<v-card-text class="pa-6">
-						<v-textarea
-							v-model="chatForm.content"
-							label="メッセージ"
-							:rules="chatRules.content"
-							required
-							rows="3"
-							class="mb-4"
-						/>
-					</v-card-text>
-					<v-card-actions class="pa-6 pt-0">
-						<v-spacer />
-						<v-btn
-							color="grey-lighten-4"
-							variant="elevated"
-							@click="closeChatDialog"
+					<!-- 投稿一覧 -->
+					<div v-if="boardStore.isLoading" class="text-center pa-8">
+						<v-progress-circular indeterminate />
+					</div>
+					<div v-else-if="boardStore.chatPosts.length === 0" class="text-center pa-8">
+						<v-icon size="64" color="grey-lighten-1">mdi-chat-outline</v-icon>
+						<p class="text-grey mt-4">まだ投稿がありません</p>
+					</div>
+					<v-list v-else>
+						<v-list-item
+							v-for="post in boardStore.chatPosts"
+							:key="post.id"
+							class="mb-2"
 						>
-							閉じる
-						</v-btn>
-						<v-btn
-							color="success"
-							variant="elevated"
-							type="submit"
-							:loading="isSubmitting"
-							:disabled="isSubmitting"
-						>
-							投稿する
-						</v-btn>
-						<v-spacer />
-					</v-card-actions>
-				</v-form>
-			</template>
-		</DialogTemplate>
-	</v-container>
+							<template #prepend>
+								<v-avatar
+									:image="post.userProfileUrl || undefined"
+									size="40"
+									class="mr-3"
+								/>
+							</template>
+							<v-list-item-subtitle class="mb-2">
+								{{ post.content }}
+							</v-list-item-subtitle>
+							<v-list-item-subtitle class="text-caption text-grey">
+								{{ post.userName }} • {{ formatDate(post.createdAt) }}
+								<v-btn
+									v-if="authStore.userInfo?.uid === post.uid"
+									@click="deleteChatPost(post.id!)"
+									size="x-small"
+									variant="text"
+									color="error"
+									class="ml-2"
+								>
+									削除
+								</v-btn>
+							</v-list-item-subtitle>
+						</v-list-item>
+					</v-list>
+				</v-card-text>
+			</v-window-item>
+		</v-window>
+	</v-card>
+
+	<!-- 記事紹介投稿ダイアログ -->
+	<DialogTemplate
+		ref="articleDialogRef"
+		label="記事を紹介する"
+		v-model:dialog="isArticleDialog"
+	>
+		<template v-slot:contents>
+			<v-form ref="articleFormRef" @submit.prevent="submitArticlePost">
+				<v-card-text class="pa-6">
+					<v-text-field
+						v-model="articleForm.title"
+						label="タイトル"
+						:rules="articleRules.title"
+						required
+						class="mb-4"
+					/>
+					<v-textarea
+						v-model="articleForm.content"
+						label="紹介文"
+						:rules="articleRules.content"
+						required
+						rows="3"
+						class="mb-4"
+					/>
+					<v-text-field
+						v-model="articleForm.blogUrl"
+						label="記事URL（任意）"
+						:rules="articleRules.url"
+						placeholder="https://..."
+						class="mb-4"
+					/>
+				</v-card-text>
+				<v-card-actions class="pa-6 pt-0">
+					<v-spacer />
+					<v-btn
+						color="grey-lighten-4"
+						variant="elevated"
+						@click="closeArticleDialog"
+					>
+						閉じる
+					</v-btn>
+					<v-btn
+						color="success"
+						variant="elevated"
+						type="submit"
+						:loading="isSubmitting"
+						:disabled="isSubmitting"
+					>
+						投稿する
+					</v-btn>
+					<v-spacer />
+				</v-card-actions>
+			</v-form>
+		</template>
+	</DialogTemplate>
+
+	<!-- 雑談投稿ダイアログ -->
+	<DialogTemplate
+		ref="chatDialogRef"
+		label="雑談を投稿する"
+		v-model:dialog="isChatDialog"
+	>
+		<template v-slot:contents>
+			<v-form ref="chatFormRef" @submit.prevent="submitChatPost">
+				<v-card-text class="pa-6">
+					<v-textarea
+						v-model="chatForm.content"
+						label="メッセージ"
+						:rules="chatRules.content"
+						required
+						rows="3"
+						class="mb-4"
+					/>
+				</v-card-text>
+				<v-card-actions class="pa-6 pt-0">
+					<v-spacer />
+					<v-btn
+						color="grey-lighten-4"
+						variant="elevated"
+						@click="closeChatDialog"
+					>
+						閉じる
+					</v-btn>
+					<v-btn
+						color="success"
+						variant="elevated"
+						type="submit"
+						:loading="isSubmitting"
+						:disabled="isSubmitting"
+					>
+						投稿する
+					</v-btn>
+					<v-spacer />
+				</v-card-actions>
+			</v-form>
+		</template>
+	</DialogTemplate>
 </template>
 
 <script setup lang="ts">

@@ -1,191 +1,189 @@
 <template>
-	<v-container>
-		<v-card>
-			<v-card-title class="d-flex align-center">
-				<div>
-					<div class="text-h5">{{ isEdit ? 'モーメント編集' : 'モーメント作成' }}</div>
-					<div class="text-caption text-grey">複数のつぶやきをまとめてストーリーを作成します</div>
-				</div>
-			</v-card-title>
-			<v-form ref="form" v-model="valid" @submit.prevent="saveMoment">
-				<v-card-text>
-					<v-row>
-						<v-col cols="12" mb="4">
-							<v-card variant="outlined">
-								<v-card-title class="text-subtitle-1">
-									<v-icon class="mr-2">mdi-information</v-icon>
-									作成のヒント
-								</v-card-title>
-								<v-card-text>
-									<ul class="text-body-2">
-										<li>関連するつぶやきを選択してください</li>
-										<li>タイトルは分かりやすく簡潔に</li>
-										<li>説明でモーメントの概要を伝えましょう</li>
-										<li>公開前にプレビューで確認できます</li>
-									</ul>
-								</v-card-text>
-							</v-card>
-						</v-col>
-						<v-col cols="12" mb="4">
-							<v-card mb-4>
-								<v-card-title class="text-subtitle-1">
-									<v-icon class="mr-2">mdi-message-text</v-icon>
-									含めるつぶやきを選択
-									<v-chip
-										v-if="selectedTweetIds.length > 0"
-										color="success"
-										size="small"
-										class="ml-2"
+	<v-card>
+		<v-card-title class="d-flex align-center">
+			<div>
+				<div class="text-h5">{{ isEdit ? 'モーメント編集' : 'モーメント作成' }}</div>
+				<div class="text-caption text-grey">複数のつぶやきをまとめてストーリーを作成します</div>
+			</div>
+		</v-card-title>
+		<v-form ref="form" v-model="valid" @submit.prevent="saveMoment">
+			<v-card-text>
+				<v-row>
+					<v-col cols="12" mb="4">
+						<v-card variant="outlined">
+							<v-card-title class="text-subtitle-1">
+								<v-icon class="mr-2">mdi-information</v-icon>
+								作成のヒント
+							</v-card-title>
+							<v-card-text>
+								<ul class="text-body-2">
+									<li>関連するつぶやきを選択してください</li>
+									<li>タイトルは分かりやすく簡潔に</li>
+									<li>説明でモーメントの概要を伝えましょう</li>
+									<li>公開前にプレビューで確認できます</li>
+								</ul>
+							</v-card-text>
+						</v-card>
+					</v-col>
+					<v-col cols="12" mb="4">
+						<v-card mb-4>
+							<v-card-title class="text-subtitle-1">
+								<v-icon class="mr-2">mdi-message-text</v-icon>
+								含めるつぶやきを選択
+								<v-chip
+									v-if="selectedTweetIds.length > 0"
+									color="success"
+									size="small"
+									class="ml-2"
+								>
+									{{ selectedTweetIds.length }} 件選択中
+								</v-chip>
+							</v-card-title>
+							<v-card-text>
+								<v-text-field
+									label="つぶやきを検索"
+									v-model="searchQuery"
+									prepend-inner-icon="mdi-magnify"
+									variant="outlined"
+									density="compact"
+									clearable
+									hide-details
+								/>
+							</v-card-text>
+							<v-row v-if="filteredTweets.length > 0" justify="start">
+								<v-col
+									v-for="tweet in filteredTweets"
+									:key="tweet.id"
+									class="pa-2 ma-4"
+									cols="auto"
+								>
+									<v-card
+										class="tweet-selection-card"
+										:class="{ 'selected': selectedTweetIds.includes(tweet.id) }"
+										@click="toggleTweetSelection(tweet)"
+										elevation="2"
 									>
-										{{ selectedTweetIds.length }} 件選択中
-									</v-chip>
-								</v-card-title>
-								<v-card-text>
-									<v-text-field
-										label="つぶやきを検索"
-										v-model="searchQuery"
-										prepend-inner-icon="mdi-magnify"
-										variant="outlined"
-										density="compact"
-										clearable
-										hide-details
-									/>
-								</v-card-text>
-								<v-row v-if="filteredTweets.length > 0" justify="start">
-									<v-col
-										v-for="tweet in filteredTweets"
-										:key="tweet.id"
-										class="pa-2 ma-4"
-										cols="auto"
-									>
-										<v-card
-											class="tweet-selection-card"
-											:class="{ 'selected': selectedTweetIds.includes(tweet.id) }"
-											@click="toggleTweetSelection(tweet)"
-											elevation="2"
-										>
-											<div class="checkbox-overlay">
-												<v-checkbox
-													base-color="white"
-													color="success"
-													:model-value="selectedTweetIds.includes(tweet.id)"
-													@click.stop="toggleTweetSelection(tweet)"
-													hide-details
-												/>
-											</div>
-											
-											<v-img
-												:src="tweet.thumbUrl"
-												aspect-ratio="16/9"
-												cover
-												height="120"
+										<div class="checkbox-overlay">
+											<v-checkbox
+												base-color="white"
+												color="success"
+												:model-value="selectedTweetIds.includes(tweet.id)"
+												@click.stop="toggleTweetSelection(tweet)"
+												hide-details
 											/>
-											
-											<v-card-text class="pa-2">
-												<div class="text-body-2 text-truncate">
-													{{ truncateContent(tweet.content) }}
-												</div>
-												<div class="text-caption text-grey mt-1">
-													{{ formatDate(tweet.createdAt) }}
-												</div>
-											</v-card-text>
-										</v-card>
-									</v-col>
-								</v-row>
-								<v-card v-else class="pa-4 text-center">
-									<v-icon size="48" color="grey-lighten-4">mdi-message-text-outline</v-icon>
-									<div class="text-h6 mt-2">つぶやきが見つかりません</div>
-									<div class="text-body-2 text-grey">検索条件を変更してお試しください</div>
-								</v-card>
+										</div>
+										
+										<v-img
+											:src="tweet.thumbUrl"
+											aspect-ratio="16/9"
+											cover
+											height="120"
+										/>
+										
+										<v-card-text class="pa-2">
+											<div class="text-body-2 text-truncate">
+												{{ truncateContent(tweet.content) }}
+											</div>
+											<div class="text-caption text-grey mt-1">
+												{{ formatDate(tweet.createdAt) }}
+											</div>
+										</v-card-text>
+									</v-card>
+								</v-col>
+							</v-row>
+							<v-card v-else class="pa-4 text-center">
+								<v-icon size="48" color="grey-lighten-4">mdi-message-text-outline</v-icon>
+								<div class="text-h6 mt-2">つぶやきが見つかりません</div>
+								<div class="text-body-2 text-grey">検索条件を変更してお試しください</div>
 							</v-card>
-						</v-col>
-						<v-col cols="12" mb="4">
-							<v-text-field
-								label="タイトル"
-								placeholder="モーメントのタイトルを入力してください"
-								class="mb-4"
-								:rules="titleRules"
-								v-model="momentDetail.title"
-								variant="outlined"
-								required
-							/>
-							<v-textarea
-								label="説明"
-								class="mb-4"
-								:rules="descriptionRules"
-								v-model="momentDetail.description"
-								variant="outlined"
-								rows="4"
-								placeholder="モーメントの説明を入力してください"
-								required
-							/>
-						</v-col>
-						<v-col cols="12" mb="4">
-							<v-file-input
-								id="images"
-								type="file"
-								label="サムネイルを選択して下さい"
-								accept="image/png, image/jpg, image/jpeg"
-								:rules="thumbnailRules"
-								v-model="fileInputValue"
-								@update:model-value="handleFileUpload"
-								:required="!isEdit || !momentDetail.thumbUrl"
-							/>
-							<v-img
-								class="cover-thumb"
-								:src="momentDetail.thumbUrl"
-								width="200"
-								aspect-ratio="16/9"
-								cover
-							/>
-						</v-col>
-						<v-col cols="12" mb="4">
-							<v-text-field
-								type="password"
-								label="パスワード（任意）"
-								v-model="momentDetail.password"
-								hint="パスワードを設定すると、このモーメントを閲覧する際にパスワードが必要になります"
-								persistent-hint
-								clearable
-								class="mb-4"
-							/>
-							<v-switch
-								v-model="momentDetail.isAdult"
-								label="閲覧制限の設定"
-								color="warning"
-								hint="モーメントに18歳未満の閲覧制限を付ける場合は設定して下さい"
-								persistent-hint
-								class="mb-4"
-							/>
-							<v-switch
-								v-model="momentDetail.isPublished"
-								label="公開する"
-								color="success"
-								hint="オフにすると下書き保存されます"
-								persistent-hint
-								class="mb-4"
-							/>
-						</v-col>
-					</v-row>
-				</v-card-text>
-				<v-card-actions class="pa-4">
-					<v-spacer />
-					<v-btn
-						color="success"
-						variant="flat"
-						:disabled="!valid || selectedTweetIds.length === 0"
-						:loading="loading"
-						@click="saveMoment"
-					>
-						{{ getButtonText() }}
-					</v-btn>
-				</v-card-actions>
-			</v-form>
-		</v-card>
-		<v-card-actions>
-			<v-btn @click="goBack">一覧に戻る</v-btn>
-		</v-card-actions>
-	</v-container>
+						</v-card>
+					</v-col>
+					<v-col cols="12" mb="4">
+						<v-text-field
+							label="タイトル"
+							placeholder="モーメントのタイトルを入力してください"
+							class="mb-4"
+							:rules="titleRules"
+							v-model="momentDetail.title"
+							variant="outlined"
+							required
+						/>
+						<v-textarea
+							label="説明"
+							class="mb-4"
+							:rules="descriptionRules"
+							v-model="momentDetail.description"
+							variant="outlined"
+							rows="4"
+							placeholder="モーメントの説明を入力してください"
+							required
+						/>
+					</v-col>
+					<v-col cols="12" mb="4">
+						<v-file-input
+							id="images"
+							type="file"
+							label="サムネイルを選択して下さい"
+							accept="image/png, image/jpg, image/jpeg"
+							:rules="thumbnailRules"
+							v-model="fileInputValue"
+							@update:model-value="handleFileUpload"
+							:required="!isEdit || !momentDetail.thumbUrl"
+						/>
+						<v-img
+							class="cover-thumb"
+							:src="momentDetail.thumbUrl"
+							width="200"
+							aspect-ratio="16/9"
+							cover
+						/>
+					</v-col>
+					<v-col cols="12" mb="4">
+						<v-text-field
+							type="password"
+							label="パスワード（任意）"
+							v-model="momentDetail.password"
+							hint="パスワードを設定すると、このモーメントを閲覧する際にパスワードが必要になります"
+							persistent-hint
+							clearable
+							class="mb-4"
+						/>
+						<v-switch
+							v-model="momentDetail.isAdult"
+							label="閲覧制限の設定"
+							color="warning"
+							hint="モーメントに18歳未満の閲覧制限を付ける場合は設定して下さい"
+							persistent-hint
+							class="mb-4"
+						/>
+						<v-switch
+							v-model="momentDetail.isPublished"
+							label="公開する"
+							color="success"
+							hint="オフにすると下書き保存されます"
+							persistent-hint
+							class="mb-4"
+						/>
+					</v-col>
+				</v-row>
+			</v-card-text>
+			<v-card-actions class="pa-4">
+				<v-spacer />
+				<v-btn
+					color="success"
+					variant="flat"
+					:disabled="!valid || selectedTweetIds.length === 0"
+					:loading="loading"
+					@click="saveMoment"
+				>
+					{{ getButtonText() }}
+				</v-btn>
+			</v-card-actions>
+		</v-form>
+	</v-card>
+	<v-card-actions>
+		<v-btn @click="goBack">一覧に戻る</v-btn>
+	</v-card-actions>
 </template>
 
 <script setup lang="ts">
