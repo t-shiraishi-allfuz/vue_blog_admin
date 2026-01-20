@@ -23,7 +23,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 // サイドメニューを非表示にするルート
-const hideSidebarRoutes = ['/dm', '/ai-talk', '/board', '/charge', '/user_profile']
+const hideSidebarRoutes = ['/dm', '/ai-talk', '/board', '/charge', '/contact', '/user_profile']
 
 // サイドメニューの表示/非表示を判定
 const showSidebar = computed(() => {

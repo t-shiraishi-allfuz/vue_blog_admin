@@ -41,6 +41,11 @@ const routes:RouteRecordRaw[] = [
 		name: 'AnnouncementDetail',
 		component: () => import("@/views/AnnouncementDetail.vue"),
 	},
+	{
+		path: '/contact',
+		name: 'Contact',
+		component: () => import("@/views/Contact.vue"),
+	},
 ] as const
 
 export default routes

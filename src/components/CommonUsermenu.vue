@@ -30,6 +30,7 @@
 			</template>
 		</v-list-item>
 		<v-list-item prepend-icon="mdi-account" title="プロフィール" value="profile" @click="goToUserProfile" />
+		<v-list-item prepend-icon="mdi-email" title="お問い合わせ" value="contact" @click="goToContact" />
 		<v-list-item prepend-icon="mdi-cog" title="設定" value="setting" @click="goToProfile" />
 	</v-list>
 </template>
@@ -99,6 +100,10 @@ const goToCharge = (): void => {
 
 const goToBoard = (): void => {
 	router.push({ path: '/board' })
+}
+
+const goToContact = (): void => {
+	router.push({ path: '/contact' })
 }
 </script>
 

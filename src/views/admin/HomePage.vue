@@ -23,6 +23,7 @@ import PostImageList from '@/views/admin/PostImageList.vue'
 import SettingList from '@/views/admin/SettingList.vue'
 import AccessStats from '@/views/admin/AccessStats.vue'
 import AnnouncementList from '@/views/admin/AnnouncementList.vue'
+import ContactList from '@/views/admin/ContactList.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -30,12 +31,13 @@ const usersStore = useUsersStore()
 const activeTab = ref(0)
 const isOwner = ref(false)
 
-const baseTabs = ['記事を書く', '記事一覧', '画像一覧', 'アクセス統計', '設定']
+const baseTabs = ['記事を書く', '記事一覧', '画像一覧', 'アクセス統計', 'お問い合わせ', '設定']
 const baseTabComponents = [
 	BlogCreate,
 	BlogList,
 	PostImageList,
 	AccessStats,
+	ContactList,
 	SettingList
 ]
 
