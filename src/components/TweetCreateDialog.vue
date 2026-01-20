@@ -101,6 +101,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useTweetStore } from '@/stores/tweetStore'
 import { useImagesStore } from '@/stores/imagesStore'
 

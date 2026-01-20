@@ -221,6 +221,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useChat } from '@/api/openai'
 import { useAiSettingStore } from '@/stores/aiSettingStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'

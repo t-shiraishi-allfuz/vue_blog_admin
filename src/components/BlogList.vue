@@ -297,6 +297,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useBlogStore } from '@/stores/blogStore'
 import { useTweetStore } from '@/stores/tweetStore'
 import { useMomentStore } from '@/stores/momentStore'

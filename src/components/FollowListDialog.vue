@@ -1,9 +1,8 @@
 <template>
 	<DialogTemplate
-		ref="dialogTemplateRef"
 		:label="dialogType === 'followers' ? 'フォロワー' : 'フォロー中'"
 		v-model:dialog="dialog"
-		scrollable="true"
+		:scrollable="true"
 	>
 		<template v-slot:contents>
 			<v-divider />
@@ -91,6 +90,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
@@ -125,14 +125,6 @@ const blogSettingStore = useBlogSettingStore()
 
 const userList = ref<UserData[]>([])
 const loading = ref<boolean>(false)
-const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
-
-// ダイアログを閉じる
-const closeDialog = (): void => {
-	if (dialogTemplateRef.value) {
-		dialogTemplateRef.value.closeDialog()
-	}
-}
 
 // ユーザーリストを取得
 const fetchUserList = async (): Promise<void> => {

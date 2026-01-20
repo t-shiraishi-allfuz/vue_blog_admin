@@ -115,6 +115,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 

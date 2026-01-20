@@ -252,7 +252,7 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 	}
 
 	// 順序を更新（子カテゴリーのみ、同じ親カテゴリー内）
-	const updateOrder = async (categoryIds: string[], parentCategoryId: string): Promise<void> => {
+	const updateOrder = async (categoryIds: string[]): Promise<void> => {
 		const updatePromises = categoryIds.map((id, index) => {
 			return BaseAPI.setData(
 				{db_name: "blog_category", item_id: id},
@@ -288,7 +288,7 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 
 		// 新しい順序でIDリストを作成
 		const categoryIds = newList.map(c => c.id)
-		await updateOrder(categoryIds, targetCategory.pre_category_id)
+		await updateOrder(categoryIds)
 	}
 
 	return {

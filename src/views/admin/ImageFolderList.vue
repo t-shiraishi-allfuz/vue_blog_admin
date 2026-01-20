@@ -112,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'

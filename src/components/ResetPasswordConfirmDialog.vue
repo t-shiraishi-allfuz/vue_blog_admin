@@ -54,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import Swal from 'sweetalert2'
 
@@ -95,11 +96,6 @@ const closeDialog = (): void => {
 	}
 }
 
-const goToLogin = (): void => {
-	closeDialog()
-	emit('openLogin')
-}
-
 // パスワードリセット
 const resetPassword = async (): Promise<void> => {
 	closeDialog()
@@ -135,10 +131,11 @@ const resetPassword = async (): Promise<void> => {
 		await authStore.initializeAuth()
 		initRefs()
 		emit('openLogin')
-	} catch(error) {
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'パスワードのリセットに失敗しました'
 		await Swal.fire({
 			title: 'エラー',
-			text: error.message || 'パスワードのリセットに失敗しました',
+			text: errorMessage,
 			icon: 'error'
 		})
 		console.error('パスワードリセットエラー:', error)

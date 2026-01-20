@@ -150,6 +150,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useImagesStore } from '@/stores/imagesStore'
 import Swal from 'sweetalert2'
 

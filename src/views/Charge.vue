@@ -97,16 +97,16 @@ const chargeCoins = async (): Promise<void> => {
 		return
 	}
 
-	if (selectedAmount.value > MAX_COINS) {
-		error.value = `チャージ金額は${MAX_COINS.toLocaleString()}コイン以下である必要があります`
+	if (selectedAmount.value > (MAX_COINS.value || 999999)) {
+		error.value = `チャージ金額は${(MAX_COINS.value || 999999).toLocaleString()}コイン以下である必要があります`
 		return
 	}
 
 	const currentCoins = coins.value || 0
 	const newCoins = currentCoins + selectedAmount.value
 
-	if (newCoins > MAX_COINS) {
-		error.value = `チャージ後のコイン数が上限(${MAX_COINS.toLocaleString()})を超えます`
+	if (newCoins > (MAX_COINS.value || 999999)) {
+		error.value = `チャージ後のコイン数が上限(${(MAX_COINS.value || 999999).toLocaleString()})を超えます`
 		return
 	}
 

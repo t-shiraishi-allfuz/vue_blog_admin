@@ -109,6 +109,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 
 interface AnnouncementData {
@@ -116,14 +117,15 @@ interface AnnouncementData {
 	title: string
 	content: string
 	isPublished: boolean
-	createdAt: string
-	updatedAt: string
+	createdAt: string | null
+	updatedAt: string | null
 }
 
 const dialog = defineModel<boolean>('dialog')
 
 const emit = defineEmits<{
 	update: []
+	updated: []
 }>()
 
 const announcementStore = useAnnouncementStore()

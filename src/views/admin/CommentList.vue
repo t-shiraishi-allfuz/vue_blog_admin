@@ -10,7 +10,7 @@
 				</template>
 				<template v-slot:[`item.comment`]="{ item }">
 					<a @click.prevent="goToList" class="blog-title" href="#">
-						{{ item.content }}
+						{{ item.body }}
 					</a>
 				</template>
 				<template v-slot:[`item.createdAt`]="{ item }">
@@ -37,7 +37,7 @@ interface CommentData {
 	id: string
 	uid: string
 	blog_id: string
-	content: string
+	body: string
 	reply_id?: string
 	createdAt: Date
 	updatedAt: Date
@@ -81,7 +81,7 @@ const fetchCommentList = async (): Promise<void> => {
 }
 
 // 個別削除確認ダイアログを開く
-const openDeleteDialog = async (comment: CommentData): void => {
+const openDeleteDialog = async (comment: CommentData): Promise<void> => {
 	commentToDelete.value = comment
 
 	const result = await Swal.fire({
@@ -114,7 +114,7 @@ const openDeleteDialog = async (comment: CommentData): void => {
 	})
 
 	if (result.isConfirmed && commentToDelete.value) {
-		await commentStore.deleteItem(commentToDelete.value)
+		await commentStore.deleteItem(commentToDelete.value.id)
 		await fetchCommentList()
 		
 		// 削除完了メッセージ

@@ -382,6 +382,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useDmStore } from '@/stores/dmStore'
 import { useAuthStore } from '@/stores/authStore'
 import Swal from 'sweetalert2'

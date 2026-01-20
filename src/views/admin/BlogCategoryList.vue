@@ -174,6 +174,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import Swal from 'sweetalert2'
@@ -450,7 +451,7 @@ const onDragEnd = async (parentCategoryId: string): Promise<void> => {
 		sortedCategoryList.value = newList
 	}
 	
-	await blogCategoryStore.updateOrder(childCategoryIds, parentCategoryId)
+	await blogCategoryStore.updateOrder(childCategoryIds)
 	
 	Swal.fire({
 		title: '順序を更新しました',

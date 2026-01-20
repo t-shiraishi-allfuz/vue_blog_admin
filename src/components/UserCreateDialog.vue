@@ -88,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { GoogleLogin } from 'vue3-google-login'
 import Swal from 'sweetalert2'

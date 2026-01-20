@@ -7,6 +7,16 @@
 		<template v-slot:contents>
 			<v-form ref="settingForm" @submit.prevent="resetPassword">
 				<v-card-text class="pa-6">
+					<v-alert
+						v-if="errorMessage"
+						type="error"
+						variant="tonal"
+						closable
+						@click:close="errorMessage = ''"
+						class="mb-4"
+					>
+						{{ errorMessage }}
+					</v-alert>
 					<v-text-field
 						v-model="email"
 						prepend-inner-icon="mdi-email-outline"
@@ -42,20 +52,18 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useUsersStore } from '@/stores/usersStore'
 import Swal from 'sweetalert2'
 
 const dialog = defineModel<boolean>('dialog')
 
-const emit = defineEmits<{
-	openLogin: []
-}>()
-
 const authStore = useAuthStore()
 const usersStore = useUsersStore()
 
 const email = ref<string>('')
+const errorMessage = ref<string>('')
 const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 const isLoading = ref<boolean>(false)
 
@@ -66,6 +74,7 @@ const emailRules = [
 
 const initRefs = (): void => {
 	email.value = ''
+	errorMessage.value = ''
 }
 
 const closeDialog = (): void => {
@@ -74,15 +83,8 @@ const closeDialog = (): void => {
 	}
 }
 
-const goToLogin = (): void => {
-	closeDialog()
-	emit('openLogin')
-}
-
 // パスワードリセット
 const resetPassword = async (): Promise<void> => {
-	closeDialog()
-
 	if (!email.value) {
 		errorMessage.value = 'メールアドレスが入力されていません'
 		await Swal.fire({

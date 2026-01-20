@@ -2,7 +2,7 @@
 	<DialogTemplate
 		label="生年月日を登録して下さい"
 		v-model:dialog="dialog"
-		persistent="true"
+		:persistent="true"
 	>
 		<template v-slot:contents>
 			<v-card-text>
@@ -38,13 +38,9 @@
 </template>
 
 <script setup lang="ts">
+import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useUsersStore } from '@/stores/usersStore'
 import { useAuthStore } from '@/stores/authStore'
-
-// Props定義
-interface Props {
-	modelValue: boolean
-}
 
 const dialog = defineModel<boolean>('dialog')
 

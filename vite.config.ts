@@ -109,7 +109,7 @@ export default defineConfig(({ mode }) => {
 
 						req.on('end', () => {
 							try {
-								const { type, year, month, filename, logEntry } = JSON.parse(body);
+								const { year, month, filename, logEntry } = JSON.parse(body);
 
 								// ログディレクトリを確保
 								const logsBaseDir = path.resolve(process.cwd(), 'src', 'logs');
