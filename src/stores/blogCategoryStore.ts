@@ -100,6 +100,32 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 		}
 	}
 
+	// カテゴリーIDからカテゴリー情報を取得
+	const getCategoryById = async (categoryId: string): Promise<BlogCategoryData | null> => {
+		try {
+			const doc = await BaseAPI.getData({
+				db_name: "blog_category",
+				item_id: categoryId
+			})
+			
+			if (!doc || !doc.exists()) {
+				return null
+			}
+			
+			return mapDocToCategory(doc)
+		} catch (error: any) {
+			console.error(`カテゴリー取得エラー (id: ${categoryId}):`, error)
+			return null
+		}
+	}
+
+	// 複数のカテゴリーIDからカテゴリー情報を取得
+	const getCategoriesByIds = async (categoryIds: string[]): Promise<BlogCategoryData[]> => {
+		const promises = categoryIds.map(id => getCategoryById(id))
+		const results = await Promise.all(promises)
+		return results.filter(category => category !== null) as BlogCategoryData[]
+	}
+
 	const getDetail = async (category_id: string): Promise<BlogCategoryData | null> => {
 		try {
 			const doc = await BaseAPI.getData(
@@ -271,6 +297,8 @@ export const useBlogCategoryStore = defineStore('blog_category', () => {
 		update,
 		getList,
 		getDetail,
+		getCategoryById,
+		getCategoriesByIds,
 		deleteItem,
 		updateOrder,
 		moveOrder

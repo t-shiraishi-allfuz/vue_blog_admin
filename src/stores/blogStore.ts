@@ -377,14 +377,10 @@ export const useBlogStore = defineStore('blog', () => {
 		}
 	}
 
-	// カテゴリーIDに一致するブログ数取得
+	// カテゴリーIDに一致するブログ数取得（公開中のブログのみ）
 	const getListForCategoryCount = async (category_id: string): Promise<number> => {
-		const userInfo = authStore.userInfo
-		if (!userInfo) {
-			throw new Error('ユーザー情報が取得できません')
-		}
 		const filters = [
-			["uid", "==", userInfo.uid],
+			["isPublished", "==", true],
 			["category_id", "==", category_id]
 		]
 		const sorters = [
@@ -397,7 +393,7 @@ export const useBlogStore = defineStore('blog', () => {
 				searchConditions: {
 					filters: filters,
 					sorters: sorters,
-					limit: 10
+					limit: 1000
 				}
 			}
 		)
@@ -454,6 +450,36 @@ export const useBlogStore = defineStore('blog', () => {
 		} catch (error) {
 			console.error('ユーザー記事数の取得に失敗しました:', error)
 			return 0
+		}
+	}
+
+	// カテゴリーIDでフィルタリングしたブログ一覧を取得（公開中の記事のみ）
+	const getListForCategory = async (categoryId: string): Promise<void> => {
+		const filters = [
+			["isPublished", "==", true],
+			["category_id", "==", categoryId]
+		]
+		const sorters = [
+			["createdAt", "desc"]
+		]
+
+		const querySnapshot = await BaseAPI.getDataWithQuery(
+			{
+				db_name: "blog",
+				searchConditions: {
+					filters: filters,
+					sorters: sorters,
+					limit: 100
+				}
+			}
+		)
+
+		if (querySnapshot) {
+			const promises = querySnapshot.docs.map(doc => setBlogData(doc))
+			const result = await Promise.all(promises)
+			blogList.value = result
+		} else {
+			blogList.value = []
 		}
 	}
 
@@ -526,6 +552,7 @@ export const useBlogStore = defineStore('blog', () => {
 		getListForFollow,
 		getListForBookmark,
 		getListForRecomend,
+		getListForCategory,
 		getListForCategoryCount,
 		getTotalAccessCount,
 		getCountForUser,

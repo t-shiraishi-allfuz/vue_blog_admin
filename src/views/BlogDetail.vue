@@ -48,7 +48,7 @@
 	<DialogTemplate
 		ref="dialogTemplateRef"
 		label="パスワード認証"
-		persistent="true"
+		:persistent="true"
 		v-model:dialog="isPasswordDialog"
 	>
 		<template v-slot:contents>
@@ -210,6 +210,23 @@
 				/>
 			</div>
 		</div>
+		<!-- カテゴリー -->
+		<v-card v-if="currentCategory" class="mt-8">
+			<v-card-title>
+				<v-icon class="mr-2">mdi-tag</v-icon>
+				カテゴリー
+			</v-card-title>
+			<v-card-text>
+				<v-chip
+					:color="'primary'"
+					variant="flat"
+					class="cursor-pointer"
+					@click="selectCategory(currentCategory.id)"
+				>
+					{{ currentCategory.name }}
+				</v-chip>
+			</v-card-text>
+		</v-card>
 		<v-divider />
 		<div class="my-4">
 			<div class="pa-4">
@@ -297,6 +314,7 @@ import { useLikeStore } from '@/stores/likeStore'
 import { useCommentStore } from '@/stores/commentStore'
 import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
+import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
@@ -329,6 +347,7 @@ const likeStore = useLikeStore()
 const commentStore = useCommentStore()
 const bookmarkStore = useBookmarkStore()
 const followUsersStore = useFollowUsersStore()
+const blogCategoryStore = useBlogCategoryStore()
 
 const {
 	userInfo
@@ -348,7 +367,7 @@ const isUserCreateDialog = ref<boolean>(false)
 const isCommentDialog = ref<boolean>(false)
 const isPasswordDialog = ref<boolean>(false)
 const isShareDialog = ref<boolean>(false)
-const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
+const dialogTemplateRef = ref<any>(null)
 
 const reply_id = ref<string | null>(null)
 const comment = ref<Partial<CommentData>>({
@@ -365,6 +384,10 @@ const passwordInput = ref<string>('')
 const passwordError = ref<string>('')
 const passwordVerifying = ref<boolean>(false)
 const isPasswordVerified = ref<boolean>(false)
+
+// カテゴリー関連
+const currentCategory = ref<any>(null)
+const isLoadingCategory = ref<boolean>(false)
 
 // 日時フォーマット関数
 const formatDate = (date: Date | null): string => {
@@ -638,6 +661,40 @@ const checkPasswordRequired = (): boolean => {
 	return true
 }
 
+// ブログに設定されているカテゴリーを取得
+const fetchCategory = async (): Promise<void> => {
+	try {
+		isLoadingCategory.value = true
+		
+		// ブログにカテゴリーIDが設定されているか確認
+		if (!blogDetail.value.category_id) {
+			currentCategory.value = null
+			return
+		}
+		
+		// カテゴリー情報を取得
+		const category = await blogCategoryStore.getCategoryById(blogDetail.value.category_id)
+		if (category) {
+			currentCategory.value = category
+		} else {
+			currentCategory.value = null
+		}
+	} catch (error) {
+		console.error('カテゴリー取得エラー:', error)
+		currentCategory.value = null
+	} finally {
+		isLoadingCategory.value = false
+	}
+}
+
+// カテゴリーをクリックしてカテゴリー一覧を表示
+const selectCategory = (categoryId: string): void => {
+	router.push({ 
+		path: '/',
+		query: { category_id: categoryId }
+	})
+}
+
 // ブログデータ取得
 onMounted(async (): Promise<void> => {
 	await blogStore.getDetailWithAccessCount(blog_id)
@@ -649,6 +706,7 @@ onMounted(async (): Promise<void> => {
 	// パスワード認証が不要で、コイン消費も完了した場合のみブログ内容を表示
 	isLoading.value = true
 	await fetchCommentList()
+	await fetchCategory()
 })
 
 // 戻るボタンのテキストを計算
@@ -688,3 +746,4 @@ const goBack = (): void => {
 	}
 }
 </style>
+

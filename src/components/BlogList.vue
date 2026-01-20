@@ -19,14 +19,14 @@
 	<!-- パスワード再設定ダイアログ -->
 	<ResetPasswordConfirmDialog 
 		v-model:dialog="isResetPasswordConfirmDialog"
-		@open-login="openLoginDialog"
+		@open-login="isLoginDialog = true"
 	/>
 
 	<DialogTemplate
 		ref="dialogTemplateRef"
 		label="パスワード認証"
 		v-model:dialog="isPasswordDialog"
-		persistent="true"
+		:persistent="true"
 	>
 		<template v-slot:contents>
 			<v-card-text>
@@ -388,7 +388,7 @@ const tweetToPreview = ref<any>(null)
 const isPreviewTweetDialog = ref<boolean>(false)
 const momentToPreview = ref<any>(null)
 const isPreviewMomentDialog = ref<boolean>(false)
-const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
+const dialogTemplateRef = ref<any>(null)
 
 // 検索関連
 const searchQuery = ref<string>("")
@@ -493,6 +493,13 @@ const extendMomentList = computed((): MomentItem[] => {
 
 // 一覧取得
 const fetchBlogList = async (type: number): Promise<void> => {
+	// カテゴリーIDがクエリパラメータにある場合は、カテゴリーでフィルタリング
+	const categoryId = route.query.category_id as string
+	if (categoryId) {
+		await blogStore.getListForCategory(categoryId)
+		return
+	}
+	
 	switch (+type) {
 		case 1:
 			await blogStore.getListForFollow()
@@ -813,6 +820,9 @@ onMounted(async (): Promise<void> => {
 		searchQuery.value = query
 		await executeSearch(query)
 	}
+	
+	// カテゴリーIDの処理はwatchで監視するため、ここでは通常の一覧取得のみ
+	// fetchBlogList内でcategory_idをチェックしているため、ここでも正常に動作する
 })
 
 // ルートクエリパラメータの変化を監視
@@ -825,6 +835,16 @@ watch(() => route.query.q, async (newQuery) => {
 		searchBlogIds.value = []
 		searchTweetIds.value = []
 		searchMomentIds.value = []
+	}
+})
+
+// カテゴリーIDの変化を監視
+watch(() => route.query.category_id, async (categoryId) => {
+	if (categoryId) {
+		await fetchBlogList(selectType.value)
+	} else {
+		// カテゴリーIDが削除された場合は、通常の一覧を取得
+		await fetchBlogList(selectType.value)
 	}
 })
 
