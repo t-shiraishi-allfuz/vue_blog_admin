@@ -130,10 +130,21 @@ export const useBoardStore = defineStore('board', () => {
 				}
 
 				// ユーザー情報を取得
-				const userSetting = await blogSettingStore.getForUid(post.uid)
-				if (userSetting) {
-					post.userName = userSetting.name || userSetting.title || '名無し'
-					post.userProfileUrl = userSetting.profileUrl || null
+				try {
+					const userSetting = await blogSettingStore.getForUid(post.uid)
+					if (userSetting) {
+						post.userName = userSetting.name || userSetting.title || '名無し'
+						post.userProfileUrl = userSetting.profileUrl || null
+					} else {
+						// ユーザー設定が取得できない場合のデフォルト値
+						post.userName = '名無し'
+						post.userProfileUrl = null
+					}
+				} catch (error) {
+					console.error(`ユーザー情報取得エラー (uid: ${post.uid}):`, error)
+					// エラー時もデフォルト値を設定
+					post.userName = '名無し'
+					post.userProfileUrl = null
 				}
 
 				posts.push(post)
@@ -180,10 +191,21 @@ export const useBoardStore = defineStore('board', () => {
 				}
 
 				// ユーザー情報を取得
-				const userSetting = await blogSettingStore.getForUid(post.uid)
-				if (userSetting) {
-					post.userName = userSetting.name || userSetting.title || '名無し'
-					post.userProfileUrl = userSetting.profileUrl || null
+				try {
+					const userSetting = await blogSettingStore.getForUid(post.uid)
+					if (userSetting) {
+						post.userName = userSetting.name || userSetting.title || '名無し'
+						post.userProfileUrl = userSetting.profileUrl || null
+					} else {
+						// ユーザー設定が取得できない場合のデフォルト値
+						post.userName = '名無し'
+						post.userProfileUrl = null
+					}
+				} catch (error) {
+					console.error(`ユーザー情報取得エラー (uid: ${post.uid}):`, error)
+					// エラー時もデフォルト値を設定
+					post.userName = '名無し'
+					post.userProfileUrl = null
 				}
 
 				posts.push(post)

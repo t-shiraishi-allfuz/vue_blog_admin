@@ -86,9 +86,8 @@
 											:image="post.userProfileUrl || undefined"
 											size="40"
 											class="mr-3"
-										>
-											<v-icon>mdi-account</v-icon>
-										</v-avatar>
+											end
+										/>
 										<div class="text-body-2 font-weight-medium">
 											{{ post.userName }}
 										</div>
@@ -144,9 +143,7 @@
 										:image="post.userProfileUrl || undefined"
 										size="40"
 										class="mr-3"
-									>
-										<v-icon>mdi-account</v-icon>
-									</v-avatar>
+									/>
 								</template>
 								<v-list-item-subtitle class="mb-2">
 									{{ post.content }}
