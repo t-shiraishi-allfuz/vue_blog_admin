@@ -25,19 +25,21 @@ import { createPinia } from 'pinia'
 import { createPersistedState } from "pinia-plugin-persistedstate"
 import { logError } from '@/utils/logger'
 import Vue3TouchEvents from "vue3-touch-events"
+import { createHead } from '@unhead/vue/client'
 
 const pinia = createPinia()
 pinia.use(createPersistedState())
 const app = createApp(App)
   .use(pinia)
   .use(VueSweetalert2)
-  .use(Vue3TouchEvents)
+  .use(Vue3TouchEvents as any)
+  .use(createHead())
 
 app.component('VueMultiselect', Multiselect)
 app.component('VueDatePicker', VueDatePicker)
 
 // グローバルエラーハンドラー
-app.config.errorHandler = (err, instance, info) => {
+app.config.errorHandler = (err, _instance, info) => {
 	console.error('Vueエラー:', err, info)
 	try {
 		if (err instanceof Error) {

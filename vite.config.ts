@@ -36,6 +36,9 @@ export default defineConfig(({ mode }) => {
 			hmr: {
 				host: 'localhost'
 			},
+			allowedHosts: [
+				'lawanda-proexperiment-uriah.ngrok-free.dev'
+			]
 		},
 		plugins: [
 			vue({

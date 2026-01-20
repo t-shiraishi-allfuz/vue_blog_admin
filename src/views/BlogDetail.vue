@@ -95,9 +95,24 @@
 			/>
 			<v-divider />
 			<v-list-item
-				prepend-icon="mdi-note-edit"
-				title="リブログ"
-				@click="reblog"
+				prepend-icon="mdi-twitter"
+				title="Xでシェア"
+				@click="handleXShare"
+			/>
+			<ShareNetwork
+				ref="shareNetworkRef"
+				network="twitter"
+				:url="blogShareUrl"
+				:title="blogShareTitle"
+				:hashtags="blogShareHashtags"
+				style="display: none;"
+				@open="onShareOpen"
+			/>
+			<v-divider />
+			<v-list-item
+				prepend-icon="mdi-bulletin-board"
+				title="掲示板に投稿"
+				@click="postToBoard"
 			/>
 			<v-divider />
 			<div class="d-flex justify-end my-2">
@@ -316,6 +331,8 @@ import { useBookmarkStore } from '@/stores/bookmarkStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
+import { useHead } from '@unhead/vue'
+import { ShareNetwork } from 'vue3-social-sharing'
 import BlogCard from '@/components/BlogCard.vue'
 import Swal from 'sweetalert2'
 
@@ -388,6 +405,35 @@ const isPasswordVerified = ref<boolean>(false)
 // カテゴリー関連
 const currentCategory = ref<any>(null)
 const isLoadingCategory = ref<boolean>(false)
+const shareNetworkRef = ref<any>(null)
+
+// シェア用のデータ
+const blogShareUrl = computed(() => {
+	return `${window.location.origin}/blog_detail?blog_id=${blogDetail.value.id}`
+})
+
+const blogShareTitle = computed(() => {
+	return `${blogDetail.value.title}をシェアしました！`
+})
+
+const blogShareHashtags = computed(() => {
+	return 'ブログ,シェア'
+})
+
+// useHeadをsetup内で呼び出して、シェア用のメタタグを管理
+useHead({
+	title: computed(() => blogDetail.value.title || 'ブログ記事'),
+	meta: computed(() => [
+		{ property: 'og:title', content: blogDetail.value.title || 'ブログ記事' },
+		{ property: 'og:description', content: blogDetail.value.summary || '' },
+		{ property: 'og:image', content: blogDetail.value.thumbUrl || '' },
+		{ property: 'og:url', content: blogShareUrl.value },
+		{ name: 'twitter:card', content: 'summary_large_image' },
+		{ name: 'twitter:title', content: blogDetail.value.title || 'ブログ記事' },
+		{ name: 'twitter:description', content: blogDetail.value.summary || '' },
+		{ name: 'twitter:image', content: blogDetail.value.thumbUrl || '' },
+	])
+})
 
 // 日時フォーマット関数
 const formatDate = (date: Date | null): string => {
@@ -468,7 +514,7 @@ const addShare = (): void => {
 		isUserCreateDialog.value = true
 		return
 	}
-	initRefs()
+	isShareDialog.value = true
 }
 
 // リンクをコピー
@@ -493,19 +539,57 @@ const copyUrl = async (): Promise<void> => {
 	}
 }
 
-// リブログ
-const reblog = async (): Promise<void> => {
+// Xでシェア
+const handleXShare = (): void => {
 	// ログインチェック
 	if (!authStore.isLogin) {
 		isUserCreateDialog.value = true
 		return
 	}
 
-	// キャッシュしておく
-	localStorage.setItem("shareBlog", JSON.stringify(blogDetail.value))
-	localStorage.setItem("shareSetting", JSON.stringify(blogDetail.value.setting))
+	// useHeadでメタタグを更新
+	// setup内で既にuseHeadを呼び出しているため、computedプロパティが自動的に更新される
+	// 明示的に更新する場合は、headオブジェクトのpatchメソッドを使用
+	// ただし、computedプロパティが既にリアクティブに更新しているため、この処理は不要な場合もある
+	// メタタグは既にsetup内のuseHeadでリアクティブに更新されているため、特に追加の処理は不要
 
-	router.push('/admin/0')
+	// ShareNetworkコンポーネントのクリックをトリガー
+	if (shareNetworkRef.value) {
+		shareNetworkRef.value.$el.click()
+	}
+	
+	// シェアダイアログを閉じる
+	isShareDialog.value = false
+}
+
+// シェアウィンドウが開いた時の処理
+const onShareOpen = (): void => {
+	// シェアウィンドウが開いた後の処理があればここに記述
+}
+
+// 掲示板に投稿
+const postToBoard = (): void => {
+	// ログインチェック
+	if (!authStore.isLogin) {
+		isUserCreateDialog.value = true
+		return
+	}
+
+	// ブログのURLを生成
+	const blogUrl = `${window.location.origin}/blog_detail?blog_id=${blogDetail.value.id}`
+	
+	// 掲示板ページに遷移し、URLパラメータでURLを渡す
+	router.push({
+		path: '/board',
+		query: {
+			tab: 'article',
+			url: blogUrl,
+			title: blogDetail.value.title || ''
+		}
+	})
+	
+	// シェアダイアログを閉じる
+	isShareDialog.value = false
 }
 
 // コメント

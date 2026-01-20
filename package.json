@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@mdi/font": "7.0.96",
+    "@unhead/vue": "^2.1.2",
     "@vue-flow/core": "^1.39.0",
     "@vuepic/vue-datepicker": "^8.8.1",
     "axios-middleware": "^0.4.0",
@@ -53,6 +54,7 @@
     "vue3-editor": "^0.1.1",
     "vue3-google-login": "^2.0.34",
     "vue3-quill": "^0.3.1",
+    "vue3-social-sharing": "^1.4.1",
     "vue3-touch-events": "^5.0.15",
     "vuedraggable": "^4.1.0",
     "vuetify": "^3.9.5"

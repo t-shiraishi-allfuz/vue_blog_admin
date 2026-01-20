@@ -276,6 +276,8 @@ import Swal from 'sweetalert2'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 
+const route = useRoute()
+const router = useRouter()
 const boardStore = useBoardStore()
 const authStore = useAuthStore()
 const blogStore = useBlogStore()
@@ -707,6 +709,27 @@ watch(() => boardStore.articlePosts, async () => {
 onMounted(async () => {
 	await boardStore.getArticlePosts()
 	await loadBlogAndMomentData()
+	
+	// URLパラメータから投稿情報を取得
+	const urlParam = route.query.url as string
+	const titleParam = route.query.title as string
+	
+	if (urlParam && authStore.isLogin) {
+		// 記事紹介タブを開く
+		activeTab.value = 'article'
+		
+		// フォームに値を設定
+		articleForm.value.blogUrl = urlParam
+		if (titleParam) {
+			articleForm.value.title = titleParam
+		}
+		
+		// ダイアログを開く
+		isArticleDialog.value = true
+		
+		// URLパラメータをクリア
+		router.replace({ path: '/board', query: {} })
+	}
 })
 </script>
 
