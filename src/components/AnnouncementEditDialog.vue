@@ -111,6 +111,7 @@
 <script setup lang="ts">
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAnnouncementStore } from '@/stores/announcementStore'
+import Swal from 'sweetalert2'
 
 interface AnnouncementData {
 	id: string
@@ -169,21 +170,21 @@ const contentRules = [
 	(v: string) => (v && v.length <= 2000) || '内容は2000文字以内で入力してください'
 ]
 
-const closeDialog = (): void => {
-	if (dialogTemplateRef.value) {
-		dialogTemplateRef.value.closeDialog()
-	}
-}
-
 const formatDate = (date: any): string => {
 	if (!date) return ''
 	const d = date.toDate ? date.toDate() : new Date(date)
 	return d.toLocaleString('ja-JP')
 }
 
+const closeDialog = (): void => {
+	if (dialogTemplateRef.value) {
+		dialogTemplateRef.value.closeDialog()
+	}
+}
+
 const updateAnnouncement = async () => {
 	if (!form.value?.validate()) return
-	
+
 	loading.value = true
 	
 	try {
@@ -193,19 +194,25 @@ const updateAnnouncement = async () => {
 			priority: announcement.priority,
 			isPublished: announcement.isPublished
 		})
-		
-		// 成功メッセージを表示
-		alert('お知らせを更新しました')
-		
-		// ダイアログを閉じる
 		closeDialog()
+
+		await Swal.fire({
+			title: '確認',
+			text: 'お知らせを更新しました',
+			icon: 'success',
+			confirmButtonText: '閉じる',
+			confirmButtonColor: '#90A4AE'
+		})
 		
 		// 親コンポーネントに更新完了を通知
 		emit('updated')
-		
 	} catch (error) {
-		console.error('お知らせ更新エラー:', error)
-		alert('お知らせの更新に失敗しました: ' + (error instanceof Error ? error.message : String(error)))
+		await Swal.fire({
+			title: 'エラー',
+			text: 'お知らせの更新に失敗しました',
+			icon: 'error',
+			confirmButtonColor: '#90A4AE'
+		})
 	} finally {
 		loading.value = false
 	}
