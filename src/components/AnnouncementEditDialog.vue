@@ -88,18 +88,18 @@
 				<v-spacer></v-spacer>
 				<v-btn
 					color="grey-lighten-4"
+					:disabled="loading"
 					variant="elevated"
 					@click="closeDialog"
-					:disabled="loading"
 				>
 					キャンセル
 				</v-btn>
 				<v-btn
-					color="primary"
-					variant="flat"
-					@click="updateAnnouncement"
+					color="success"
 					:loading="loading"
 					:disabled="!valid"
+					variant="elevated"
+					@click="updateAnnouncement"
 				>
 					更新
 				</v-btn>
@@ -201,7 +201,7 @@ const updateAnnouncement = async () => {
 			text: 'お知らせを更新しました',
 			icon: 'success',
 			confirmButtonText: '閉じる',
-			confirmButtonColor: '#90A4AE'
+			confirmButtonColor: '#E0E0E0'
 		})
 		
 		// 親コンポーネントに更新完了を通知
@@ -211,7 +211,7 @@ const updateAnnouncement = async () => {
 			title: 'エラー',
 			text: 'お知らせの更新に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#90A4AE'
+			confirmButtonColor: '#E0E0E0'
 		})
 	} finally {
 		loading.value = false

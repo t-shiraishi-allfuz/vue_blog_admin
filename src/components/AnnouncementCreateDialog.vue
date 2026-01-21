@@ -180,7 +180,7 @@ const saveAnnouncement = async (): Promise<void> => {
 			text: 'お知らせを作成しました',
 			icon: 'success',
 			confirmButtonText: '閉じる',
-			confirmButtonColor: '#90A4AE'
+			confirmButtonColor: '#E0E0E0'
 		})
 
 		// 親コンポーネントに保存完了を通知
@@ -190,7 +190,7 @@ const saveAnnouncement = async (): Promise<void> => {
 			title: 'エラー',
 			text: 'お知らせの作成に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#90A4AE'
+			confirmButtonColor: '#E0E0E0'
 		})
 		return
 	} finally {

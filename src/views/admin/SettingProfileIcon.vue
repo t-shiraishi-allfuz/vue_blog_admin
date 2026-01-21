@@ -75,7 +75,7 @@ const updateSetting = async (): Promise<void> => {
 				title: 'エラー',
 				text: 'ブログ設定が読み込まれていません',
 				icon: 'error',
-				confirmButtonColor: '#90A4AE'
+				confirmButtonColor: '#E0E0E0'
 			})
 			return
 		}
@@ -89,7 +89,7 @@ const updateSetting = async (): Promise<void> => {
 			confirmButtonText: '完了する',
 			cancelButtonText: 'キャンセル',
 			confirmButtonColor: '#27C1A3',
-			cancelButtonColor: '#90A4AE',
+			cancelButtonColor: '#E0E0E0',
 			reverseButtons: true
 		})
 
@@ -128,7 +128,7 @@ const updateSetting = async (): Promise<void> => {
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonColor: '#90A4AE'
+			confirmButtonColor: '#E0E0E0'
 		})
 	}
 }
@@ -144,7 +144,7 @@ const skipSetting = async (): Promise<void> => {
 			confirmButtonText: 'スキップする',
 			cancelButtonText: 'キャンセル',
 			confirmButtonColor: '#27C1A3',
-			cancelButtonColor: '#90A4AE',
+			cancelButtonColor: '#E0E0E0',
 			reverseButtons: true
 		})
 
@@ -154,7 +154,7 @@ const skipSetting = async (): Promise<void> => {
 				text: 'ブログを開始します。設定は後から変更できます。',
 				icon: 'info',
 				confirmButtonText: 'OK',
-				confirmButtonColor: '#90A4AE'
+				confirmButtonColor: '#E0E0E0'
 			})
 			
 			router.push('/')
@@ -166,7 +166,7 @@ const skipSetting = async (): Promise<void> => {
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonColor: '#90A4AE'
+			confirmButtonColor: '#E0E0E0'
 		})
 	}
 }
