@@ -5,18 +5,6 @@ export const useAccessLogStore = defineStore('accessLog', () => {
 	// アクセスログを記録（詳細な分析用）
 	const create = async (blogId: string) => {
 		try {
-			const accessLog = {
-				blogId: blogId,
-				accessedAt: new Date(),
-				userAgent: navigator.userAgent,
-				referrer: document.referrer || null,
-			}
-
-			await BaseAPI.addData(
-				{ db_name: "blog_access_log" },
-				accessLog
-			)
-
 			// ファイルログにも保存
 			const logData: AccessLogData = {
 				blogId: blogId,
@@ -33,18 +21,6 @@ export const useAccessLogStore = defineStore('accessLog', () => {
 	// つぶやきのアクセスログを記録
 	const createTweetAccessLog = async (tweetId: string) => {
 		try {
-			const accessLog = {
-				tweetId: tweetId,
-				accessedAt: new Date(),
-				userAgent: navigator.userAgent,
-				referrer: document.referrer || null,
-			}
-
-			await BaseAPI.addData(
-				{ db_name: "tweet_access_log" },
-				accessLog
-			)
-
 			// ファイルログにも保存
 			const logData: AccessLogData = {
 				tweetId: tweetId,

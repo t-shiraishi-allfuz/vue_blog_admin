@@ -1,24 +1,26 @@
 <template>
-	<v-form v-if="blogSetting" ref="settingForm" @submit.prevent="updateSetting">
-		<v-card class="user-login">
-			<v-card-title class="cardHeader textCenter" color="info">
-				<h4 class="cardTitle">プロフィール設定 1/2</h4>
-			</v-card-title>
-			<v-card-text>
-				<v-text-field
-					label="ブログのタイトルを入力して下さい"
-					v-model="blogSetting.title"
-				/>
-				<v-text-field
-					label="ブログの説明を入力して下さい"
-					v-model="blogSetting.description"
-				/>
-			</v-card-text>
-			<v-card-actions>
-				<v-btn color="success" variant="flat" type="submit">登録する</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-form>
+	<v-container>
+		<v-form v-if="blogSetting" ref="settingForm" @submit.prevent="updateSetting">
+			<v-card class="user-login">
+				<v-card-title class="cardHeader textCenter" color="info">
+					<h4 class="cardTitle">プロフィール設定 1/2</h4>
+				</v-card-title>
+				<v-card-text>
+					<v-text-field
+						label="ブログのタイトルを入力して下さい"
+						v-model="blogSetting.title"
+					/>
+					<v-text-field
+						label="ブログの説明を入力して下さい"
+						v-model="blogSetting.description"
+					/>
+				</v-card-text>
+				<v-card-actions>
+					<v-btn color="success" variant="flat" type="submit">登録する</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-form>
+	</v-container>
 </template>
 
 <script setup lang="ts">
@@ -41,7 +43,7 @@ const updateSetting = async (): Promise<void> => {
 				title: 'エラー',
 				text: 'ブログ設定が読み込まれていません',
 				icon: 'error',
-				confirmButtonColor: '#F784C3'
+				confirmButtonColor: '#90A4AE'
 			})
 			return
 		}
@@ -54,8 +56,9 @@ const updateSetting = async (): Promise<void> => {
 			showCancelButton: true,
 			confirmButtonText: '保存する',
 			cancelButtonText: 'キャンセル',
-			confirmButtonColor: '#F784C3',
-			cancelButtonColor: '#6c757d'
+			confirmButtonColor: '#27C1A3',
+			cancelButtonColor: '#90A4AE',
+			reverseButtons: true
 		})
 
 		if (result.isConfirmed) {
@@ -79,7 +82,7 @@ const updateSetting = async (): Promise<void> => {
 				text: 'ブログの基本設定が保存されました。',
 				icon: 'success',
 				confirmButtonText: '次へ',
-				confirmButtonColor: '#F784C3'
+				confirmButtonColor: '#27C1A3'
 			})
 			
 			router.push({path: "/setting_profile_icon"})
@@ -91,8 +94,7 @@ const updateSetting = async (): Promise<void> => {
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonText: 'OK',
-			confirmButtonColor: '#F784C3'
+			confirmButtonColor: '#90A4AE'
 		})
 	}
 }

@@ -1,35 +1,37 @@
 <template>
-	<v-form v-if="blogSetting" ref="settingForm" @submit.prevent="updateSetting">
-		<v-card class="user-login">
-			<v-card-title class="cardHeader textCenter" color="info">
-				<h4 class="cardTitle">プロフィール設定 2/2</h4>
-			</v-card-title>
-			<v-card-text>
-				<v-text-field
-					label="ニックネームを入力して下さい"
-					v-model="blogSetting.name"
-				/>
-				<v-file-input
-					label="ブログアイコン"
-					id="profileImage"
-					type="file"
-					accept="image/png,image/jpg,image/jpeg"
-					@change="handleFileUpload"
-				/>
-				<v-img
-					v-if="blogSetting.profileUrl"
-					class="profile-preview"
-					alt="Profile Preview"
-					:src="blogSetting.profileUrl"
-					cover
-				/>
-			</v-card-text>
-			<v-card-actions>
-				<v-btn color="grey-lighten-2" variant="flat" @click="skipSetting">あとで</v-btn>
-				<v-btn color="primary" variant="flat" type="submit">登録する</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-form>
+	<v-container>
+		<v-form v-if="blogSetting" ref="settingForm" @submit.prevent="updateSetting">
+			<v-card class="user-login">
+				<v-card-title class="cardHeader textCenter" color="info">
+					<h4 class="cardTitle">プロフィール設定 2/2</h4>
+				</v-card-title>
+				<v-card-text>
+					<v-text-field
+						label="ニックネームを入力して下さい"
+						v-model="blogSetting.name"
+					/>
+					<v-file-input
+						label="ブログアイコン"
+						id="profileImage"
+						type="file"
+						accept="image/png,image/jpg,image/jpeg"
+						@change="handleFileUpload"
+					/>
+					<v-img
+						v-if="blogSetting.profileUrl"
+						class="profile-preview"
+						alt="Profile Preview"
+						:src="blogSetting.profileUrl"
+						cover
+					/>
+				</v-card-text>
+				<v-card-actions>
+					<v-btn color="grey-lighten-2" variant="flat" @click="skipSetting">あとで</v-btn>
+					<v-btn color="primary" variant="flat" type="submit">登録する</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-form>
+	</v-container>
 </template>
 
 <script setup lang="ts">
@@ -73,7 +75,7 @@ const updateSetting = async (): Promise<void> => {
 				title: 'エラー',
 				text: 'ブログ設定が読み込まれていません',
 				icon: 'error',
-				confirmButtonColor: '#F784C3'
+				confirmButtonColor: '#90A4AE'
 			})
 			return
 		}
@@ -86,8 +88,9 @@ const updateSetting = async (): Promise<void> => {
 			showCancelButton: true,
 			confirmButtonText: '完了する',
 			cancelButtonText: 'キャンセル',
-			confirmButtonColor: '#F784C3',
-			cancelButtonColor: '#6c757d'
+			confirmButtonColor: '#27C1A3',
+			cancelButtonColor: '#90A4AE',
+			reverseButtons: true
 		})
 
 		if (result.isConfirmed) {
@@ -113,7 +116,7 @@ const updateSetting = async (): Promise<void> => {
 				text: 'プロフィール設定が完了しました。ブログを開始できます！',
 				icon: 'success',
 				confirmButtonText: 'ブログを開始',
-				confirmButtonColor: '#F784C3'
+				confirmButtonColor: '#27C1A3'
 			})
 			
 			router.push('/')
@@ -125,8 +128,7 @@ const updateSetting = async (): Promise<void> => {
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonText: 'OK',
-			confirmButtonColor: '#F784C3'
+			confirmButtonColor: '#90A4AE'
 		})
 	}
 }
@@ -141,8 +143,9 @@ const skipSetting = async (): Promise<void> => {
 			showCancelButton: true,
 			confirmButtonText: 'スキップする',
 			cancelButtonText: 'キャンセル',
-			confirmButtonColor: '#6c757d',
-			cancelButtonColor: '#F784C3'
+			confirmButtonColor: '#27C1A3',
+			cancelButtonColor: '#90A4AE',
+			reverseButtons: true
 		})
 
 		if (result.isConfirmed) {
@@ -151,7 +154,7 @@ const skipSetting = async (): Promise<void> => {
 				text: 'ブログを開始します。設定は後から変更できます。',
 				icon: 'info',
 				confirmButtonText: 'OK',
-				confirmButtonColor: '#F784C3'
+				confirmButtonColor: '#90A4AE'
 			})
 			
 			router.push('/')
@@ -163,8 +166,7 @@ const skipSetting = async (): Promise<void> => {
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonText: 'OK',
-			confirmButtonColor: '#F784C3'
+			confirmButtonColor: '#90A4AE'
 		})
 	}
 }
