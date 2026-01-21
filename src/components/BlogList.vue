@@ -1,7 +1,7 @@
 <template>
 	<!-- 生年月日入力ダイアログ -->
 	<BirthDateDialog 
-		v-model="isBirthDateDialog" 
+		v-model:dialog="isBirthDateDialog" 
 		@saved="onBirthDateSaved"
 	/>
 
