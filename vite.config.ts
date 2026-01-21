@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
 		console.warn('環境変数の読み込みに失敗しました:', error)
 	}
 	const APP_TITLE = env.VITE_APP_TITLE || 'ブログ管理システム'
+	const BASE_PATH = env.VITE_BASE_PATH || '/'
 
 	// HTMLタイトルを設定するカスタムプラグイン
 	const htmlTitlePlugin = () => {
@@ -36,6 +37,7 @@ export default defineConfig(({ mode }) => {
 	}
 
 	return {
+		base: BASE_PATH,
 		server: {
 			port: 8080,
 			hmr: {

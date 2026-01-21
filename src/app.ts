@@ -65,6 +65,23 @@ app.config.errorHandler = (err, _instance, info) => {
 // 未処理のPromise拒否をキャッチ
 window.addEventListener('unhandledrejection', (event) => {
 	console.error('未処理のPromise拒否:', event.reason)
+	
+	// 動的インポートのエラーを詳細に記録
+	if (event.reason instanceof TypeError && event.reason.message?.includes('Failed to fetch dynamically imported module')) {
+		const errorMessage = `動的インポートエラー: ${event.reason.message}\nURL: ${(event.reason as any).url || '不明'}`
+		console.error(errorMessage)
+		const error = new Error(errorMessage)
+		if ((event.reason as any).url) {
+			(error as any).url = (event.reason as any).url
+		}
+		logError(error, '動的インポートエラー').catch(() => {
+			// ログ保存エラーは無視
+		})
+		// デフォルトの動作を防ぐ（エラーが表示されないようにする）
+		event.preventDefault()
+		return
+	}
+	
 	if (event.reason instanceof Error) {
 		logError(event.reason, '未処理のPromise拒否').catch(() => {
 			// ログ保存エラーは無視
