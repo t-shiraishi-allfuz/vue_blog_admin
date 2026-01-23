@@ -59,7 +59,6 @@
 					label="パスワード"
 					type="password"
 					variant="outlined"
-					:error-messages="passwordError"
 					@keyup.enter="verifyPassword"
 					autofocus
 				/>
@@ -333,8 +332,7 @@ import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { format } from 'date-fns'
 import { useHead } from '@unhead/vue'
 import { ShareNetwork } from 'vue3-social-sharing'
-import BlogCard from '@/components/BlogCard.vue'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 interface CommentData {
 	id: string
@@ -398,7 +396,6 @@ const comment = ref<Partial<CommentData>>({
 
 // パスワード認証関連
 const passwordInput = ref<string>('')
-const passwordError = ref<string>('')
 const passwordVerifying = ref<boolean>(false)
 const isPasswordVerified = ref<boolean>(false)
 
@@ -523,15 +520,14 @@ const copyUrl = async (): Promise<void> => {
 
 	try {
 		await navigator.clipboard.writeText(window.location.href)
-		await Swal.fire({
+		AppSwal.fire({
 			title: '成功',
 			text: 'リンクをコピーしました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 	} catch (error) {
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'リンクのコピーに失敗しました',
 			icon: 'error'
@@ -547,12 +543,6 @@ const handleXShare = (): void => {
 		return
 	}
 
-	// useHeadでメタタグを更新
-	// setup内で既にuseHeadを呼び出しているため、computedプロパティが自動的に更新される
-	// 明示的に更新する場合は、headオブジェクトのpatchメソッドを使用
-	// ただし、computedプロパティが既にリアクティブに更新しているため、この処理は不要な場合もある
-	// メタタグは既にsetup内のuseHeadでリアクティブに更新されているため、特に追加の処理は不要
-
 	// ShareNetworkコンポーネントのクリックをトリガー
 	if (shareNetworkRef.value) {
 		shareNetworkRef.value.$el.click()
@@ -564,7 +554,6 @@ const handleXShare = (): void => {
 
 // シェアウィンドウが開いた時の処理
 const onShareOpen = (): void => {
-	// シェアウィンドウが開いた後の処理があればここに記述
 }
 
 // 掲示板に投稿
@@ -652,7 +641,7 @@ const fetchCommentList = async (): Promise<void> => {
 		await commentStore.getList(blogDetail.value.id)
 	} catch (error) {
 		console.error('コメントの取得に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'コメントの取得に失敗しました',
 			icon: 'error'
@@ -704,7 +693,11 @@ const deleteFollowUser = async (): Promise<void> => {
 // パスワード認証
 const verifyPassword = async (): Promise<void> => {
 	if (!passwordInput.value.trim()) {
-		passwordError.value = 'パスワードを入力してください'
+		await AppSwal.fire({
+			title: '確認',
+			text: 'パスワードを入力してください',
+			icon: 'error'
+		})
 		return
 	}
 	passwordVerifying.value = true
@@ -718,11 +711,19 @@ const verifyPassword = async (): Promise<void> => {
 			isLoading.value = true
 			await fetchCommentList()
 		} else {
-			passwordError.value = 'パスワードが正しくありません'
+			AppSwal.fire({
+				title: 'エラー',
+				text: 'パスワードが正しくありません',
+				icon: 'error'
+			})
 		}
 	} catch (error) {
 		console.error('パスワード認証エラー:', error)
-		passwordError.value = '認証に失敗しました'
+		AppSwal.fire({
+			title: 'エラー',
+			text: '認証に失敗しました',
+			icon: 'error'
+		})
 	} finally {
 		passwordVerifying.value = false
 	}

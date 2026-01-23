@@ -86,7 +86,7 @@
 									<v-btn
 										icon="mdi-delete"
 										size="small"
-										:color="isImageDeletable(image) ? 'error' : 'grey'"
+										:color="isImageDeletable(image) ? 'red' : 'grey'"
 										variant="elevated"
 										:disabled="!isImageDeletable(image)"
 										@click.stop="openDeleteDialog(image)"
@@ -152,7 +152,7 @@
 <script setup lang="ts">
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useImagesStore } from '@/stores/imagesStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface ImageData {
@@ -270,12 +270,11 @@ const moveImage = async (): Promise<void> => {
 	emit('changeFolderList', selectedFolderId.value)
 	
 	// 移動完了メッセージ
-	Swal.fire({
+	AppSwal.fire({
 		title: '移動完了',
 		text: '画像を移動しました',
 		icon: 'success',
 		timer: 1500,
-		showConfirmButton: false
 	})
 	
 	imageToMove.value = null
@@ -297,45 +296,21 @@ const openDeleteDialog = async (image: ImageData): Promise<void> => {
 			message += `・${image.usedInMoments.length}件のつぶやきで使用されています。`
 		}
 		
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '削除不可',
 			text: message,
 			icon: 'warning',
-			confirmButtonColor: '#27C1A3',
-			confirmButtonText: '了解'
 		})
 		return
 	}
 
 	imageToDelete.value = image
 	
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'この画像を本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed && imageToDelete.value) {
@@ -344,12 +319,11 @@ const openDeleteDialog = async (image: ImageData): Promise<void> => {
 		emit('changeFolderList', selectedFolderId.value)
 		
 		// 削除完了メッセージ
-		Swal.fire({
+		AppSwal.fire({
 			title: '削除完了',
 			text: '画像を削除しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 	}
 }
@@ -363,12 +337,10 @@ const openBatchDeleteDialog = async (): Promise<void> => {
 	const nonDeletableImages = selectedForDelete.value.filter(image => !isImageDeletable(image))
 	
 	if (deletableImages.length === 0) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '削除不可',
 			text: '選択した画像はすべて削除できません。\nブログやつぶやきで使用されている画像は削除できません。',
 			icon: 'warning',
-			confirmButtonColor: '#27C1A3',
-			confirmButtonText: '了解'
 		})
 		return
 	}
@@ -378,33 +350,11 @@ const openBatchDeleteDialog = async (): Promise<void> => {
 		confirmMessage += `\n\n※${nonDeletableImages.length}件の画像は使用中のため削除されません。`
 	}
 	
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '一括削除確認',
 		text: confirmMessage,
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed) {
@@ -430,12 +380,11 @@ const deleteSelectedImages = async (): Promise<void> => {
 		message += `\n※${nonDeletableImages.length}件の画像は使用中のため削除されませんでした`
 	}
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '削除完了',
 		text: message,
 		icon: 'success',
 		timer: 2000,
-		showConfirmButton: false
 	})
 }
 
@@ -525,20 +474,5 @@ watch(() => props.selectedFolderId, (newValue) => {
 .usage-chip {
 	font-size: 10px !important;
 	height: 18px !important;
-}
-</style>
-
-<style>
-/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
-.swal2-confirm-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-
-.swal2-cancel-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
 }
 </style>

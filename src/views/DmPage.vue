@@ -385,7 +385,7 @@
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useDmStore } from '@/stores/dmStore'
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface OtherUser {
@@ -469,7 +469,7 @@ const refreshConversations = async (): Promise<void> => {
 		await dmStore.getConversations()
 	} catch (error) {
 		console.error('会話一覧の更新に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: '会話一覧の更新に失敗しました',
 			icon: 'error'
@@ -486,7 +486,7 @@ const selectConversation = async (conversationId: string): Promise<void> => {
 		await dmStore.markMessagesAsRead(conversationId)
 	} catch (error) {
 		console.error('メッセージの取得に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'メッセージの取得に失敗しました',
 			icon: 'error'
@@ -539,7 +539,7 @@ const sendNewMessage = async (): Promise<void> => {
 		
 	} catch (error) {
 		console.error('メッセージの送信に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'メッセージの送信に失敗しました',
 			icon: 'error'
@@ -807,7 +807,7 @@ const selectConversationByUserId = async (userId: string): Promise<void> => {
 		}
 	} catch (error) {
 		console.error('会話の選択に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: '会話の開始に失敗しました',
 			icon: 'error'

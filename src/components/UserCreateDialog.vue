@@ -91,7 +91,7 @@
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { GoogleLogin } from 'vue3-google-login'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface GoogleResponse {
@@ -179,22 +179,19 @@ const showRegistrationSuccessDialog = async (): Promise<void> => {
 	closeDialog()
 
 	try {
-		const result = await Swal.fire({
+		await AppSwal.fire({
 			title: '登録完了',
 			text: 'ユーザー登録が完了しました。初期設定画面に移動します。',
 			icon: 'success',
-			confirmButtonText: 'OK',
-			confirmButtonColor: '#F784C3',
-			showCancelButton: false,
-			allowOutsideClick: false,
-			allowEscapeKey: false
 		})
-		
-		if (result.isConfirmed) {
-			router.push('/setting_first')
-		}
+		router.push('/setting_first')
 	} catch (error) {
 		console.error('ダイアログエラー:', error)
+		await AppSwal.fire({
+			title: 'エラー',
+			text: 'ユーザー登録に失敗しました。初期設定画面に移動します。',
+			icon: 'error',
+		})
 		// ダイアログでエラーが発生した場合も設定画面にリダイレクト
 		router.push('/setting_first')
 	}

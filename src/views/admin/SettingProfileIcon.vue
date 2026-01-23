@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // ブログ設定
 const router = useRouter()
@@ -71,36 +71,31 @@ const updateSetting = async (): Promise<void> => {
 	try {
 		// blogSettingの存在チェック
 		if (!blogSetting.value) {
-			await Swal.fire({
+			await AppSwal.fire({
 				title: 'エラー',
 				text: 'ブログ設定が読み込まれていません',
 				icon: 'error',
-				confirmButtonColor: '#E0E0E0'
 			})
 			return
 		}
 
 		// 確認ダイアログを表示
-		const result = await Swal.fire({
+		const result = await AppSwal.fire({
 			title: '設定を完了しますか？',
 			text: 'プロフィール設定を保存して、ブログを開始します。',
 			icon: 'question',
-			showCancelButton: true,
+			showConfirmButton: true,
 			confirmButtonText: '完了する',
-			cancelButtonText: 'キャンセル',
-			confirmButtonColor: '#27C1A3',
-			cancelButtonColor: '#E0E0E0',
-			reverseButtons: true
 		})
 
 		if (result.isConfirmed) {
 			// ローディング表示
-			Swal.fire({
+			AppSwal.fire({
 				title: '保存中...',
 				text: 'プロフィール設定を保存しています',
 				allowOutsideClick: false,
 				allowEscapeKey: false,
-				showConfirmButton: false,
+				showCancelButton: false,
 				didOpen: () => {
 					Swal.showLoading()
 				}
@@ -111,12 +106,10 @@ const updateSetting = async (): Promise<void> => {
 			}
 			
 			// 成功ダイアログ
-			await Swal.fire({
+			await AppSwal.fire({
 				title: '設定完了',
 				text: 'プロフィール設定が完了しました。ブログを開始できます！',
 				icon: 'success',
-				confirmButtonText: 'ブログを開始',
-				confirmButtonColor: '#27C1A3'
 			})
 			
 			router.push('/')
@@ -124,11 +117,10 @@ const updateSetting = async (): Promise<void> => {
 	} catch (error) {
 		console.error('設定保存エラー:', error)
 		const errorMessage = error instanceof Error ? error.message : '設定の保存に失敗しました'
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonColor: '#E0E0E0'
 		})
 	}
 }
@@ -136,25 +128,19 @@ const updateSetting = async (): Promise<void> => {
 // 設定をスキップする処理
 const skipSetting = async (): Promise<void> => {
 	try {
-		const result = await Swal.fire({
+		const result = await AppSwal.fire({
 			title: '設定をスキップしますか？',
 			text: 'プロフィール画像の設定をスキップして、ブログを開始します。後から設定画面で変更できます。',
 			icon: 'question',
-			showCancelButton: true,
+			showConfirmButton: true,
 			confirmButtonText: 'スキップする',
-			cancelButtonText: 'キャンセル',
-			confirmButtonColor: '#27C1A3',
-			cancelButtonColor: '#E0E0E0',
-			reverseButtons: true
 		})
 
 		if (result.isConfirmed) {
-			await Swal.fire({
+			await AppSwal.fire({
 				title: 'ブログを開始',
 				text: 'ブログを開始します。設定は後から変更できます。',
 				icon: 'info',
-				confirmButtonText: 'OK',
-				confirmButtonColor: '#E0E0E0'
 			})
 			
 			router.push('/')
@@ -162,11 +148,10 @@ const skipSetting = async (): Promise<void> => {
 	} catch (error) {
 		console.error('スキップ処理エラー:', error)
 		const errorMessage = error instanceof Error ? error.message : '処理中にエラーが発生しました'
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonColor: '#E0E0E0'
 		})
 	}
 }

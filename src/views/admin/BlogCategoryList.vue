@@ -30,11 +30,10 @@
 							{{ formatDate(parentCategory.createdAt) }}
 						</v-list-item-subtitle>
 						<template v-slot:append>
-							<v-icon
-								class="delete-icon"
+							<v-btn
 								icon="mdi-delete"
-								aria-label="削除"
-								role="button"
+								color="red"
+								variant="text"
 								@click="openDeleteDialog(parentCategory)"
 							/>
 						</template>
@@ -83,11 +82,10 @@
 													@click="moveDown(item.id)"
 													class="mr-2"
 												/>
-												<v-icon
-													class="delete-icon"
+												<v-btn
 													icon="mdi-delete"
-													aria-label="削除"
-													role="button"
+													color="red"
+													variant="text"
 													@click="openDeleteDialog(item)"
 												/>
 											</div>
@@ -176,8 +174,8 @@
 <script setup lang="ts">
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
+import { AppSwal } from '@/utils/swal'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
 import draggable from 'vuedraggable'
 
 // 型定義
@@ -278,33 +276,11 @@ const openUpdateDialog = (category: BlogCategoryData): void => {
 const openDeleteDialog = async (category: BlogCategoryData): Promise<void> => {
 	categoryToDelete.value = category
 	
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'このカテゴリーを本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed && categoryToDelete.value) {
@@ -312,12 +288,11 @@ const openDeleteDialog = async (category: BlogCategoryData): Promise<void> => {
 		await fetchCategoryList()
 		
 		// 削除完了メッセージ
-		Swal.fire({
+		AppSwal.fire({
 			title: '削除完了',
 			text: 'カテゴリーを削除しました',
 			icon: 'success',
 			timer: 1500,
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -325,11 +300,10 @@ const openDeleteDialog = async (category: BlogCategoryData): Promise<void> => {
 // 新規カテゴリー作成
 const createCategory = async (): Promise<void> => {
 	if (!category.value.name.trim()) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'カテゴリー名を入力してください',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 		return
 	}
@@ -343,20 +317,18 @@ const createCategory = async (): Promise<void> => {
 
 		selectedPreCategoryID.value = null
 		category.value = { pre_category_id: null, name: "" }
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '成功',
 			text: 'カテゴリーが作成されました',
 			icon: 'success',
 			timer: 1500,
-			confirmButtonColor: '#27C1A3',
 		})
 	} catch (error) {
 		console.error('カテゴリー作成エラー:', error)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'カテゴリーの作成に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -366,11 +338,10 @@ const updateCategory = async (): Promise<void> => {
 	if (!categoryToUpdate.value) return
 	
 	if (!categoryToUpdate.value.name.trim()) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'カテゴリー名を入力してください',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 		return
 	}
@@ -380,11 +351,10 @@ const updateCategory = async (): Promise<void> => {
 
 		// 親と同一IDはNG
 		if (categoryToUpdate.value.pre_category_id == categoryToUpdate.value.id) {
-			await Swal.fire({
+			await AppSwal.fire({
 				title: 'エラー',
 				text: '同じカテゴリーは選択出来ません',
 				icon: 'error',
-				confirmButtonColor: '#27C1A3',
 			})
 			return
 		}
@@ -394,20 +364,18 @@ const updateCategory = async (): Promise<void> => {
 		await fetchCategoryList()
 
 		categoryToUpdate.value = null
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '成功',
 			text: 'カテゴリーを更新しました',
 			icon: 'success',
 			timer: 1500,
-			confirmButtonColor: '#27C1A3',
 		})
 	} catch (error) {
 		console.error('カテゴリー更新エラー:', error)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'カテゴリーの更新に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -418,11 +386,10 @@ const fetchCategoryList = async (): Promise<void> => {
 		await blogCategoryStore.getList()
 	} catch (error) {
 		console.error('カテゴリー一覧取得エラー:', error)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'カテゴリー一覧の取得に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -453,12 +420,11 @@ const onDragEnd = async (parentCategoryId: string): Promise<void> => {
 	
 	await blogCategoryStore.updateOrder(childCategoryIds)
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '順序を更新しました',
 		icon: 'success',
 		timer: 1500,
 		showConfirmButton: false,
-		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -466,12 +432,11 @@ const onDragEnd = async (parentCategoryId: string): Promise<void> => {
 const moveUp = async (categoryId: string): Promise<void> => {
 	await blogCategoryStore.moveOrder(categoryId, 'up')
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '順序を更新しました',
 		icon: 'success',
 		timer: 1500,
 		showConfirmButton: false,
-		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -479,12 +444,11 @@ const moveUp = async (categoryId: string): Promise<void> => {
 const moveDown = async (categoryId: string): Promise<void> => {
 	await blogCategoryStore.moveOrder(categoryId, 'down')
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '順序を更新しました',
 		icon: 'success',
 		timer: 1500,
 		showConfirmButton: false,
-		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -500,11 +464,6 @@ onMounted(async (): Promise<void> => {
 </script>
 
 <style scoped>
-	.delete-icon {
-		color: red;
-		cursor: pointer;
-	}
-	
 	.category-item {
 		cursor: move;
 	}
@@ -521,32 +480,4 @@ onMounted(async (): Promise<void> => {
 	.folder-title:hover {
 		text-decoration: underline;
 	}
-
-	/* SweetAlert2ボタンの固定幅スタイル */
-	:deep(.swal2-confirm-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-
-	:deep(.swal2-cancel-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-</style>
-
-<style>
-/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
-.swal2-confirm-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-
-.swal2-cancel-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
 </style>

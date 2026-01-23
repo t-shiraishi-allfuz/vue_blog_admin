@@ -272,7 +272,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useMomentStore } from '@/stores/momentStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 
@@ -568,16 +568,14 @@ const submitArticlePost = async (): Promise<void> => {
 		// ダイアログを閉じる
 		closeArticleDialog()
 
-		await Swal.fire({
+		AppSwal.fire({
 			title: '投稿しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false,
-			confirmButtonColor: '#27C1A3',
 		})
 	} catch (error: any) {
 		console.error('記事紹介投稿エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: error.message || '投稿に失敗しました',
 			icon: 'error'
@@ -601,16 +599,14 @@ const submitChatPost = async (): Promise<void> => {
 		// ダイアログを閉じる
 		closeChatDialog()
 
-		await Swal.fire({
+		AppSwal.fire({
 			title: '投稿しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false,
-			confirmButtonColor: '#27C1A3',
 		})
 	} catch (error: any) {
 		console.error('雑談投稿エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: error.message || '投稿に失敗しました',
 			icon: 'error'
@@ -622,30 +618,25 @@ const submitChatPost = async (): Promise<void> => {
 
 // 記事紹介投稿を削除
 const deleteArticlePost = async (postId: string): Promise<void> => {
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除しますか？',
 		text: 'この投稿を削除しますか？',
 		icon: 'warning',
-		showCancelButton: true,
-		confirmButtonColor: '#d33',
-		cancelButtonColor: '#6c757d',
+		showConfirmButton: true,
 		confirmButtonText: '削除する',
-		cancelButtonText: 'キャンセル'
 	})
 
 	if (result.isConfirmed) {
 		try {
 			await boardStore.deletePost(postId, 'article')
-			await Swal.fire({
+			AppSwal.fire({
 				title: '削除しました',
 				icon: 'success',
 				timer: 1500,
-				showConfirmButton: false,
-				confirmButtonColor: '#27C1A3',
 			})
 		} catch (error: any) {
 			console.error('削除エラー:', error)
-			await Swal.fire({
+			AppSwal.fire({
 				title: 'エラー',
 				text: error.message || '削除に失敗しました',
 				icon: 'error'
@@ -656,30 +647,25 @@ const deleteArticlePost = async (postId: string): Promise<void> => {
 
 // 雑談投稿を削除
 const deleteChatPost = async (postId: string): Promise<void> => {
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除しますか？',
 		text: 'この投稿を削除しますか？',
 		icon: 'warning',
-		showCancelButton: true,
-		confirmButtonColor: '#d33',
-		cancelButtonColor: '#6c757d',
+		showConfirmButton: true,
 		confirmButtonText: '削除する',
-		cancelButtonText: 'キャンセル'
 	})
 
 	if (result.isConfirmed) {
 		try {
 			await boardStore.deletePost(postId, 'chat')
-			await Swal.fire({
+			AppSwal.fire({
 				title: '削除しました',
 				icon: 'success',
 				timer: 1500,
-				showConfirmButton: false,
-				confirmButtonColor: '#27C1A3',
 			})
 		} catch (error: any) {
 			console.error('削除エラー:', error)
-			await Swal.fire({
+			AppSwal.fire({
 				title: 'エラー',
 				text: error.message || '削除に失敗しました',
 				icon: 'error'
@@ -738,4 +724,3 @@ onMounted(async () => {
 	border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 </style>
-

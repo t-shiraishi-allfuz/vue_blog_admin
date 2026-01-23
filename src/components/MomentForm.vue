@@ -192,7 +192,7 @@ import { useMomentStore } from '@/stores/momentStore'
 import { useTweetStore } from '@/stores/tweetStore'
 import { useImagesStore } from '@/stores/imagesStore'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 interface Props {
 	isEdit?: boolean
@@ -258,7 +258,7 @@ const fetchMomentDetail = async () => {
 		selectedTweetIds.value = [...momentDetail.value.tweetIds]
 	} catch (error) {
 		console.error('モーメント詳細の取得に失敗しました:', error)
-		Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'モーメントの取得に失敗しました',
 			icon: 'error'
@@ -374,12 +374,11 @@ const saveMoment = async () => {
 		}
 
 		const actionText = props.isEdit ? '更新' : '作成'
-		Swal.fire({
+		AppSwal.fire({
 			title: `${actionText}完了`,
 			text: `モーメントを${actionText}しました`,
 			icon: 'success',
-			timer: 1500,
-			showConfirmButton: false
+			timer: 1500
 		}).then(() => {
 			// 保存成功後に状態をクリア
 			if (!props.isEdit) {
@@ -391,7 +390,7 @@ const saveMoment = async () => {
 	} catch (error) {
 		console.error('モーメント保存エラー:', error)
 		const actionText = props.isEdit ? '更新' : '作成'
-		Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: `モーメントの${actionText}に失敗しました`,
 			icon: 'error'

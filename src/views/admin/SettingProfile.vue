@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 const BlogCategoryList = defineAsyncComponent(() => import('@/views/admin/BlogCategoryList.vue'))
 
 // ブログ設定
@@ -143,7 +143,7 @@ const settingForm = ref<any>(null)
 const updateSetting = async (): Promise<void> => {
 	// blogSettingの存在チェック
 	if (!blogSetting.value) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'ブログ設定が読み込まれていません',
 			icon: 'error'
@@ -164,15 +164,14 @@ const updateSetting = async (): Promise<void> => {
 		profileImage.value = null
 		
 		// 成功メッセージ
-		await Swal.fire({
+		AppSwal.fire({
 			title: '成功',
 			text: 'プロフィールが更新されました',
 			icon: 'success',
-			confirmButtonColor: '#27C1A3'
 		})
 	} catch (error) {
 		console.error('プロフィール更新エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'プロフィールの更新に失敗しました',
 			icon: 'error'

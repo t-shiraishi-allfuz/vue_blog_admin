@@ -76,37 +76,11 @@
 		:announcement-data="selectedAnnouncement as any"
 		@updated="onAnnouncementUpdated"
 	/>
-	
-	<v-dialog v-model="isDeleteDialog" max-width="400">
-		<v-card>
-			<v-card-title>削除確認</v-card-title>
-			<v-card-text>
-				このお知らせを削除しますか？この操作は取り消せません。
-			</v-card-text>
-			<v-card-actions>
-				<v-spacer></v-spacer>
-				<v-btn
-					color="grey-lighten-4"
-					variant="text"
-					@click="isDeleteDialog = false"
-				>
-					キャンセル
-				</v-btn>
-				<v-btn
-					color="error"
-					variant="elevated"
-					@click="confirmDelete"
-					:loading="deleting"
-				>
-					削除
-				</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
 </template>
 
 <script setup lang="ts">
 import { useAnnouncementStore } from '@/stores/announcementStore'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface AnnouncementData {
@@ -179,7 +153,6 @@ const loadAnnouncements = async (): Promise<void> => {
 		await announcementStore.getList()
 	} catch (error) {
 		console.error('お知らせ一覧取得エラー:', error)
-		alert('お知らせ一覧の取得に失敗しました')
 	} finally {
 		loading.value = false
 	}
@@ -202,26 +175,27 @@ const onAnnouncementUpdated = async (): Promise<void> => {
 	await loadAnnouncements()
 }
 
-const deleteAnnouncement = (announcement: AnnouncementData): void => {
+const deleteAnnouncement = async (announcement: AnnouncementData): Promise<void> => {
 	selectedAnnouncement.value = announcement
-	isDeleteDialog.value = true
-}
-
-const confirmDelete = async (): Promise<void> => {
-	if (!selectedAnnouncement.value) return
 	
-	deleting.value = true
-	try {
+	const result = await AppSwal.fire({
+		title: '削除確認',
+		text: 'このお知らせを本当に削除しますか？',
+		showConfirmButton: true,
+		confirmButtonText: '削除',
+	})
+
+	if (result.isConfirmed && selectedAnnouncement.value) {
 		await announcementStore.deleteAnnouncement(selectedAnnouncement.value.id)
 		await loadAnnouncements()
-		alert('お知らせを削除しました')
-	} catch (error) {
-		console.error('お知らせ削除エラー:', error)
-		alert('お知らせの削除に失敗しました')
-	} finally {
-		deleting.value = false
-		isDeleteDialog.value = false
-		selectedAnnouncement.value = null
+
+		// 削除完了メッセージ
+		AppSwal.fire({
+			title: '削除完了',
+			text: 'お知らせを削除しました',
+			icon: 'success',
+			timer: 1500,
+		})
 	}
 }
 

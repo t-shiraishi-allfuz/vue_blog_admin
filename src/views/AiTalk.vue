@@ -226,7 +226,7 @@ import { useChat } from '@/api/openai'
 import { useAiSettingStore } from '@/stores/aiSettingStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { useCoinStore } from '@/stores/coinStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 消費コスト
 const AI_TALK_COST = 20
@@ -299,21 +299,17 @@ const applyPersona = async () => {
 		await setSystemMessage(imageArray, persona.value, characterName.value)
 		initRefs()
 
-		await Swal.fire({
+		AppSwal.fire({
 			title: '確認',
 			text: '設定を保存しました',
 			icon: 'success',
-			confirmButtonColor: '#27C1A3',
-			confirmButtonText: 'OK'
 		})
 	} catch (error: any) {
 		console.error('設定の適用エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: error.message || '設定の適用に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#d33',
-			confirmButtonText: 'OK'
 		})
 	}
 }
@@ -328,24 +324,20 @@ const resetChat = async () => {
 	await resetConversation()
 	initRefs()
 	
-	await Swal.fire({
+	AppSwal.fire({
 		title: 'リセット完了',
 		text: '会話履歴をリセットしました',
 		icon: 'success',
-		confirmButtonColor: '#27C1A3',
-		confirmButtonText: 'OK'
 	})
 }
 
 const handleSend = async () => {
 	if (!userInput.value.trim()) return
 	if (!hasEnoughCoins.value) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'コインが不足しています',
 			text: `AIトークには${AI_TALK_COST}コイン必要です。トークを続ける場合は、チャージをしてください。`,
 			icon: 'warning',
-			confirmButtonColor: '#27C1A3',
-			confirmButtonText: 'OK'
 		})
 		return
 	}

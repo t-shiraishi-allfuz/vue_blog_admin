@@ -67,9 +67,3 @@ onMounted(async (): Promise<void> => {
 	await fetchLikeList()
 })
 </script>
-
-<style scoped>
-	.delete-icon {
-		color: red;
-	}
-</style>

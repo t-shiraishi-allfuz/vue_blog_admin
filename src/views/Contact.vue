@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import { useContactStore } from '@/stores/contactStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 interface ContactForm {
 	email: string
@@ -125,30 +125,22 @@ const submitContact = async (): Promise<void> => {
 			message: contactForm.value.message
 		})
 		
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '送信完了',
 			text: 'お問い合わせを受け付けました。ありがとうございます。',
 			icon: 'success',
-			confirmButtonColor: '#27C1A3',
-			confirmButtonText: 'OK'
 		})
 		
 		resetForm()
 	} catch (error: any) {
 		console.error('お問い合わせ送信エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'お問い合わせの送信に失敗しました。もう一度お試しください。',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
-			confirmButtonText: 'OK'
 		})
 	} finally {
 		isSubmitting.value = false
 	}
 }
 </script>
-
-<style scoped>
-</style>
-

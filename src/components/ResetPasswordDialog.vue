@@ -55,7 +55,7 @@
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useUsersStore } from '@/stores/usersStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 const dialog = defineModel<boolean>('dialog')
 
@@ -87,7 +87,7 @@ const closeDialog = (): void => {
 const resetPassword = async (): Promise<void> => {
 	if (!email.value) {
 		errorMessage.value = 'メールアドレスが入力されていません'
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: errorMessage.value,
 			icon: 'error'
@@ -102,7 +102,7 @@ const resetPassword = async (): Promise<void> => {
 		const user = await usersStore.getUserByEmail(email.value)
 		if (!user) {
 			errorMessage.value = 'このメールアドレスは登録されていません'
-			await Swal.fire({
+			await AppSwal.fire({
 				title: 'エラー',
 				text: errorMessage.value,
 				icon: 'error'
@@ -111,19 +111,18 @@ const resetPassword = async (): Promise<void> => {
 		}
 
 		await authStore.resetPassword(email.value)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '成功',
 			text: 'パスワードリセットメールが送信されました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 		initRefs()
 	} catch (error: any) {
 		console.error('パスワードリセットエラー:', error)
 		const msg = error?.message || 'パスワードリセットメールの送信に失敗しました'
 		errorMessage.value = msg
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: msg,
 			icon: 'error'

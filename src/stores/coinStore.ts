@@ -12,16 +12,16 @@ interface CoinData {
 
 export const useCoinStore = defineStore('coin', () => {
 	const coins = ref<number>(0)
+	const MAX_COINS = ref<number>(999999)
+	const DEFAULT_COINS = ref<number>(0)
 	const authStore = useAuthStore()
-	const MAX_COINS = 999999
-	const DEFAULT_COINS = 0
 
 	// コイン情報を取得
 	const getCoins = async (): Promise<void> => {
 		const userInfo = authStore.getUserInfo()
 		
 		if (!userInfo || !userInfo.uid) {
-			coins.value = DEFAULT_COINS
+			coins.value = DEFAULT_COINS.value
 			return
 		}
 
@@ -33,14 +33,14 @@ export const useCoinStore = defineStore('coin', () => {
 			
 			if (doc && doc.exists()) {
 				const data = doc.data() as CoinData
-				coins.value = data.coins || DEFAULT_COINS
+				coins.value = data.coins || DEFAULT_COINS.value
 			} else {
 				// ドキュメントが存在しない場合はデフォルト値を使用
-				coins.value = DEFAULT_COINS
+				coins.value = DEFAULT_COINS.value
 			}
 		} catch (error) {
 			console.error('コイン情報の取得エラー:', error)
-			coins.value = DEFAULT_COINS
+			coins.value = DEFAULT_COINS.value
 		}
 	}
 
@@ -57,8 +57,8 @@ export const useCoinStore = defineStore('coin', () => {
 		}
 
 		try {
-			const currentCoins = coins.value || DEFAULT_COINS
-			const newCoins = Math.min(currentCoins + amount, MAX_COINS)
+			const currentCoins = coins.value || DEFAULT_COINS.value
+			const newCoins = Math.min(currentCoins + amount, MAX_COINS.value)
 			
 			const now = new Date()
 			// 既存のコインデータからcreatedAtを取得、なければnowを使用
@@ -114,7 +114,7 @@ export const useCoinStore = defineStore('coin', () => {
 		}
 
 		try {
-			const currentCoins = coins.value || DEFAULT_COINS
+			const currentCoins = coins.value || DEFAULT_COINS.value
 			
 			if (currentCoins < amount) {
 				return false // コインが不足
@@ -161,12 +161,12 @@ export const useCoinStore = defineStore('coin', () => {
 
 	// コインが十分にあるかチェック
 	const hasEnoughCoins = (amount: number): boolean => {
-		return (coins.value || DEFAULT_COINS) >= amount
+		return (coins.value || DEFAULT_COINS.value) >= amount
 	}
 
 	// ストアをクリア
 	const clearStore = (): void => {
-		coins.value = DEFAULT_COINS
+		coins.value = DEFAULT_COINS.value
 	}
 
 	return {

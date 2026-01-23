@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { useTweetStore } from '@/stores/tweetStore'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 const router = useRouter()
 const tweetStore = useTweetStore()
@@ -172,33 +172,11 @@ watch(isTweetDialogOpen, (newValue) => {
 const openDeleteDialog = async (tweet: any) => {
 	tweetToDelete.value = tweet
 	
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'このつぶやきを本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed && tweetToDelete.value) {
@@ -207,16 +185,15 @@ const openDeleteDialog = async (tweet: any) => {
 			await fetchTweetList()
 			
 			// 削除完了メッセージ
-			Swal.fire({
+			AppSwal.fire({
 				title: '削除完了',
 				text: 'つぶやきを削除しました',
 				icon: 'success',
 				timer: 1500,
-				showConfirmButton: false
 			})
 		} catch (error) {
 			console.error('つぶやき削除エラー:', error)
-			Swal.fire({
+			AppSwal.fire({
 				title: 'エラー',
 				text: 'つぶやきの削除に失敗しました',
 				icon: 'error'
@@ -286,32 +263,4 @@ onMounted(async () => {
 	.clickable-content:hover {
 		background-color: rgba(0, 0, 0, 0.04);
 	}
-
-	/* SweetAlert2ボタンの固定幅スタイル */
-	:deep(.swal2-confirm-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-
-	:deep(.swal2-cancel-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-</style>
-
-<style>
-/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
-.swal2-confirm-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-
-.swal2-cancel-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
 </style>

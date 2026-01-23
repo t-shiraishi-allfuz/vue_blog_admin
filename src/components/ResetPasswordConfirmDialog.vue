@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 const dialog = defineModel<boolean>('dialog')
 
@@ -101,7 +101,7 @@ const resetPassword = async (): Promise<void> => {
 	closeDialog()
 
 	if (password.value !== confirmPassword.value) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'パスワードが一致しません',
 			icon: 'error'
@@ -110,7 +110,7 @@ const resetPassword = async (): Promise<void> => {
 	}
 
 	if (!oobCode.value) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'パスワード再設定コードがありません',
 			icon: 'error'
@@ -120,12 +120,11 @@ const resetPassword = async (): Promise<void> => {
 
 	try {
 		await authStore.resetPasswordConfirm(oobCode.value, password.value)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '成功',
 			text: 'パスワードがリセットされました',
 			icon: 'success',
-			timer: 1500,
-			showConfirmButton: false
+			timer: 1500
 		})
 
 		await authStore.initializeAuth()
@@ -133,7 +132,7 @@ const resetPassword = async (): Promise<void> => {
 		emit('openLogin')
 	} catch (error: unknown) {
 		const errorMessage = error instanceof Error ? error.message : 'パスワードのリセットに失敗しました'
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error'

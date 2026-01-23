@@ -123,7 +123,7 @@ import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { useBlogCategoryStore } from '@/stores/blogCategoryStore'
 import { useCoinStore } from '@/stores/coinStore'
 import { VueEditor } from "vue3-editor"
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface BlogData {
@@ -252,7 +252,7 @@ const BLOG_POST_COST = 10
 
 const submitPost = async () => {
 	if (!blog.value.title || !blog.value.content) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'タイトルまたは本文が入力されていません',
 			icon: 'error'
@@ -263,11 +263,10 @@ const submitPost = async () => {
 	// 閲覧制限付き投稿時のみコインチェック
 	if (blog.value.isAdult && !props.isUpdate) {
 		if (!coinStore.hasEnoughCoins(BLOG_POST_COST)) {
-			await Swal.fire({
+			await AppSwal.fire({
 				title: 'コインが不足しています',
 				text: `閲覧制限付きの投稿には${BLOG_POST_COST}コイン必要です。チャージしてください。`,
 				icon: 'warning',
-				confirmButtonColor: '#27C1A3'
 			})
 			return
 		}
@@ -286,21 +285,19 @@ const submitPost = async () => {
 			try {
 				const consumed = await coinStore.consumeCoins(BLOG_POST_COST)
 				if (!consumed) {
-					await Swal.fire({
+					await AppSwal.fire({
 						title: 'コイン消費に失敗しました',
 						text: `閲覧制限付きの投稿には${BLOG_POST_COST}コイン必要です。チャージしてください。`,
 						icon: 'warning',
-						confirmButtonColor: '#27C1A3'
 					})
 					return
 				}
 			} catch (err) {
 				console.error('コイン消費エラー:', err)
-				await Swal.fire({
+				await AppSwal.fire({
 					title: 'エラー',
 					text: 'コインの消費に失敗しました。再度お試しください。',
 					icon: 'error',
-					confirmButtonColor: '#d33'
 				})
 				return
 			}
@@ -308,34 +305,31 @@ const submitPost = async () => {
 
 		if (blog.value.isPublished) {
 			if (props.isUpdate) {
-				await Swal.fire({
+				await AppSwal.fire({
 					title: '成功',
 					text: 'ブログが更新されました',
 					icon: 'success',
 					timer: 1500,
-					showConfirmButton: false
 				})
 			} else {
-				await Swal.fire({
+				await AppSwal.fire({
 					title: '成功',
 					text: 'ブログが投稿されました',
 					icon: 'success',
 					timer: 1500,
-					showConfirmButton: false
 				})
 			}
 		} else {
-			await Swal.fire({
+			await AppSwal.fire({
 				title: '成功',
 				text: '下書き保存されました',
 				icon: 'success',
 				timer: 1500,
-				showConfirmButton: false
 			})
 		}
 	} catch (error) {
 		console.error('ブログ投稿エラー:', error)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'ブログの投稿に失敗しました',
 			icon: 'error'

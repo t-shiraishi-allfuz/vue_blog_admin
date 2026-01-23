@@ -1,0 +1,9 @@
+.swal2-confirm, .swal2-cancel {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+.swal2-actions {
+	gap: 15px;
+}

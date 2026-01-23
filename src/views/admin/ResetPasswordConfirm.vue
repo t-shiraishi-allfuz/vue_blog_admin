@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 const route = useRoute()
 const oobCode = route.query.oobCode as string
@@ -53,7 +53,7 @@ const changeVisible = (): void => {
 // パスワードリセット
 const resetPassword = async (): Promise<void> => {
 	if (password.value !== confirmPassword.value) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'パスワードが一致しません',
 			icon: 'error'
@@ -62,7 +62,7 @@ const resetPassword = async (): Promise<void> => {
 	}
 
 	if (!oobCode) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: 'パスワード再設定コードがありません',
 			icon: 'error'
@@ -72,19 +72,18 @@ const resetPassword = async (): Promise<void> => {
 
 	try {
 		await authStore.resetPasswordConfirm(oobCode, password.value)
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '成功',
 			text: 'パスワードがリセットされました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 
 		await authStore.initializeAuth()
 		router.push({path: "/user_login"})
 	} catch(error) {
 		console.error('パスワードリセットエラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'パスワードのリセットに失敗しました',
 			icon: 'error'
@@ -94,7 +93,7 @@ const resetPassword = async (): Promise<void> => {
 
 onMounted(async (): Promise<void> => {
 	if (!oobCode) {
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'パスワード再設定コードがありません',
 			icon: 'error'

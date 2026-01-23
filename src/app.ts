@@ -1,3 +1,5 @@
+import '@/assets/css/app.css'
+import '@/assets/css/sweetalert-custom.css'
 import 'element-plus/dist/index.css'
 import VueSweetalert2 from 'vue-sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'

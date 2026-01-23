@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { useCommentStore } from '@/stores/commentStore'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface CommentData {
@@ -84,33 +84,11 @@ const fetchCommentList = async (): Promise<void> => {
 const openDeleteDialog = async (comment: CommentData): Promise<void> => {
 	commentToDelete.value = comment
 
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'このコメントを本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed && commentToDelete.value) {
@@ -118,12 +96,11 @@ const openDeleteDialog = async (comment: CommentData): Promise<void> => {
 		await fetchCommentList()
 		
 		// 削除完了メッセージ
-		Swal.fire({
+		AppSwal.fire({
 			title: '削除完了',
 			text: 'コメントを削除しました',
 			icon: 'success',
 			timer: 1500,
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }

@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // ブログ設定
 const router = useRouter()
@@ -39,50 +39,43 @@ const updateSetting = async (): Promise<void> => {
 	try {
 		// blogSettingの存在チェック
 		if (!blogSetting.value) {
-			await Swal.fire({
+			await AppSwal.fire({
 				title: 'エラー',
 				text: 'ブログ設定が読み込まれていません',
 				icon: 'error',
-				confirmButtonColor: '#E0E0E0'
 			})
 			return
 		}
 
 		// 確認ダイアログを表示
-		const result = await Swal.fire({
+		const result = await AppSwal.fire({
 			title: '設定を保存しますか？',
 			text: 'ブログのタイトルと説明を保存して、次の設定画面に進みます。',
 			icon: 'question',
-			showCancelButton: true,
+			showConfirmButton: true,
 			confirmButtonText: '保存する',
-			cancelButtonText: 'キャンセル',
-			confirmButtonColor: '#27C1A3',
-			cancelButtonColor: '#E0E0E0',
-			reverseButtons: true
 		})
 
 		if (result.isConfirmed) {
 			// ローディング表示
-			Swal.fire({
+			AppSwal.fire({
 				title: '保存中...',
 				text: '設定を保存しています',
 				allowOutsideClick: false,
 				allowEscapeKey: false,
-				showConfirmButton: false,
+				showCancelButton: false,
 				didOpen: () => {
-					Swal.showLoading()
+					AppSwal.showLoading()
 				}
 			})
 
 			await blogSettingStore.update(null, blogSetting.value as any)
 			
 			// 成功ダイアログ
-			await Swal.fire({
+			await AppSwal.fire({
 				title: '保存完了',
 				text: 'ブログの基本設定が保存されました。',
 				icon: 'success',
-				confirmButtonText: '次へ',
-				confirmButtonColor: '#27C1A3'
 			})
 			
 			router.push({path: "/setting_profile_icon"})
@@ -90,11 +83,10 @@ const updateSetting = async (): Promise<void> => {
 	} catch (error) {
 		console.error('設定保存エラー:', error)
 		const errorMessage = error instanceof Error ? error.message : '設定の保存に失敗しました'
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: errorMessage,
 			icon: 'error',
-			confirmButtonColor: '#E0E0E0'
 		})
 	}
 }

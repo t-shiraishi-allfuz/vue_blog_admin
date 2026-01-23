@@ -98,7 +98,7 @@
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface AnnouncementData {
@@ -175,24 +175,20 @@ const saveAnnouncement = async (): Promise<void> => {
 		// フォームをリセット
 		closeDialog()
 
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '確認',
 			text: 'お知らせを作成しました',
 			icon: 'success',
-			confirmButtonText: '閉じる',
-			confirmButtonColor: '#E0E0E0'
 		})
 
 		// 親コンポーネントに保存完了を通知
 		emit('saved')
 	} catch (error: any) {
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'お知らせの作成に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#E0E0E0'
 		})
-		return
 	} finally {
 		loading.value = false
 	}

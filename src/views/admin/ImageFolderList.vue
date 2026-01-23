@@ -47,11 +47,10 @@
 										@click="moveDown(item.id)"
 										class="mr-2"
 									/>
-									<v-icon
-										class="delete-icon"
+									<v-btn
+										color="red"
 										icon="mdi-delete"
-										aria-label="削除"
-										role="button"
+										variant="text"
 										@click="openDeleteDialog(item)"
 									/>
 								</div>
@@ -115,7 +114,7 @@
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 import draggable from 'vuedraggable'
 
 // 型定義
@@ -197,27 +196,11 @@ const openUpdateDialog = (folder: FolderData): void => {
 const openDeleteDialog = async (folder: FolderData): Promise<void> => {
 	folderToDelete.value = folder
 	
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'この画像フォルダを本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) confirmBtn.style.width = '150px'
-			if (cancelBtn) cancelBtn.style.width = '150px'
-		}
 	})
 
 	if (result.isConfirmed && folderToDelete.value) {
@@ -225,12 +208,11 @@ const openDeleteDialog = async (folder: FolderData): Promise<void> => {
 		await fetchList()
 		
 		// 削除完了メッセージ
-		Swal.fire({
+		AppSwal.fire({
 			title: '削除完了',
 			text: '画像フォルダを削除しました',
 			icon: 'success',
 			timer: 1500,
-			confirmButtonColor: '#27C1A3',
 		})
 		
 		folderToDelete.value = null
@@ -273,12 +255,10 @@ const onDragEnd = async (): Promise<void> => {
 	const folderIds = sortedFolderList.value.map(f => f.id)
 	await imagesFolderStore.updateOrder(folderIds)
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '順序を更新しました',
 		icon: 'success',
 		timer: 1500,
-		showConfirmButton: false,
-		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -296,12 +276,10 @@ const moveUp = async (folderId: string): Promise<void> => {
 	const folderIds = newList.map(f => f.id)
 	await imagesFolderStore.updateOrder(folderIds)
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '順序を更新しました',
 		icon: 'success',
 		timer: 1500,
-		showConfirmButton: false,
-		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -319,12 +297,10 @@ const moveDown = async (folderId: string): Promise<void> => {
 	const folderIds = newList.map(f => f.id)
 	await imagesFolderStore.updateOrder(folderIds)
 	
-	Swal.fire({
+	AppSwal.fire({
 		title: '順序を更新しました',
 		icon: 'success',
 		timer: 1500,
-		showConfirmButton: false,
-		confirmButtonColor: '#27C1A3',
 	})
 }
 
@@ -334,11 +310,6 @@ onMounted(async (): Promise<void> => {
 </script>
 
 <style scoped>
-	.delete-icon {
-		color: red;
-		cursor: pointer;
-	}
-	
 	.folder-item {
 		cursor: move;
 	}

@@ -25,18 +25,6 @@
 						@click:append-inner="changeVisible"
 						class="mb-4"
 					/>
-					
-					<v-alert
-						v-if="errorMessage"
-						type="error"
-						variant="tonal"
-						closable
-						@click:close="errorMessage = ''"
-						class="mb-4"
-					>
-						{{ errorMessage }}
-					</v-alert>
-					
 					<div class="text-center mb-4">
 						<v-btn
 							variant="text"
@@ -102,7 +90,7 @@ import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
 import { GoogleLogin } from 'vue3-google-login'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface GoogleResponse {
@@ -136,7 +124,6 @@ const visibleIcon = ref<string>("mdi-eye-off")
 const visibleType = ref<string>('password')
 const isGoogleLoading = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
-const errorMessage = ref<string>('')
 const dialogTemplateRef = ref<InstanceType<typeof DialogTemplate> | null>(null)
 
 const googleClientId = computed((): string => {
@@ -171,7 +158,6 @@ const changeVisible = (): void => {
 const initRefs = (): void => {
 	email.value = ''
 	password.value = ''
-	errorMessage.value = ''
 }
 
 const closeDialog = (): void => {
@@ -199,20 +185,12 @@ const showLoginSuccessDialog = async (): Promise<void> => {
 		// ログイン成功後、ブログ設定を取得
 		await blogSettingStore.getDetail()
 		
-		const result = await Swal.fire({
+		await AppSwal.fire({
 			title: 'ログイン完了',
 			text: 'ログインが完了しました。',
 			icon: 'success',
-			confirmButtonText: 'OK',
-			confirmButtonColor: '#F784C3',
-			showCancelButton: false,
-			allowOutsideClick: false,
-			allowEscapeKey: false
 		})
-		
-		if (result.isConfirmed) {
-			initRefs()
-		}
+		initRefs()
 	} catch (error: any) {
 		console.error('ダイアログエラー:', error)
 		initRefs()
@@ -222,14 +200,16 @@ const showLoginSuccessDialog = async (): Promise<void> => {
 // ログイン処理
 const loginUser = async (): Promise<void> => {
 	try {
-		errorMessage.value = ''
 		isLoading.value = true
 		
 		await authStore.login(email.value, password.value)
 		await showLoginSuccessDialog()
 	} catch (error: any) {
-		console.error('ログインエラー:', error)
-		errorMessage.value = error.message || 'ログインに失敗しました'
+		await AppSwal.fire({
+			title: 'エラー',
+			text: 'ログインに失敗しました',
+			icon: 'error',
+		})
 	} finally {
 		isLoading.value = false
 	}
@@ -238,7 +218,6 @@ const loginUser = async (): Promise<void> => {
 // Google認証でログイン
 const handleGoogleLogin = async (response: GoogleResponse): Promise<void> => {
 	try {
-		errorMessage.value = ''
 		isGoogleLoading.value = true
 		
 		await authStore.loginWithGoogle(response)
@@ -247,18 +226,28 @@ const handleGoogleLogin = async (response: GoogleResponse): Promise<void> => {
 		if (authStore.isLogin) {
 			await showLoginSuccessDialog()
 		} else {
-			errorMessage.value = 'ログインに失敗しました'
+			AppSwal.fire({
+				title: 'エラー',
+				text: 'ログインに失敗しました',
+				icon: 'error',
+			})
 		}
 	} catch (error: any) {
-		console.error('Google認証エラー:', error)
-		errorMessage.value = error.message || 'Google認証に失敗しました'
+		AppSwal.fire({
+			title: 'エラー',
+			text: 'ログインに失敗しました',
+			icon: 'error',
+		})
 	} finally {
 		isGoogleLoading.value = false
 	}
 }
 
 const handleGoogleError = (error: any): void => {
-	console.error('Google認証エラー:', error)
-	errorMessage.value = 'Google認証でエラーが発生しました'
+	AppSwal.fire({
+		title: 'エラー',
+		text: 'Google認証でエラーが発生しました',
+		icon: 'error',
+	})
 }
 </script>

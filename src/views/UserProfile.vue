@@ -8,13 +8,10 @@
 						size="120"
 						class="mb-4"
 					/>
-					
 					<h2 class="text-h4 mb-2">{{ userProfile?.title || 'ユーザー' }}</h2>
 					<p class="text-body-1 text-grey mb-4">
 						{{ userProfile?.description || 'プロフィール情報がありません' }}
 					</p>
-					
-					<!-- ソーシャルリンク -->
 					<div 
 						v-if="userProfile && (userProfile.xUrl || userProfile.youtubeUrl || userProfile.instagramUrl)"
 						class="d-flex justify-center align-center mb-4 social-links"
@@ -53,7 +50,6 @@
 							<v-icon>mdi-instagram</v-icon>
 						</v-btn>
 					</div>
-					
 					<v-row class="text-center">
 						<v-col cols="4">
 							<div class="text-h6">{{ userStats?.blogCount || 0 }}</div>
@@ -198,7 +194,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useBlogStore } from '@/stores/blogStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface UserProfile {
@@ -276,7 +272,7 @@ const fetchUserProfile = async (): Promise<void> => {
 		}
 	} catch (error: any) {
 		console.error('ユーザープロフィールの取得に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'ユーザー情報の取得に失敗しました',
 			icon: 'error'
@@ -363,7 +359,7 @@ const toggleFollow = async (): Promise<void> => {
 		}
 	} catch (error) {
 		console.error('フォロー操作に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'フォロー操作に失敗しました',
 			icon: 'error'
@@ -407,15 +403,11 @@ const goToDmPage = (): void => {
 
 // ソーシャルリンクを開く
 const openSocialLink = async (platform: string, url: string): Promise<void> => {
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '外部サイトに遷移します',
 		html: `${platform}のページへ移動しますか？<br><small class="text-grey">${url}</small>`,
 		icon: 'info',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		confirmButtonText: '遷移する',
-		cancelButtonText: '閉じる',
-		reverseButtons: true
+		showConfirmButton: true,
 	})
 
 	if (result.isConfirmed) {

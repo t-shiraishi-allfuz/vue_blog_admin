@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAnnouncementStore } from '@/stores/announcementStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 interface AnnouncementData {
 	id: string
@@ -196,22 +196,19 @@ const updateAnnouncement = async () => {
 		})
 		closeDialog()
 
-		await Swal.fire({
+		await AppSwal.fire({
 			title: '確認',
 			text: 'お知らせを更新しました',
-			icon: 'success',
-			confirmButtonText: '閉じる',
-			confirmButtonColor: '#E0E0E0'
+			icon: 'success'
 		})
 		
 		// 親コンポーネントに更新完了を通知
 		emit('updated')
 	} catch (error) {
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'お知らせの更新に失敗しました',
-			icon: 'error',
-			confirmButtonColor: '#E0E0E0'
+			icon: 'error'
 		})
 	} finally {
 		loading.value = false

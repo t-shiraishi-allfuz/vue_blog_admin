@@ -91,11 +91,10 @@
 							</div>
 						</template>
 						<template v-slot:[`item.actions`]="{ item }">
-							<v-icon
+							<v-btn
 								color="red"
 								icon="mdi-delete"
-								aria-label="削除"
-								role="button"
+								variant="text"
 								@click="openDeleteDialog(item)"
 							/>
 						</template>
@@ -125,7 +124,7 @@
 <script setup lang="ts">
 import { useBlogStore } from '@/stores/blogStore'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 import MomentList from '@/views/admin/MomentList.vue'
 
 const router = useRouter()
@@ -157,33 +156,11 @@ const fetchBlogList = async () => {
 const openDeleteDialog = async (blog: any) => {
 	blogToDelete.value = blog
 	
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'この記事を本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed && blogToDelete.value) {
@@ -191,12 +168,11 @@ const openDeleteDialog = async (blog: any) => {
 		await fetchBlogList()
 		
 		// 削除完了メッセージ
-		Swal.fire({
+		AppSwal.fire({
 			title: '削除完了',
 			text: '記事を削除しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 	}
 }
@@ -248,32 +224,4 @@ onMounted(async () => {
 	.content-list {
 		margin-top: 20px;
 	}
-
-	/* SweetAlert2ボタンの固定幅スタイル */
-	:deep(.swal2-confirm-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-
-	:deep(.swal2-cancel-fixed-width) {
-		min-width: 150px !important;
-		width: 150px !important;
-		box-sizing: border-box !important;
-	}
-</style>
-
-<style>
-/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
-.swal2-confirm-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-
-.swal2-cancel-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
 </style>

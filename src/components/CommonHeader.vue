@@ -89,7 +89,7 @@ import { useNotificationStore } from '@/stores/notificationStore'
 import { useAnnouncementStore } from '@/stores/announcementStore'
 import { useDmStore } from '@/stores/dmStore'
 import { useCoinStore } from '@/stores/coinStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 const router = useRouter()
 const route = useRoute()
@@ -162,33 +162,11 @@ watch(isLogin, async (newIsLogin: boolean): Promise<void> => {
 
 const logout = async (): Promise<void> => {
 	try {
-		const result = await Swal.fire({
+		const result = await AppSwal.fire({
 			title: '確認',
 			text: 'ログアウトしますか？',
-			showCancelButton: true,
-			confirmButtonColor: '#27C1A3',
-			cancelButtonColor: '#9e9e9e',
+			showConfirmButton: true,
 			confirmButtonText: 'ログアウト',
-			cancelButtonText: 'キャンセル',
-			reverseButtons: true,
-			buttonsStyling: true,
-			customClass: {
-				confirmButton: 'swal2-confirm-fixed-width',
-				cancelButton: 'swal2-cancel-fixed-width'
-			},
-			didOpen: () => {
-				// ダイアログが開いた後にボタンのスタイルを適用
-				const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-				const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-				if (confirmBtn) {
-					confirmBtn.style.minWidth = '150px'
-					confirmBtn.style.width = '150px'
-				}
-				if (cancelBtn) {
-					cancelBtn.style.minWidth = '150px'
-					cancelBtn.style.width = '150px'
-				}
-			}
 		})
 
 		if (result.isConfirmed) {
@@ -203,7 +181,7 @@ const logout = async (): Promise<void> => {
 		}
 	} catch (error: any) {
 		console.error('ログアウトエラー:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'ログアウトに失敗しました',
 			icon: 'error'
@@ -255,33 +233,3 @@ const executeSearch = (): void => {
 	}
 }
 </script>
-
-<style scoped>
-/* SweetAlert2ボタンの固定幅スタイル */
-:deep(.swal2-confirm-fixed-width) {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-
-:deep(.swal2-cancel-fixed-width) {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-</style>
-
-<style>
-/* グローバルスタイルでSweetAlert2ボタンの幅を固定 */
-.swal2-confirm-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-
-.swal2-cancel-fixed-width {
-	min-width: 150px !important;
-	width: 150px !important;
-	box-sizing: border-box !important;
-}
-</style>

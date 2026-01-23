@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { useImagesStore } from '@/stores/imagesStore'
 import { useImagesFolderStore } from '@/stores/imagesFolderStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface PreviewFile {
@@ -160,11 +160,10 @@ const handleFileUpload = (event: Event): void => {
 // 画像をサーバーにアップロードする処理
 const submitImages = async (): Promise<void> => {
 	if (selectedFiles.value.length === 0) {
-		await Swal.fire({
+		await AppSwal.fire({
 			title: 'エラー',
 			text: '画像を選択してください',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 		return
 	}
@@ -179,19 +178,17 @@ const submitImages = async (): Promise<void> => {
 		previewFiles.value = []
 		fileInputValue.value = null
 
-		await Swal.fire({
+		AppSwal.fire({
 			title: '成功',
 			text: '画像がアップロードされました',
 			icon: 'success',
-			confirmButtonColor: '#27C1A3',
 		})
 	} catch (error) {
 		console.error('画像アップロードエラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: '画像のアップロードに失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }

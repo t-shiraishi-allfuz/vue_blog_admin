@@ -1,0 +1,10 @@
+.v-dialog .v-card-actions .v-btn {
+	min-width: 150px !important;
+	width: 150px !important;
+	box-sizing: border-box !important;
+}
+
+.v-dialog .v-card-actions {
+	padding: 16px !important;
+	gap: 8px;
+}

@@ -49,27 +49,24 @@
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
 					<div class="d-flex gap-2">
-						<v-icon
-							class="view-icon"
+						<v-btn
+							color="info"
 							icon="mdi-eye"
-							aria-label="詳細"
-							role="button"
+							variant="text"
 							@click="viewDetail(item)"
 						/>
-						<v-icon
+						<v-btn
 							v-if="canReply(item)"
-							class="reply-icon"
+							color="blue"
 							icon="mdi-reply"
-							aria-label="返信"
-							role="button"
+							variant="text"
 							@click="openReplyDialog(item)"
 						/>
-						<v-icon
+						<v-btn
 							v-if="isOwner || (authStore.userInfo && item.uid === authStore.userInfo.uid)"
-							class="delete-icon"
+							color="red"
 							icon="mdi-delete"
-							aria-label="削除"
-							role="button"
+							variant="text"
 							@click="openDeleteDialog(item)"
 						/>
 					</div>
@@ -234,7 +231,7 @@ import { useContactStore } from '@/stores/contactStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUsersStore } from '@/stores/usersStore'
 import { format } from 'date-fns'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface ContactData {
@@ -333,12 +330,11 @@ const submitReply = async (): Promise<void> => {
 			selectedContact.value.status = 'replied'
 		}
 		
-		await Swal.fire({
+		AppSwal.fire({
 			title: '送信完了',
 			text: '返信を送信しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false,
 		})
 		
 		closeReplyDialog()
@@ -349,11 +345,10 @@ const submitReply = async (): Promise<void> => {
 		}
 	} catch (error: any) {
 		console.error('返信送信エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: '返信の送信に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	} finally {
 		isSubmittingReply.value = false
@@ -418,11 +413,10 @@ const fetchContactList = async (): Promise<void> => {
 		}
 	} catch (error: any) {
 		console.error('お問い合わせ一覧の取得に失敗しました:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'お問い合わせ一覧の取得に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -440,11 +434,10 @@ const viewDetail = async (contact: ContactData): Promise<void> => {
 		}
 	} catch (error: any) {
 		console.error('お問い合わせ詳細の取得に失敗しました:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'お問い合わせ詳細の取得に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -463,20 +456,18 @@ const markAsRead = async (): Promise<void> => {
 			contact.status = 'read'
 		}
 		
-		await Swal.fire({
+		AppSwal.fire({
 			title: '更新完了',
 			text: 'ステータスを既読に更新しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false,
 		})
 	} catch (error: any) {
 		console.error('ステータス更新エラー:', error)
-		await Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'ステータスの更新に失敗しました',
 			icon: 'error',
-			confirmButtonColor: '#27C1A3',
 		})
 	}
 }
@@ -486,33 +477,11 @@ const markAsRead = async (): Promise<void> => {
 const openDeleteDialog = async (contact: ContactData): Promise<void> => {
 	contactToDelete.value = contact
 
-	const result = await Swal.fire({
+	const result = await AppSwal.fire({
 		title: '削除確認',
 		text: 'このお問い合わせを本当に削除しますか？',
-		showCancelButton: true,
-		confirmButtonColor: '#27C1A3',
-		cancelButtonColor: '#9e9e9e',
+		showConfirmButton: true,
 		confirmButtonText: '削除',
-		cancelButtonText: 'キャンセル',
-		reverseButtons: true,
-		buttonsStyling: true,
-		customClass: {
-			confirmButton: 'swal2-confirm-fixed-width',
-			cancelButton: 'swal2-cancel-fixed-width'
-		},
-		didOpen: () => {
-			// ダイアログが開いた後にボタンのスタイルを適用
-			const confirmBtn = document.querySelector('.swal2-confirm-fixed-width') as HTMLElement
-			const cancelBtn = document.querySelector('.swal2-cancel-fixed-width') as HTMLElement
-			if (confirmBtn) {
-				confirmBtn.style.minWidth = '150px'
-				confirmBtn.style.width = '150px'
-			}
-			if (cancelBtn) {
-				cancelBtn.style.minWidth = '150px'
-				cancelBtn.style.width = '150px'
-			}
-		}
 	})
 
 	if (result.isConfirmed && contactToDelete.value) {
@@ -520,21 +489,18 @@ const openDeleteDialog = async (contact: ContactData): Promise<void> => {
 			await contactStore.deleteItem(contactToDelete.value)
 			await fetchContactList()
 			
-			await Swal.fire({
+			AppSwal.fire({
 				title: '削除完了',
 				text: 'お問い合わせを削除しました',
 				icon: 'success',
 				timer: 1500,
-				showConfirmButton: false,
-				confirmButtonColor: '#27C1A3',
 			})
 		} catch (error: any) {
 			console.error('削除エラー:', error)
-			await Swal.fire({
+			AppSwal.fire({
 				title: 'エラー',
 				text: 'お問い合わせの削除に失敗しました',
 				icon: 'error',
-				confirmButtonColor: '#27C1A3',
 			})
 		}
 	}
@@ -551,21 +517,3 @@ onMounted(async (): Promise<void> => {
 	await fetchContactList()
 })
 </script>
-
-<style scoped>
-.view-icon {
-	color: #2196F3;
-	cursor: pointer;
-}
-
-.reply-icon {
-	color: #4CAF50;
-	cursor: pointer;
-}
-
-.delete-icon {
-	color: red;
-	cursor: pointer;
-}
-</style>
-

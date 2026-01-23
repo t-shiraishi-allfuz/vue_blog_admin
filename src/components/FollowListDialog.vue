@@ -94,7 +94,7 @@ import DialogTemplate from '@/components/DialogTemplate.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useFollowUsersStore } from '@/stores/followUsersStore'
 import { useBlogSettingStore } from '@/stores/blogSettingStore'
-import Swal from 'sweetalert2'
+import { AppSwal } from '@/utils/swal'
 
 // 型定義
 interface UserData {
@@ -177,7 +177,7 @@ const fetchUserList = async (): Promise<void> => {
 		
 	} catch (error) {
 		console.error('ユーザーリストの取得に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'ユーザーリストの取得に失敗しました',
 			icon: 'error'
@@ -201,16 +201,15 @@ const followUser = async (uid: string): Promise<void> => {
 			user.isFollowing = true
 		}
 		
-		Swal.fire({
+		AppSwal.fire({
 			title: '成功',
 			text: 'フォローしました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 	} catch (error) {
 		console.error('フォローに失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'フォローに失敗しました',
 			icon: 'error'
@@ -237,16 +236,15 @@ const unfollowUser = async (uid: string): Promise<void> => {
 			user.isFollowing = false
 		}
 		
-		Swal.fire({
+		AppSwal.fire({
 			title: '成功',
 			text: 'フォローを解除しました',
 			icon: 'success',
 			timer: 1500,
-			showConfirmButton: false
 		})
 	} catch (error) {
 		console.error('フォロー解除に失敗しました:', error)
-		Swal.fire({
+		AppSwal.fire({
 			title: 'エラー',
 			text: 'フォロー解除に失敗しました',
 			icon: 'error'
